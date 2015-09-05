@@ -1,0 +1,12 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+include =
+    rebulk/*
+omit =
+    rebulk/__version__.py
+    rebulk/test/*
+
+[report]
+exclude_lines =
+    pragma: no cover
