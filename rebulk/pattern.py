@@ -56,11 +56,12 @@ class Pattern:
                     formatter = self.formatters.get(match.name, self._default_formatter)
                     value = formatter(value)
                     match.value = value
-                if match.parent and match.parent.value is None:
-                    value = input_string[match.parent.start:match.parent.end]
-                    formatter = self.formatters.get(match.parent.name, self._default_formatter)
-                    value = formatter(value)
-                    match.parent.value = value
+                for child in match.children:
+                    if child.value is None:
+                        value = input_string[child.start:child.end]
+                        formatter = self.formatters.get(child.name, self._default_formatter)
+                        value = formatter(value)
+                        child.value = value
                 yield match
 
     @abstractmethod
@@ -120,9 +121,10 @@ class RePattern(Pattern):
                     name = names.get(i, None)
                     start = match_object.start(i)
                     end = match_object.end(i)
-                    yield Match(self, start, end, name=name, parent=main_match)
-            else:
-                yield main_match
+                    child_match = Match(self, start, end, name=name, parent=main_match)
+                    main_match.children.append(child_match)
+
+            yield main_match
 
 
 class FunctionalPattern(Pattern):

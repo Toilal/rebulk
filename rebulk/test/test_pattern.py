@@ -131,55 +131,64 @@ class TestRePattern:
         pattern = RePattern("(Celt.?c)\s+(\w+)", label="test")
 
         matches = list(pattern.matches(self.input_string))
-        assert len(matches) == 2
+        assert len(matches) == 1
 
-        assert isinstance(matches[0], Match)
-        assert matches[0].pattern == pattern
-        assert matches[0].span == (28, 34)
-        assert matches[0].name is None
-        assert matches[0].value == "Celtic"
-
-        assert isinstance(matches[1], Match)
-        assert matches[1].pattern == pattern
-        assert matches[1].span == (35, 41)
-        assert matches[1].name is None
-        assert matches[1].value == "violin"
-
-        assert matches[0].parent == matches[1].parent
-        parent = matches[0].parent
+        parent = matches[0]
 
         assert isinstance(parent, Match)
         assert parent.pattern == pattern
         assert parent.span == (28, 41)
         assert parent.name is None
         assert parent.value == "Celtic violin"
+
+        assert len(parent.children) == 2
+
+        group1, group2 = parent.children
+
+        assert isinstance(group1, Match)
+        assert group1.pattern == pattern
+        assert group1.span == (28, 34)
+        assert group1.name is None
+        assert group1.value == "Celtic"
+        assert group1.parent == parent
+
+        assert isinstance(group2, Match)
+        assert group2.pattern == pattern
+        assert group2.span == (35, 41)
+        assert group2.name is None
+        assert group2.value == "violin"
+        assert group2.parent == parent
 
     def test_named_groups(self):
         pattern = RePattern("(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test")
 
         matches = list(pattern.matches(self.input_string))
-        assert len(matches) == 2
+        assert len(matches) == 1
 
-        assert isinstance(matches[0], Match)
-        assert matches[0].pattern == pattern
-        assert matches[0].span == (28, 34)
-        assert matches[0].name == "param1"
-        assert matches[0].value == "Celtic"
-
-        assert isinstance(matches[1], Match)
-        assert matches[1].pattern == pattern
-        assert matches[1].span == (35, 41)
-        assert matches[1].name == "param2"
-        assert matches[1].value == "violin"
-
-        assert matches[0].parent == matches[1].parent
-        parent = matches[0].parent
+        parent = matches[0]
 
         assert isinstance(parent, Match)
         assert parent.pattern == pattern
         assert parent.span == (28, 41)
         assert parent.name is None
         assert parent.value == "Celtic violin"
+
+        assert len(parent.children) == 2
+        group1, group2 = parent.children
+
+        assert isinstance(group1, Match)
+        assert group1.pattern == pattern
+        assert group1.span == (28, 34)
+        assert group1.name == "param1"
+        assert group1.value == "Celtic"
+        assert group1.parent == parent
+
+        assert isinstance(group2, Match)
+        assert group2.pattern == pattern
+        assert group2.span == (35, 41)
+        assert group2.name == "param2"
+        assert group2.value == "violin"
+        assert group2.parent == parent
 
 
 class TestFunctionalPattern:
@@ -264,6 +273,7 @@ class TestFunctionalPattern:
         assert matches[2].span == (88, 94)
         assert matches[2].value == "Hebrew"
 
+
 class TestFormatter:
     """
     Tests for FunctionalPattern matching
@@ -272,41 +282,47 @@ class TestFormatter:
     input_string = "This string contains 1849 a number"
 
     def test_single_string(self):
-        pattern = StringPattern("1849", formatters=lambda x: int(x)/2)
+        pattern = StringPattern("1849", formatters=lambda x: int(x) / 2)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
         assert matches[0].span == (21, 25)
-        assert matches[0].value == 1849/2
+        assert matches[0].value == 1849 / 2
 
     def test_single_re_no_group(self):
-        pattern = RePattern("\d+", formatters=lambda x: int(x)*2)
+        pattern = RePattern("\d+", formatters=lambda x: int(x) * 2)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
         assert matches[0].span == (21, 25)
-        assert matches[0].value == 1849*2
+        assert matches[0].value == 1849 * 2
 
     def test_single_re_named_groups(self):
         pattern = RePattern("(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
-                            formatters={'intParam': lambda x: int(x)*2,
+                            formatters={'intParam': lambda x: int(x) * 2,
                                         'strParam': lambda x: "really " + x})
 
         matches = list(pattern.matches(self.input_string))
-        assert len(matches) == 2
-        assert isinstance(matches[0], Match)
-        assert matches[0].pattern == pattern
-        assert matches[0].span == (12, 20)
-        assert matches[0].value == "really contains"
+        assert len(matches) == 1
 
-        assert isinstance(matches[1], Match)
-        assert matches[1].pattern == pattern
-        assert matches[1].span == (21, 25)
-        assert matches[1].value == 1849*2
+        parent = matches[0]
+        assert len(parent.children) == 2
+
+        group1, group2 = parent.children
+
+        assert isinstance(group1, Match)
+        assert group1.pattern == pattern
+        assert group1.span == (12, 20)
+        assert group1.value == "really contains"
+
+        assert isinstance(group2, Match)
+        assert group2.pattern == pattern
+        assert group2.span == (21, 25)
+        assert group2.value == 1849 * 2
 
     def test_single_functional(self):
         def digit(input_string):
@@ -314,11 +330,11 @@ class TestFormatter:
             if i > -1:
                 return i, i + len("1849")
 
-        pattern = FunctionalPattern(digit, formatters=lambda x: int(x)*3)
+        pattern = FunctionalPattern(digit, formatters=lambda x: int(x) * 3)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
         assert matches[0].span == (21, 25)
-        assert matches[0].value == 1849*3
+        assert matches[0].value == 1849 * 3

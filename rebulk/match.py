@@ -8,6 +8,7 @@ class Match:
         self.end = end
         self.name = name
         self.parent = parent
+        self.children = []
         self.value = value
 
     @property
