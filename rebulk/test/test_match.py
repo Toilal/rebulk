@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import pytest
+import six
 
 from ..match import Match, group_neighbors
 from ..pattern import StringPattern
@@ -59,17 +60,18 @@ class TestMatchClass:
         assert m2 > m1
         assert m2 >= m1
 
-        with pytest.raises(TypeError):
-            m1 < other
+        if six.PY3:
+            with pytest.raises(TypeError):
+                m1 < other
 
-        with pytest.raises(TypeError):
-            m1 <= other
+            with pytest.raises(TypeError):
+                m1 <= other
 
-        with pytest.raises(TypeError):
-            m1 > other
+            with pytest.raises(TypeError):
+                m1 > other
 
-        with pytest.raises(TypeError):
-            m1 >= other
+            with pytest.raises(TypeError):
+                m1 >= other
 
 
 class TestMatchFunctions:
