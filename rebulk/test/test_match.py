@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import pytest
 
 from ..match import Match, group_neighbors
 from ..pattern import StringPattern
@@ -17,9 +18,13 @@ class TestMatchClass:
         m1 = Match(self.p, 1, 3, value="es")
         m2 = Match(self.p, 1, 3, value="es")
 
+        other = object()
+
         assert hash(m1) == hash(m2)
+        assert hash(m1) != hash(other)
 
         assert m1 == m2
+        assert not m1 == other
 
     def test_inequality(self):
         m1 = Match(self.p, 0, 2, value="te")
@@ -46,11 +51,25 @@ class TestMatchClass:
         m1 = Match(self.p, 0, 2, value="te")
         m2 = Match(self.p, 2, 4, value="st")
 
+        other = object()
+
         assert m1 < m2
         assert m1 <= m2
 
         assert m2 > m1
         assert m2 >= m1
+
+        with pytest.raises(TypeError):
+            m1 < other
+
+        with pytest.raises(TypeError):
+            m1 <= other
+
+        with pytest.raises(TypeError):
+            m1 > other
+
+        with pytest.raises(TypeError):
+            m1 >= other
 
 
 class TestMatchFunctions:
