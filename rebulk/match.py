@@ -24,9 +24,34 @@ class Match:
         return hash(Match) + hash(self.start) + hash(self.end) + hash(self.value)
 
     def __eq__(self, other):
-        if not isinstance(other, Match):
-            return False
-        return self.span == other.span and self.value == other.value
+        if isinstance(other, Match):
+            return self.span == other.span and self.value == other.value
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, Match):
+            return self.span != other.span or self.value != other.value
+        return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, Match):
+            return self.span < other.span
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, Match):
+            return self.span > other.span
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, Match):
+            return self.span <= other.span
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, Match):
+            return self.span >= other.span
+        return NotImplemented
 
     def __repr__(self):
         return "%s<span=%s, value=\'%s\'>" % (self.__class__.__name__, self.span, self.value)
