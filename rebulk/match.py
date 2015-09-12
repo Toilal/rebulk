@@ -71,3 +71,41 @@ def start_end_hash(matches):
         start_dict[match.start].add(match)
         end_dict[match.end].add(match)
     return start_dict, end_dict
+
+def group_neighbors(matches, input_string, ignore_chars):
+    """
+
+    :param matches:
+    :type matches: iterable[Match]
+    :param input_string:
+    :type input_string:
+    :param ignore_chars:
+    :type ignore_chars:
+    :return:
+    :rtype:
+    """
+    starts, ends = start_end_hash(matches)
+
+    matches_at_position = []
+
+    current_group = []
+    ret = []
+
+    for i in range(len(input_string)):
+        matches_starting = starts[i]
+        matches_ended = ends[i]
+
+        matches_at_position.extend(matches_starting)
+        matches_at_position = [m for m in matches_at_position if m not in matches_ended]
+
+        ignoring = input_string[i] in ignore_chars
+
+        if current_group and not matches_at_position and not ignoring:
+            ret.append(current_group)
+            current_group = []
+        current_group.extend(matches_starting)
+
+    if current_group:
+        ret.append(current_group)
+
+    return ret

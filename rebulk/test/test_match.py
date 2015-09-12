@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ..match import Match
+from ..match import Match, group_neighbors
 from ..pattern import StringPattern
 
 
@@ -51,3 +51,30 @@ class TestMatchClass:
 
         assert m2 > m1
         assert m2 >= m1
+
+
+class TestMatchFunctions:
+    def test_group_neighbors(self):
+        input_string = "abc.def._._.ghi.klm.nop.qrs.tuv.wyx.z"
+
+        matches = StringPattern("abc", "def", "ghi", "nop", "qrs.tuv", "z").matches(input_string)
+        matches_groups = group_neighbors(matches, input_string, "._")
+
+        assert len(matches_groups) == 3
+        assert len(matches_groups[0]) == 3
+        assert len(matches_groups[1]) == 2
+        assert len(matches_groups[2]) == 1
+
+        abc, def_, ghi = matches_groups[0]
+        assert abc.value == "abc"
+        assert def_.value == "def"
+        assert ghi.value == "ghi"
+
+        nop, qrstuv = matches_groups[1]
+        assert nop.value == "nop"
+        assert qrstuv.value == "qrs.tuv"
+
+        z = matches_groups[2][0]
+        assert z.value == "z"
+
+
