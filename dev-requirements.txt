@@ -1,2 +1,4 @@
 pytest
+pep8
+tox
 -e .
