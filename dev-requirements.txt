@@ -1,4 +1,4 @@
-pytest
+pytest>=2.7.3
 pep8
 tox
 -e .

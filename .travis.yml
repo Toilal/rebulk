@@ -3,11 +3,13 @@ python:
   - 2.7
   - 3.3
   - 3.4
+  - 3.5
   - pypy
 install:
   - pip install -r requirements.txt
-  - pip install coveralls
+  - pip install pytest>=2.7.3 --upgrade
   - pip install pep8
+  - pip install coveralls
 script:
   - pep8 rebulk
   - coverage run --source=rebulk setup.py test
