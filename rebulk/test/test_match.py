@@ -79,7 +79,7 @@ class TestMatchFunctions:
         input_string = "abc.def._._.ghi.klm.nop.qrs.tuv.wyx.z"
 
         matches = StringPattern("abc", "def", "ghi", "nop", "qrs.tuv", "z").matches(input_string)
-        matches_groups = group_neighbors(matches, input_string, "._")
+        matches_groups = list(group_neighbors(matches, input_string, "._"))
 
         assert len(matches_groups) == 3
         assert len(matches_groups[0]) == 3
@@ -97,5 +97,3 @@ class TestMatchFunctions:
 
         z = matches_groups[2][0]
         assert z.value == "z"
-
-

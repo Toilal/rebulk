@@ -3,7 +3,6 @@
 
 from ..pattern import StringPattern
 from ..filters import conflict_prefer_longer
-from ..runtime import Context
 
 
 def test_conflict_prefer_longer():
@@ -12,7 +11,7 @@ def test_conflict_prefer_longer():
     pattern = StringPattern("ijklmn", "kl", "abcdef", "ab", "ef", "yz")
     matches = list(pattern.matches(input_string))
 
-    filtered_matches = conflict_prefer_longer(matches, Context())
+    filtered_matches = conflict_prefer_longer(matches, {})
 
     values = [x.value for x in filtered_matches]
 

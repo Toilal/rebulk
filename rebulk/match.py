@@ -3,6 +3,7 @@
 
 from collections import defaultdict
 
+
 class Match:
     def __init__(self, pattern, start, end, name=None, parent=None, value=None):
         self.pattern = pattern
@@ -56,6 +57,7 @@ class Match:
     def __repr__(self):
         return "%s<span=%s, value=\'%s\'>" % (self.__class__.__name__, self.span, self.value)
 
+
 def start_end_hash(matches):
     """
     Computes a tuple(dict, dict) containing (start, end) hash for each match.
@@ -71,6 +73,7 @@ def start_end_hash(matches):
         start_dict[match.start].add(match)
         end_dict[match.end].add(match)
     return start_dict, end_dict
+
 
 def group_neighbors(matches, input_string, ignore_chars):
     """
@@ -89,7 +92,6 @@ def group_neighbors(matches, input_string, ignore_chars):
     matches_at_position = []
 
     current_group = []
-    ret = []
 
     for i in range(len(input_string)):
         matches_starting = starts[i]
@@ -101,11 +103,9 @@ def group_neighbors(matches, input_string, ignore_chars):
         ignoring = input_string[i] in ignore_chars
 
         if current_group and not matches_at_position and not ignoring:
-            ret.append(current_group)
+            yield current_group
             current_group = []
         current_group.extend(matches_starting)
 
     if current_group:
-        ret.append(current_group)
-
-    return ret
+        yield current_group

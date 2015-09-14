@@ -4,7 +4,7 @@
 from .match import start_end_hash
 
 
-def conflict_prefer_longer(matches, context):
+def conflict_prefer_longer(matches, context=None):
     """
     Remove shorter matches if they conflicts with longer ones
 
@@ -15,9 +15,7 @@ def conflict_prefer_longer(matches, context):
     :return:
     :rtype: list[rebulk.match.Match]
     """
-    if 'match.start_end_hash' not in context:
-        context['match.start_end_hash'] = start_end_hash(matches)
-    start_hash, end_hash = context['match.start_end_hash']
+    start_hash, end_hash = start_end_hash(matches)
 
     to_remove_matches = set()
     for match in matches:

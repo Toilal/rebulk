@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 def find_all(s, sub, start=None, end=None):
     """
     Return all indices in string s where substring sub is

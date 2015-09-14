@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .runtime import Request
-
 from .filters import conflict_prefer_longer
 
 
@@ -31,17 +29,11 @@ class Bucket:
         """
         self.filters.extend(func)
 
-    def response(self, input_string):
-        """
-
-        :param input_string:
-        :type input_string: str
-        :return:
-        :rtype: rebulk.runtime.Response
-        """
-        return Request(self, input_string).execute()
 
 def default():
     b = Bucket()
-    b.add_match_filter(conflict_prefer_longer)
+    for f in default_filters:
+        b.add_match_filter(f)
     return b
+
+default_filters = [conflict_prefer_longer]
