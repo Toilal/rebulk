@@ -1,7 +1,81 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from collections import defaultdict
+from collections import defaultdict, MutableSequence
+import six
+
+from .ordered_set import OrderedSet
+
+class Matches(MutableSequence):
+    """
+    A custom list[Match] that automatically maintains start, end hashes
+    """
+
+    def __init__(self, *matches):
+        self._delegate = []
+        self._start_dict = defaultdict(OrderedSet)
+        self._end_dict = defaultdict(OrderedSet)
+        if matches:
+            if len(matches) == 1:
+                try:
+                    iterator = iter(matches)
+                    self.extend(next(iterator))
+                    return
+                except TypeError:  # pragma: no cover
+                    pass
+            self.extend(matches)
+
+    def _add_match(self, match):
+        self._start_dict[match.start].add(match)
+        self._end_dict[match.end].add(match)
+
+    def _remove_match(self, match):
+        self._start_dict[match.start].remove(match)
+        self._end_dict[match.end].remove(match)
+
+    def starting(self, start):
+        return self._start_dict[start]
+
+    def ending(self, end):
+        return self._end_dict[end]
+
+    if six.PY2:  # pragma: no cover
+        def clear(self):
+            """
+            Python 3 backport
+            """
+            del self[:]
+
+    def __len__(self):
+        return len(self._delegate)
+
+    def __getitem__(self, index):
+        ret = self._delegate[index]
+        if isinstance(ret, list):
+            return Matches(ret)
+        return ret
+
+    def __setitem__(self, index, match):
+        self._delegate[index] = match
+        if isinstance(index, slice):
+            for match_item in match:
+                self._add_match(match_item)
+            return
+        self._add_match(match)
+
+    def __delitem__(self, index):
+        match = self._delegate[index]
+        del self._delegate[index]
+        if isinstance(match, list):
+            # if index is a slice, we has a match list
+            for match_item in match:
+                self._remove_match(match_item)
+        else:
+            self._remove_match(match)
+
+    def insert(self, index, match):
+        self._delegate.insert(index, match)
+        self._add_match(match)
 
 
 class Match:
@@ -58,28 +132,11 @@ class Match:
         return "%s<span=%s, value=\'%s\'>" % (self.__class__.__name__, self.span, self.value)
 
 
-def start_end_hash(matches):
-    """
-    Computes a tuple(dict, dict) containing (start, end) hash for each match.
-
-    :param matches:
-    :type matches: __generator[Match]
-    :return:
-    :rtype: tuple(dict, dict)
-    """
-
-    start_dict, end_dict = defaultdict(set), defaultdict(set)
-    for match in matches:
-        start_dict[match.start].add(match)
-        end_dict[match.end].add(match)
-    return start_dict, end_dict
-
-
 def group_neighbors(matches, input_string, ignore_chars):
     """
 
     :param matches:
-    :type matches: iterable[Match]
+    :type matches: Matches
     :param input_string:
     :type input_string:
     :param ignore_chars:
@@ -87,15 +144,13 @@ def group_neighbors(matches, input_string, ignore_chars):
     :return:
     :rtype:
     """
-    starts, ends = start_end_hash(matches)
-
     matches_at_position = []
 
     current_group = []
 
     for i in range(len(input_string)):
-        matches_starting = starts[i]
-        matches_ended = ends[i]
+        matches_starting = matches.starting(i)
+        matches_ended = matches.ending(i)
 
         matches_at_position.extend(matches_starting)
         matches_at_position = [m for m in matches_at_position if m not in matches_ended]

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .match import Matches
 
 def rebulk(bucket, input_string):
-    matches = []
+    matches = Matches()
     context = {}
 
     for pattern in bucket.patterns:
