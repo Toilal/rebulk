@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Filters functions
+"""
 
 
-def conflict_prefer_longer(matches, context=None):
+def conflict_prefer_longer(matches, context=None):  # pylint: disable=unused-argument
     """
     Remove shorter matches if they conflicts with longer ones
 

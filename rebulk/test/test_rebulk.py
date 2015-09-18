@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use, pointless-statement, missing-docstring
 
 from .. import rebulk
 from .. import Bucket
 from rebulk.pattern import StringPattern, RePattern, FunctionalPattern
+
 
 
 def test_rebulk_simple():

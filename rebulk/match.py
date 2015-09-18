@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+Classes and functions related to matches
+"""
 from collections import defaultdict, MutableSequence
 import six
 
@@ -27,17 +29,41 @@ class Matches(MutableSequence):
             self.extend(matches)
 
     def _add_match(self, match):
+        """
+        Add a match
+        :param match:
+        :type match: Match
+        """
         self._start_dict[match.start].add(match)
         self._end_dict[match.end].add(match)
 
     def _remove_match(self, match):
+        """
+        Remove a match
+        :param match:
+        :type match: Match
+        """
         self._start_dict[match.start].remove(match)
         self._end_dict[match.end].remove(match)
 
     def starting(self, start):
+        """
+        Retrieves a list of matches starting at start index
+        :param start: the starting index
+        :type start: int
+        :return: list of matches
+        :rtype: list[Match]
+        """
         return self._start_dict[start]
 
     def ending(self, end):
+        """
+        Retrieves a list of matches ending at end index
+        :param end: the ending index
+        :type end: int
+        :return: list of matches
+        :rtype: list[Match]
+        """
         return self._end_dict[end]
 
     if six.PY2:  # pragma: no cover
@@ -79,7 +105,10 @@ class Matches(MutableSequence):
         self._add_match(match)
 
 
-class Match:
+class Match(object):
+    """
+    Object storing values related to a single match
+    """
     def __init__(self, pattern, start, end, name=None, parent=None, value=None):
         self.pattern = pattern
         self.start = start
@@ -91,6 +120,9 @@ class Match:
 
     @property
     def span(self):
+        """
+        2-tuple with start and end indices of the match
+        """
         return self.start, self.end
 
     def __len__(self):

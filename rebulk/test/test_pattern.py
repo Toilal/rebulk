@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use, pointless-statement, missing-docstring
+
 import re
 
 from ..pattern import StringPattern, RePattern, FunctionalPattern
 from ..match import Match
 
-
-class TestStringPattern:
+class TestStringPattern(object):
     """
     Tests for StringPattern matching
     """
@@ -27,8 +28,8 @@ class TestStringPattern:
     def test_no_match(self):
         pattern = StringPattern("Python")
 
-        m2 = list(pattern.matches(self.input_string))
-        assert not m2
+        matches = list(pattern.matches(self.input_string))
+        assert not matches
 
     def test_multiple_patterns(self):
         pattern = StringPattern("playing", "annoyed", "Hebrew")
@@ -52,7 +53,7 @@ class TestStringPattern:
         assert matches[2].value == "Hebrew"
 
 
-class TestRePattern:
+class TestRePattern(object):
     """
     Tests for RePattern matching
     """
@@ -128,7 +129,7 @@ class TestRePattern:
         assert matches[2].value == "Hebrew"
 
     def test_unnamed_groups(self):
-        pattern = RePattern("(Celt.?c)\s+(\w+)", label="test")
+        pattern = RePattern(r"(Celt.?c)\s+(\w+)", label="test")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -160,7 +161,7 @@ class TestRePattern:
         assert group2.parent == parent
 
     def test_named_groups(self):
-        pattern = RePattern("(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test")
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -191,7 +192,7 @@ class TestRePattern:
         assert group2.parent == parent
 
 
-class TestFunctionalPattern:
+class TestFunctionalPattern(object):
     """
     Tests for FunctionalPattern matching
     """
@@ -274,7 +275,7 @@ class TestFunctionalPattern:
         assert matches[2].value == "Hebrew"
 
 
-class TestFormatter:
+class TestFormatter(object):
     """
     Tests for FunctionalPattern matching
     """
@@ -292,7 +293,7 @@ class TestFormatter:
         assert matches[0].value == 1849 / 2
 
     def test_single_re_no_group(self):
-        pattern = RePattern("\d+", formatters=lambda x: int(x) * 2)
+        pattern = RePattern(r"\d+", formatters=lambda x: int(x) * 2)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -302,7 +303,7 @@ class TestFormatter:
         assert matches[0].value == 1849 * 2
 
     def test_single_re_named_groups(self):
-        pattern = RePattern("(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
+        pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
                             formatters={'intParam': lambda x: int(x) * 2,
                                         'strParam': lambda x: "really " + x})
 

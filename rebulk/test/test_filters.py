@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use, pointless-statement, missing-docstring
 
 from ..pattern import StringPattern
 from ..filters import conflict_prefer_longer

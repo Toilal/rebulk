@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Abstract pattern class definition along with various implementations (regexp, string, functional)
+"""
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 import re
 
 import six
@@ -11,7 +14,7 @@ from .utils import find_all
 
 
 @six.add_metaclass(ABCMeta)
-class Pattern:
+class Pattern(object):
     """
     Definition of a particular pattern to search for.
     """
@@ -64,6 +67,16 @@ class Pattern:
                         child.value = value
                 yield match
 
+    @abstractproperty
+    def patterns(self):
+        """
+        List of base patterns defined
+
+        :return: A list of base patterns
+        :rtype: list
+        """
+        pass
+
     @abstractmethod
     def _match(self, pattern, input_string):  # pragma: no cover
         """
@@ -85,7 +98,11 @@ class StringPattern(Pattern):
 
     def __init__(self, *patterns, **kwargs):
         super(StringPattern, self).__init__(**kwargs)
-        self.patterns = patterns
+        self._patterns = patterns
+
+    @property
+    def patterns(self):
+        return self._patterns
 
     def _match(self, pattern, input_string):
         for index in find_all(input_string, pattern):
@@ -99,7 +116,7 @@ class RePattern(Pattern):
 
     def __init__(self, *patterns, **kwargs):
         super(RePattern, self).__init__(**kwargs)
-        self.patterns = []
+        self._patterns = []
         for pattern in patterns:
             if isinstance(pattern, six.string_types):
                 pattern = re.compile(pattern)
@@ -107,7 +124,11 @@ class RePattern(Pattern):
                 pattern = re.compile(**pattern)
             elif hasattr(pattern, '__iter__'):
                 pattern = re.compile(*pattern)
-            self.patterns.append(pattern)
+            self._patterns.append(pattern)
+
+    @property
+    def patterns(self):
+        return self._patterns
 
     def _match(self, pattern, input_string):
         names = {v: k for k, v in pattern.groupindex.items()}
@@ -134,7 +155,11 @@ class FunctionalPattern(Pattern):
 
     def __init__(self, *patterns, **kwargs):
         super(FunctionalPattern, self).__init__(**kwargs)
-        self.patterns = patterns
+        self._patterns = patterns
+
+    @property
+    def patterns(self):
+        return self._patterns
 
     def _match(self, pattern, input_string):
         ret = pattern(input_string)

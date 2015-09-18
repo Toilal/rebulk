@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Various utilities functions
+"""
 
-
-def find_all(s, sub, start=None, end=None):
+def find_all(string, sub, start=None, end=None):
     """
     Return all indices in string s where substring sub is
     found, such that sub is contained in the slice s[start:end].
@@ -28,15 +30,15 @@ def find_all(s, sub, start=None, end=None):
     ... 60))
     [51]
 
-    :param s: the input string
-    :type s: str
+    :param string: the input string
+    :type string: str
     :param sub: the substring
     :type sub: str
     :return: all indices in the input string
     :rtype: __generator[str]
     """
     while True:
-        start = s.find(sub, start, end)
+        start = string.find(sub, start, end)
         if start == -1:
             return
         yield start

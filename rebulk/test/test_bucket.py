@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use, pointless-statement, missing-docstring
 
 from ..pattern import StringPattern
 
 import rebulk.bucket as bucket
 
 
-class TestBucket:
+class TestBucket(object):
     """
     Tests for Bucket matching
     """
@@ -15,10 +16,10 @@ class TestBucket:
                    "which were the Hebrew letter qoph."
 
     def test_build(self):
-        b = bucket.default()
+        buck = bucket.default()
 
-        b.add_pattern(StringPattern("Abyssinian"), StringPattern("fly"), StringPattern("Celtic"),
-                      StringPattern("Hebrew"))
+        buck.add_pattern(StringPattern("Abyssinian"), StringPattern("fly"), StringPattern("Celtic"),
+                         StringPattern("Hebrew"))
 
-        assert len(b.patterns) == 4
-        assert b
+        assert len(buck.patterns) == 4
+        assert buck

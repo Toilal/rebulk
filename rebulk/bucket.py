@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Bucket class and factories
+"""
 
 from .filters import conflict_prefer_longer
 
 
-class Bucket:
+class Bucket(object):
     """
     A bucket is a container of predefined patterns and filters
     """
@@ -31,9 +34,15 @@ class Bucket:
 
 
 def default():
-    b = Bucket()
-    for f in default_filters:
-        b.add_match_filter(f)
-    return b
+    """
+    Builds a default Bucket with preconfigured filters
 
-default_filters = [conflict_prefer_longer]
+    :return: A new bucket
+    :rtype: Bucket
+    """
+    bucket = Bucket()
+    for filter_ in DEFAULT_FILTERS:
+        bucket.add_match_filter(filter_)
+    return bucket
+
+DEFAULT_FILTERS = [conflict_prefer_longer]

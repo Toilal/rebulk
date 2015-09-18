@@ -3,15 +3,15 @@ python:
   - 2.7
   - 3.3
   - 3.4
-  - 3.5
+# - 3.5 (pylint currently fails with python 3.5)
   - pypy
 install:
   - pip install -r requirements.txt
   - pip install pytest>=2.7.3 --upgrade
-  - pip install pep8
+  - pip install pylint
   - pip install coveralls
 script:
-  - pep8 rebulk
+  - pylint rebulk
   - coverage run --source=rebulk setup.py test
   - python setup.py build
 after_success:

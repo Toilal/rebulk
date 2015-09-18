@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use, pointless-statement, missing-docstring
+
 import pytest
 import six
 
@@ -7,194 +9,194 @@ from ..match import Match, Matches, group_neighbors
 from ..pattern import StringPattern
 
 
-class TestMatchClass:
-    p = StringPattern("test")
+class TestMatchClass(object):
+    pattern = StringPattern("test")
 
     def test_str(self):
-        m1 = Match(self.p, 1, 3, value="es")
+        match1 = Match(self.pattern, 1, 3, value="es")
 
-        assert str(m1) == 'Match<span=(1, 3), value=\'es\'>'
+        assert str(match1) == 'Match<span=(1, 3), value=\'es\'>'
 
     def test_equality(self):
-        m1 = Match(self.p, 1, 3, value="es")
-        m2 = Match(self.p, 1, 3, value="es")
+        match1 = Match(self.pattern, 1, 3, value="es")
+        match2 = Match(self.pattern, 1, 3, value="es")
 
         other = object()
 
-        assert hash(m1) == hash(m2)
-        assert hash(m1) != hash(other)
+        assert hash(match1) == hash(match2)
+        assert hash(match1) != hash(other)
 
-        assert m1 == m2
-        assert not m1 == other
+        assert match1 == match2
+        assert not match1 == other
 
     def test_inequality(self):
-        m1 = Match(self.p, 0, 2, value="te")
-        m2 = Match(self.p, 2, 4, value="st")
-        m3 = Match(self.p, 0, 2, value="other")
+        match1 = Match(self.pattern, 0, 2, value="te")
+        match2 = Match(self.pattern, 2, 4, value="st")
+        match3 = Match(self.pattern, 0, 2, value="other")
 
         other = object()
 
-        assert hash(m1) != hash(m2)
-        assert hash(m1) != hash(m3)
+        assert hash(match1) != hash(match2)
+        assert hash(match1) != hash(match3)
 
-        assert m1 != other
-        assert m1 != m2
-        assert m1 != m3
+        assert match1 != other
+        assert match1 != match2
+        assert match1 != match3
 
     def test_length(self):
-        m1 = Match(self.p, 0, 4, value="test")
-        m2 = Match(self.p, 0, 2, value="spanIsUsed")
+        match1 = Match(self.pattern, 0, 4, value="test")
+        match2 = Match(self.pattern, 0, 2, value="spanIsUsed")
 
-        assert len(m1) == 4
-        assert len(m2) == 2
+        assert len(match1) == 4
+        assert len(match2) == 2
 
     def test_compare(self):
-        m1 = Match(self.p, 0, 2, value="te")
-        m2 = Match(self.p, 2, 4, value="st")
+        match1 = Match(self.pattern, 0, 2, value="te")
+        match2 = Match(self.pattern, 2, 4, value="st")
 
         other = object()
 
-        assert m1 < m2
-        assert m1 <= m2
+        assert match1 < match2
+        assert match1 <= match2
 
-        assert m2 > m1
-        assert m2 >= m1
+        assert match2 > match1
+        assert match2 >= match1
 
         if six.PY3:
             with pytest.raises(TypeError):
-                m1 < other
+                match1 < other
 
             with pytest.raises(TypeError):
-                m1 <= other
+                match1 <= other
 
             with pytest.raises(TypeError):
-                m1 > other
+                match1 > other
 
             with pytest.raises(TypeError):
-                m1 >= other
+                match1 >= other
 
 
-class TestMatchesClass:
-    p = StringPattern("test")
+class TestMatchesClass(object):
+    pattern = StringPattern("test")
 
-    m1 = Match(p, 0, 2, value="te")
-    m2 = Match(p, 2, 3, value="s")
-    m3 = Match(p, 3, 4, value="t")
-    m4 = Match(p, 2, 4, value="st")
+    match1 = Match(pattern, 0, 2, value="te")
+    match2 = Match(pattern, 2, 3, value="s")
+    match3 = Match(pattern, 3, 4, value="t")
+    match4 = Match(pattern, 2, 4, value="st")
 
     def test_base(self):
-        l = Matches()
-        l.append(self.m1)
+        matches = Matches()
+        matches.append(self.match1)
 
-        assert len(l) == 1
-        assert list(l.starting(0)) == [self.m1]
-        assert list(l.ending(2)) == [self.m1]
+        assert len(matches) == 1
+        assert list(matches.starting(0)) == [self.match1]
+        assert list(matches.ending(2)) == [self.match1]
 
-        l.append(self.m2)
-        l.append(self.m3)
-        l.append(self.m4)
+        matches.append(self.match2)
+        matches.append(self.match3)
+        matches.append(self.match4)
 
-        assert len(l) == 4
-        assert list(l.starting(2)) == [self.m2, self.m4]
-        assert list(l.starting(3)) == [self.m3]
-        assert list(l.ending(3)) == [self.m2]
-        assert list(l.ending(4)) == [self.m3, self.m4]
+        assert len(matches) == 4
+        assert list(matches.starting(2)) == [self.match2, self.match4]
+        assert list(matches.starting(3)) == [self.match3]
+        assert list(matches.ending(3)) == [self.match2]
+        assert list(matches.ending(4)) == [self.match3, self.match4]
 
-        l.remove(self.m1)
-        assert len(l) == 3
-        assert len(l.starting(0)) == 0
-        assert len(l.ending(2)) == 0
+        matches.remove(self.match1)
+        assert len(matches) == 3
+        assert len(matches.starting(0)) == 0
+        assert len(matches.ending(2)) == 0
 
-        l.clear()
+        matches.clear()
 
-        assert len(l) == 0
-        assert len(l.starting(0)) == 0
-        assert len(l.starting(2)) == 0
-        assert len(l.starting(3)) == 0
-        assert len(l.ending(2)) == 0
-        assert len(l.ending(3)) == 0
-        assert len(l.ending(4)) == 0
+        assert len(matches) == 0
+        assert len(matches.starting(0)) == 0
+        assert len(matches.starting(2)) == 0
+        assert len(matches.starting(3)) == 0
+        assert len(matches.ending(2)) == 0
+        assert len(matches.ending(3)) == 0
+        assert len(matches.ending(4)) == 0
 
     def test_get_slices(self):
-        l = Matches()
-        l.append(self.m1)
-        l.append(self.m2)
-        l.append(self.m3)
-        l.append(self.m4)
+        matches = Matches()
+        matches.append(self.match1)
+        matches.append(self.match2)
+        matches.append(self.match3)
+        matches.append(self.match4)
 
-        slice_matches = l[1:3]
+        slice_matches = matches[1:3]
 
         assert isinstance(slice_matches, Matches)
 
         assert len(slice_matches) == 2
-        assert slice_matches[0] == self.m2
-        assert slice_matches[1] == self.m3
+        assert slice_matches[0] == self.match2
+        assert slice_matches[1] == self.match3
 
     def test_remove_slices(self):
-        l = Matches()
-        l.append(self.m1)
-        l.append(self.m2)
-        l.append(self.m3)
-        l.append(self.m4)
+        matches = Matches()
+        matches.append(self.match1)
+        matches.append(self.match2)
+        matches.append(self.match3)
+        matches.append(self.match4)
 
-        del l[1:3]
+        del matches[1:3]
 
-        assert len(l) == 2
-        assert l[0] == self.m1
-        assert l[1] == self.m4
+        assert len(matches) == 2
+        assert matches[0] == self.match1
+        assert matches[1] == self.match4
 
     def test_set_slices(self):
-        l = Matches()
-        l.append(self.m1)
-        l.append(self.m2)
-        l.append(self.m3)
-        l.append(self.m4)
+        matches = Matches()
+        matches.append(self.match1)
+        matches.append(self.match2)
+        matches.append(self.match3)
+        matches.append(self.match4)
 
-        l[1:3] = self.m1, self.m4
+        matches[1:3] = self.match1, self.match4
 
-        assert len(l) == 4
-        assert l[0] == self.m1
-        assert l[1] == self.m1
-        assert l[2] == self.m4
-        assert l[3] == self.m4
+        assert len(matches) == 4
+        assert matches[0] == self.match1
+        assert matches[1] == self.match1
+        assert matches[2] == self.match4
+        assert matches[3] == self.match4
 
     def test_set_index(self):
-        l = Matches()
-        l.append(self.m1)
-        l.append(self.m2)
-        l.append(self.m3)
+        matches = Matches()
+        matches.append(self.match1)
+        matches.append(self.match2)
+        matches.append(self.match3)
 
-        l[1] = self.m4
+        matches[1] = self.match4
 
-        assert len(l) == 3
-        assert l[0] == self.m1
-        assert l[1] == self.m4
-        assert l[2] == self.m3
+        assert len(matches) == 3
+        assert matches[0] == self.match1
+        assert matches[1] == self.match4
+        assert matches[2] == self.match3
 
     def test_iterator_constructor(self):
-        l = Matches([self.m1, self.m2, self.m3, self.m4])
+        matches = Matches([self.match1, self.match2, self.match3, self.match4])
 
-        assert len(l) == 4
-        assert list(l.starting(0)) == [self.m1]
-        assert list(l.ending(2)) == [self.m1]
-        assert list(l.starting(2)) == [self.m2, self.m4]
-        assert list(l.starting(3)) == [self.m3]
-        assert list(l.ending(3)) == [self.m2]
-        assert list(l.ending(4)) == [self.m3, self.m4]
+        assert len(matches) == 4
+        assert list(matches.starting(0)) == [self.match1]
+        assert list(matches.ending(2)) == [self.match1]
+        assert list(matches.starting(2)) == [self.match2, self.match4]
+        assert list(matches.starting(3)) == [self.match3]
+        assert list(matches.ending(3)) == [self.match2]
+        assert list(matches.ending(4)) == [self.match3, self.match4]
 
     def test_constructor(self):
-        l = Matches(self.m1, self.m2, self.m3, self.m4)
+        matches = Matches(self.match1, self.match2, self.match3, self.match4)
 
-        assert len(l) == 4
-        assert list(l.starting(0)) == [self.m1]
-        assert list(l.ending(2)) == [self.m1]
-        assert list(l.starting(2)) == [self.m2, self.m4]
-        assert list(l.starting(3)) == [self.m3]
-        assert list(l.ending(3)) == [self.m2]
-        assert list(l.ending(4)) == [self.m3, self.m4]
+        assert len(matches) == 4
+        assert list(matches.starting(0)) == [self.match1]
+        assert list(matches.ending(2)) == [self.match1]
+        assert list(matches.starting(2)) == [self.match2, self.match4]
+        assert list(matches.starting(3)) == [self.match3]
+        assert list(matches.ending(3)) == [self.match2]
+        assert list(matches.ending(4)) == [self.match3, self.match4]
 
 
-class TestMatchFunctions:
+class TestMatchFunctions(object):
     def test_group_neighbors(self):
         input_string = "abc.def._._.ghi.klm.nop.qrs.tuv.wyx.z"
 
@@ -215,5 +217,5 @@ class TestMatchFunctions:
         assert nop.value == "nop"
         assert qrstuv.value == "qrs.tuv"
 
-        z = matches_groups[2][0]
-        assert z.value == "z"
+        z__ = matches_groups[2][0]
+        assert z__.value == "z"

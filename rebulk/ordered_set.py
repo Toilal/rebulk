@@ -14,6 +14,7 @@ Rob Speer's changes are as follows:
     - added a __getstate__ and __setstate__ so it can be pickled
     - added __getitem__
 """
+# pylint: disable=invalid-name,missing-docstring
 import collections
 
 SLICE_ALL = slice(None)
