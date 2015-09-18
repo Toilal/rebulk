@@ -73,6 +73,7 @@ class TestMatchClass:
             with pytest.raises(TypeError):
                 m1 >= other
 
+
 class TestMatchesClass:
     p = StringPattern("test")
 

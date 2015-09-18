@@ -157,4 +157,3 @@ class OrderedSet(collections.MutableSet):
             return False
         else:
             return set(self) == other_as_set
-

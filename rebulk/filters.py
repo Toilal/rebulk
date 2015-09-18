@@ -26,8 +26,6 @@ def conflict_prefer_longer(matches, context=None):
             for conflicting_match in conflicting_matches:
                 if len(conflicting_match) < len(match):
                     to_remove_matches.add(conflicting_match)
-                    #matches.starting(i).discard(conflicting_match)
-                    #matches.ending(i).discard(conflicting_match)
 
     for match in list(to_remove_matches):
         matches.remove(match)

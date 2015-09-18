@@ -6,6 +6,7 @@ import six
 
 from .ordered_set import OrderedSet
 
+
 class Matches(MutableSequence):
     """
     A custom list[Match] that automatically maintains start, end hashes

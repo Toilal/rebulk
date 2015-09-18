@@ -3,6 +3,7 @@
 
 from .match import Matches
 
+
 def rebulk(bucket, input_string):
     matches = Matches()
     context = {}
