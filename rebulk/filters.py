@@ -5,7 +5,7 @@ Filters functions
 """
 
 
-def conflict_prefer_longer(matches, context=None):  # pylint: disable=unused-argument
+def conflict_prefer_longer(matches):
     """
     Remove shorter matches if they conflicts with longer ones
 

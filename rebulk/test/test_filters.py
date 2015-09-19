@@ -13,7 +13,7 @@ def test_conflict_prefer_longer():
     pattern = StringPattern("ijklmn", "kl", "abcdef", "ab", "ef", "yz")
     matches = Matches(pattern.matches(input_string))
 
-    filtered_matches = conflict_prefer_longer(matches, {})
+    filtered_matches = conflict_prefer_longer(matches)
 
     values = [x.value for x in filtered_matches]
 

@@ -100,6 +100,9 @@ class Matches(MutableSequence):
         else:
             self._remove_match(match)
 
+    def __repr__(self):
+        return self._delegate.__repr__()
+
     def insert(self, index, match):
         self._delegate.insert(index, match)
         self._add_match(match)
@@ -162,7 +165,7 @@ class Match(object):
         return NotImplemented
 
     def __repr__(self):
-        return "%s<span=%s, value=\'%s\'>" % (self.__class__.__name__, self.span, self.value)
+        return "<%s:%s>" % (self.value, self.span)
 
 
 def group_neighbors(matches, input_string, ignore_chars):

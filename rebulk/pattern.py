@@ -3,6 +3,7 @@
 """
 Abstract pattern class definition along with various implementations (regexp, string, functional)
 """
+# pylint: disable=super-init-not-called
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import re
@@ -11,6 +12,7 @@ import six
 
 from .match import Match
 from .utils import find_all
+from .loose import call
 
 
 @six.add_metaclass(ABCMeta)
@@ -68,7 +70,7 @@ class Pattern(object):
                 yield match
 
     @abstractproperty
-    def patterns(self):
+    def patterns(self):  # pragma: no cover
         """
         List of base patterns defined
 
@@ -97,7 +99,7 @@ class StringPattern(Pattern):
     """
 
     def __init__(self, *patterns, **kwargs):
-        super(StringPattern, self).__init__(**kwargs)
+        call(super(StringPattern, self).__init__, **kwargs)
         self._patterns = patterns
 
     @property
@@ -115,11 +117,11 @@ class RePattern(Pattern):
     """
 
     def __init__(self, *patterns, **kwargs):
-        super(RePattern, self).__init__(**kwargs)
+        call(super(RePattern, self).__init__, **kwargs)
         self._patterns = []
         for pattern in patterns:
             if isinstance(pattern, six.string_types):
-                pattern = re.compile(pattern)
+                pattern = call(re.compile, pattern, **kwargs)
             elif isinstance(pattern, dict):
                 pattern = re.compile(**pattern)
             elif hasattr(pattern, '__iter__'):
@@ -154,7 +156,7 @@ class FunctionalPattern(Pattern):
     """
 
     def __init__(self, *patterns, **kwargs):
-        super(FunctionalPattern, self).__init__(**kwargs)
+        call(super(FunctionalPattern, self).__init__, **kwargs)
         self._patterns = patterns
 
     @property
@@ -165,6 +167,6 @@ class FunctionalPattern(Pattern):
         ret = pattern(input_string)
         if ret:
             if isinstance(ret, dict):
-                yield Match(self, **ret)
+                yield call(Match, self, **ret)
             else:
-                yield Match(self, *ret)
+                yield call(Match, self, *ret)

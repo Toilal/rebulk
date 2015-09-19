@@ -12,10 +12,10 @@ from ..pattern import StringPattern
 class TestMatchClass(object):
     pattern = StringPattern("test")
 
-    def test_str(self):
+    def test_repr(self):
         match1 = Match(self.pattern, 1, 3, value="es")
 
-        assert str(match1) == 'Match<span=(1, 3), value=\'es\'>'
+        assert repr(match1) == '<es:(1, 3)>'
 
     def test_equality(self):
         match1 = Match(self.pattern, 1, 3, value="es")
@@ -89,6 +89,7 @@ class TestMatchesClass(object):
         matches.append(self.match1)
 
         assert len(matches) == 1
+        assert repr(matches) == repr([self.match1])
         assert list(matches.starting(0)) == [self.match1]
         assert list(matches.ending(2)) == [self.match1]
 
