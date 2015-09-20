@@ -21,7 +21,7 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, label=None, examples=None, tags=None, formatters=None):
+    def __init__(self, label=None, examples=None, tags=None, formatter=None):
         """
         :param label: Unique label for this pattern
         :type label: str
@@ -29,21 +29,21 @@ class Pattern(object):
         :type examples: list[str]
         :param tags: List of tags related to this pattern
         :type tags: list[str]
-        :param formatters: dict (name, func) of formatter to use with this pattern. name is the match name to support,
+        :param formatter: dict (name, func) of formatter to use with this pattern. name is the match name to support,
         and func a function(input_string) that returns the formatted string. A single formatter function can also be
         passed as a shortcut for {None: formatter}. The returned formatted string with be set in Match.value property.
-        :type formatters: dict[str, func] || func
+        :type formatter: dict[str, func] || func
         """
         self.label = label
         self.examples = examples
         self.tags = tags
         self._default_formatter = lambda x: x
-        if not formatters:
-            formatters = self._default_formatter
-        if not isinstance(formatters, dict):
-            self.formatters = {None: formatters}
+        if not formatter:
+            formatter = self._default_formatter
+        if not isinstance(formatter, dict):
+            self.formatters = {None: formatter}
         else:
-            self.formatters = formatters
+            self.formatters = formatter
 
     def matches(self, input_string):
         """

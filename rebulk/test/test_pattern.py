@@ -283,7 +283,7 @@ class TestFormatter(object):
     input_string = "This string contains 1849 a number"
 
     def test_single_string(self):
-        pattern = StringPattern("1849", formatters=lambda x: int(x) / 2)
+        pattern = StringPattern("1849", formatter=lambda x: int(x) / 2)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -293,7 +293,7 @@ class TestFormatter(object):
         assert matches[0].value == 1849 / 2
 
     def test_single_re_no_group(self):
-        pattern = RePattern(r"\d+", formatters=lambda x: int(x) * 2)
+        pattern = RePattern(r"\d+", formatter=lambda x: int(x) * 2)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -304,7 +304,7 @@ class TestFormatter(object):
 
     def test_single_re_named_groups(self):
         pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
-                            formatters={'intParam': lambda x: int(x) * 2,
+                            formatter={'intParam': lambda x: int(x) * 2,
                                         'strParam': lambda x: "really " + x})
 
         matches = list(pattern.matches(self.input_string))
@@ -331,7 +331,7 @@ class TestFormatter(object):
             if i > -1:
                 return i, i + len("1849")
 
-        pattern = FunctionalPattern(digit, formatters=lambda x: int(x) * 3)
+        pattern = FunctionalPattern(digit, formatter=lambda x: int(x) * 3)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
