@@ -7,7 +7,7 @@ from .match import Matches
 
 from .pattern import RePattern, StringPattern, FunctionalPattern
 
-from .filters import conflict_prefer_longer
+from .processors import conflict_prefer_longer
 from .loose import call
 
 class Rebulk(object):
@@ -40,11 +40,11 @@ class Rebulk(object):
         [<Lo:(20, 22)>, <LoKeRs:(4, 10)>]
     """
 
-    def __init__(self, default_filters=True):
+    def __init__(self, default=True):
         self._patterns = []
-        self._filters = []
-        if default_filters:
-            self.filter(*DEFAULT_FILTERS)
+        self._processors = []
+        if default:
+            self.processor(*DEFAULT_PROCESSORS)
 
     def pattern(self, *pattern):
         """
@@ -94,14 +94,16 @@ class Rebulk(object):
         self.pattern(FunctionalPattern(*pattern, **kwargs))
         return self
 
-    def filter(self, *func):
+    def processor(self, *func):
         """
-        Add a Match filter functions
+        Add matches processor function.
+
+        Default processors can be found in rebulk.processors module.
 
         :param func:
         :type func: list[rebulk.match.Match] = function(list[rebulk.match.Match])
         """
-        self._filters.extend(func)
+        self._processors.extend(func)
         return self
 
     def matches(self, string):
@@ -119,10 +121,10 @@ class Rebulk(object):
             for match in pattern.matches(string):
                 matches.append(match)
 
-        for func in self._filters:
+        for func in self._processors:
             matches = call(func, matches, context)
 
         return matches
 
 
-DEFAULT_FILTERS = [conflict_prefer_longer]
+DEFAULT_PROCESSORS = [conflict_prefer_longer]

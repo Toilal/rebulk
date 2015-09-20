@@ -37,10 +37,10 @@ def test_rebulk_defaults():
     assert matches[0].value == "quick"
     assert matches[1].value == "brown"
 
-def test_rebulk_no_filters():
+def test_rebulk_no_default():
     input_string = "The quick brown fox jumps over the lazy dog"
 
-    matches = Rebulk(default_filters=False).string("quick").string("own").regex("br.{2}n").matches(input_string)
+    matches = Rebulk(default=False).string("quick").string("own").regex("br.{2}n").matches(input_string)
 
     assert len(matches) == 3
 
