@@ -3,7 +3,6 @@
 """
 Various utilities functions
 """
-import inspect, sys
 
 
 def find_all(string, sub, start=None, end=None):

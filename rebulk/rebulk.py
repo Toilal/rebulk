@@ -31,11 +31,18 @@ class Rebulk(object):
         >>> rebulk.matches("the lakers are from la") # la string from lakers won't match
         [<la:(20, 22)>, <lakers:(4, 10)>]
 
-    Options can be given to patterns using keyword arguments.
+    Regexp options can be given to patterns using keyword arguments ...
 
     .. code-block:: python
         >>> import re
         >>> rebulk = Rebulk().regex('L[A-Z]', flags=re.IGNORECASE).regex('L[A-Z]KERS', flags=re.IGNORECASE)
+        >>> rebulk.matches("The LoKeRs are from Lo")
+        [<Lo:(20, 22)>, <LoKeRs:(4, 10)>]
+
+    ... or using a tuple
+
+    .. code-block:: python
+        >>> rebulk = Rebulk().regex(('L[A-Z]', re.IGNORECASE)).regex(('L[A-Z]KERS', re.IGNORECASE))
         >>> rebulk.matches("The LoKeRs are from Lo")
         [<Lo:(20, 22)>, <LoKeRs:(4, 10)>]
     """
