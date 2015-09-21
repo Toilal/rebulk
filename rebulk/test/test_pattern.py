@@ -305,7 +305,7 @@ class TestFormatter(object):
     def test_single_re_named_groups(self):
         pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
                             formatter={'intParam': lambda x: int(x) * 2,
-                                        'strParam': lambda x: "really " + x})
+                                       'strParam': lambda x: "really " + x})
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
