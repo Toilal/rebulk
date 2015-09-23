@@ -169,7 +169,6 @@ and all subgroups (1, 2, ... n) will be converted to ``children`` matches of the
     ...         .matches("Zero, 0, One, 1, Two, 2, Three, 3, Four, 4")
     >>> matches
     [<One, 1, Two, 2, Three, 3:(9, 33)>]
-    >>> children = {}
     >>> for child in matches[0].children:
     ...     '%s = %s' % (child.name, child.value)
     'one = 1'
