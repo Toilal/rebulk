@@ -101,14 +101,16 @@ class StringPattern(Pattern):
     def __init__(self, *patterns, **kwargs):
         call(super(StringPattern, self).__init__, **kwargs)
         self._patterns = patterns
+        self._kwargs = kwargs
+        self._match_kwargs = _filter_match_kwargs(kwargs)
 
     @property
     def patterns(self):
         return self._patterns
 
     def _match(self, pattern, input_string):
-        for index in find_all(input_string, pattern):
-            yield Match(self, index, index + len(pattern))
+        for index in call(find_all, input_string, pattern, **self._kwargs):
+            yield call(Match, self, index, index + len(pattern), **self._match_kwargs)
 
 
 class RePattern(Pattern):
@@ -118,10 +120,13 @@ class RePattern(Pattern):
 
     def __init__(self, *patterns, **kwargs):
         call(super(RePattern, self).__init__, **kwargs)
+        self._kwargs = kwargs
+        self._match_kwargs = _filter_match_kwargs(kwargs)
+        self._children_match_kwargs = _filter_match_kwargs(kwargs, children=True)
         self._patterns = []
         for pattern in patterns:
             if isinstance(pattern, six.string_types):
-                pattern = call(re.compile, pattern, **kwargs)
+                pattern = call(re.compile, pattern, **self._kwargs)
             elif isinstance(pattern, dict):
                 pattern = re.compile(**pattern)
             elif hasattr(pattern, '__iter__'):
@@ -137,14 +142,15 @@ class RePattern(Pattern):
         for match_object in pattern.finditer(input_string):
             start = match_object.start()
             end = match_object.end()
-            main_match = Match(self, start, end)
+            main_match = call(Match, self, start, end, **self._match_kwargs)
 
             if pattern.groups:
                 for i in range(1, pattern.groups + 1):
                     name = names.get(i, None)
                     start = match_object.start(i)
                     end = match_object.end(i)
-                    child_match = Match(self, start, end, name=name, parent=main_match)
+                    child_match = call(Match, self, start, end, name=name, parent=main_match,
+                                       **self._children_match_kwargs)
                     main_match.children.append(child_match)
 
             yield main_match
@@ -158,15 +164,43 @@ class FunctionalPattern(Pattern):
     def __init__(self, *patterns, **kwargs):
         call(super(FunctionalPattern, self).__init__, **kwargs)
         self._patterns = patterns
+        self._kwargs = kwargs
+        self._match_kwargs = _filter_match_kwargs(kwargs)
 
     @property
     def patterns(self):
         return self._patterns
 
     def _match(self, pattern, input_string):
-        ret = pattern(input_string)
+        ret = call(pattern, input_string, **self._kwargs)
         if ret:
             if isinstance(ret, dict):
-                yield call(Match, self, **ret)
+                options = ret
+                if self._match_kwargs:
+                    options = self._match_kwargs.copy()
+                    options.update(ret)
+                yield call(Match, self, **options)
             else:
-                yield call(Match, self, *ret)
+                yield call(Match, self, *ret, **self._match_kwargs)
+
+
+def _filter_match_kwargs(kwargs, children=False):
+    """
+    Filters out kwargs for Match construction
+
+    :param kwargs:
+    :type kwargs: dict
+    :param children:
+    :type children: Flag to filter children matches
+    :return: A filtered dict
+    :rtype: dict
+    """
+    kwargs = kwargs.copy()
+    for key in ('pattern', 'start', 'end', 'parent'):
+        if key in kwargs:
+            del kwargs[key]
+    if children:
+        for key in ('name',):
+            if key in kwargs:
+                del kwargs[key]
+    return kwargs

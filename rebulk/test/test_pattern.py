@@ -52,6 +52,20 @@ class TestStringPattern(object):
         assert matches[2].span == (88, 94)
         assert matches[2].value == "Hebrew"
 
+    def test_start_end_kwargs(self):
+        pattern = StringPattern("Abyssinian", start=20, end=40)
+        matches = list(pattern.matches(self.input_string))
+
+        assert len(matches) == 0
+
+    def test_matches_kwargs(self):
+        pattern = StringPattern("Abyssinian", name="test", value="AB")
+        matches = list(pattern.matches(self.input_string))
+
+        assert len(matches) == 1
+        assert matches[0].name == "test"
+        assert matches[0].value == "AB"
+
 
 class TestRePattern(object):
     """
@@ -191,6 +205,44 @@ class TestRePattern(object):
         assert group2.value == "violin"
         assert group2.parent == parent
 
+    def test_matches_kwargs(self):
+        pattern = RePattern("He.rew", name="test", value="HE")
+        matches = list(pattern.matches(self.input_string))
+
+        assert len(matches) == 1
+        assert matches[0].name == "test"
+        assert matches[0].value == "HE"
+
+        pattern = RePattern("H(e.)(rew)", name="test", value="HE")
+        matches = list(pattern.matches(self.input_string))
+
+        assert len(matches) == 1
+        assert matches[0].name == "test"
+        assert matches[0].value == "HE"
+
+        children = matches[0].children
+        assert len(children) == 2
+        assert children[0].name is None
+        assert children[0].value == "HE"
+
+        assert children[1].name is None
+        assert children[1].value == "HE"
+
+        pattern = RePattern("H(?P<first>e.)(?P<second>rew)", name="test", value="HE")
+        matches = list(pattern.matches(self.input_string))
+
+        assert len(matches) == 1
+        assert matches[0].name == "test"
+        assert matches[0].value == "HE"
+
+        children = matches[0].children
+        assert len(children) == 2
+        assert children[0].name == "first"
+        assert children[0].value == "HE"
+
+        assert children[1].name == "second"
+        assert children[1].value == "HE"
+
 
 class TestFunctionalPattern(object):
     """
@@ -273,6 +325,19 @@ class TestFunctionalPattern(object):
         assert matches[2].pattern == pattern
         assert matches[2].span == (88, 94)
         assert matches[2].value == "Hebrew"
+
+    def test_matches_kwargs(self):
+        def playing(input_string):
+            i = input_string.find("playing")
+            if i > -1:
+                return i, i + len("playing")
+
+        pattern = FunctionalPattern(playing, name="test", value="PLAY")
+        matches = list(pattern.matches(self.input_string))
+
+        assert len(matches) == 1
+        assert matches[0].name == "test"
+        assert matches[0].value == "PLAY"
 
 
 class TestFormatter(object):
