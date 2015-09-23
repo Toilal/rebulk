@@ -18,3 +18,21 @@ def test_conflict_prefer_longer():
     values = [x.value for x in processed_matches]
 
     assert values == ["ijklmn", "abcdef", "yz"]
+
+    pattern = StringPattern("ijklmn", "jklmnopqrst")
+    matches = Matches(pattern.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+
+    values = [x.value for x in processed_matches]
+
+    assert values == ["jklmnopqrst"]
+
+    pattern = StringPattern("ijklmnopqrst", "jklmnopqrst")
+    matches = Matches(pattern.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+
+    values = [x.value for x in processed_matches]
+
+    assert values == ["ijklmnopqrst"]

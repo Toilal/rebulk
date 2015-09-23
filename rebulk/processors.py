@@ -25,7 +25,7 @@ def conflict_prefer_longer(matches):
             conflicting_matches.update(matches.ending(i))
 
         if conflicting_matches:
-            # keep the match only if it's the longuest
+            # keep the match only if it's the longest
             for conflicting_match in conflicting_matches:
                 if len(conflicting_match) < len(match):
                     to_remove_matches.add(conflicting_match)
