@@ -74,6 +74,11 @@ class TestMatchClass(object):
 
             with pytest.raises(TypeError):
                 match1 >= other
+        else:
+            assert match1 < other
+            assert match1 <= other
+            assert not match1 > other
+            assert not match1 >= other
 
 
 class TestMatchesClass(object):
