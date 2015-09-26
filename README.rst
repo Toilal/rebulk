@@ -139,6 +139,23 @@ All patterns have options that can be given as keyword arguments.
       >>> isinstance(matches[0].value, int)
       True
 
+- validator
+
+  Function to validate ``Match`` value given by the pattern.
+
+  .. code-block:: python
+
+      >>> def check_leap_year(match):
+      ...     return int(match.value) in [1980, 1984, 1988]
+      >>> matches = Rebulk().regex(r'\d{4}', validator=check_leap_year) \
+      ...                   .matches("In year 1982 ...")
+      >>> len(matches)
+      0
+      >>> matches = Rebulk().regex(r'\d{4}', validator=check_leap_year) \
+      ...                   .matches("In year 1984 ...")
+      >>> len(matches)
+      1
+
 - label, tags, examples
 
   TODO

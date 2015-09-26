@@ -21,7 +21,7 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, label=None, examples=None, tags=None, formatter=None):
+    def __init__(self, label=None, examples=None, tags=None, formatter=None, validator=None):
         """
         :param label: Unique label for this pattern
         :type label: str
@@ -32,6 +32,10 @@ class Pattern(object):
         :param formatter: dict (name, func) of formatter to use with this pattern. name is the match name to support,
         and func a function(input_string) that returns the formatted string. A single formatter function can also be
         passed as a shortcut for {None: formatter}. The returned formatted string with be set in Match.value property.
+        :type formatter: dict[str, func] || func
+        :param validator: dict (name, func) of validator to use with this pattern. name is the match name to support,
+        and func a function(match) that returns the a boolean. A single validator function can also be
+        passed as a shortcut for {None: validator}. If return value is False, match will be ignored.
         :type formatter: dict[str, func] || func
         """
         self.label = label
@@ -44,6 +48,13 @@ class Pattern(object):
             self.formatters = {None: formatter}
         else:
             self.formatters = formatter
+        self._default_validator = lambda match: True
+        if not validator:
+            validator = self._default_validator
+        if not isinstance(validator, dict):
+            self.validators = {None: validator}
+        else:
+            self.validators = validator
 
     def matches(self, input_string):
         """
@@ -61,13 +72,22 @@ class Pattern(object):
                     formatter = self.formatters.get(match.name, self._default_formatter)
                     value = formatter(value)
                     match.value = value
+                validator = self.validators.get(match.name, self._default_validator)
+                if not validator(match):
+                    break
+                validated = True
                 for child in match.children:
                     if child.value is None:
                         value = input_string[child.start:child.end]
                         formatter = self.formatters.get(child.name, self._default_formatter)
                         value = formatter(value)
                         child.value = value
-                yield match
+                    validator = self.validators.get(child.name, self._default_validator)
+                    if not validator(child):
+                        validated = False
+                        break
+                if validated:
+                    yield match
 
     @abstractproperty
     def patterns(self):  # pragma: no cover

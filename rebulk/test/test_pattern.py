@@ -342,7 +342,7 @@ class TestFunctionalPattern(object):
 
 class TestFormatter(object):
     """
-    Tests for FunctionalPattern matching
+    Tests for formatter option
     """
 
     input_string = "This string contains 1849 a number"
@@ -404,3 +404,71 @@ class TestFormatter(object):
         assert matches[0].pattern == pattern
         assert matches[0].span == (21, 25)
         assert matches[0].value == 1849 * 3
+
+
+class TestValidator(object):
+    """
+    Tests for validator option
+    """
+
+    input_string = "This string contains 1849 a number"
+
+    @staticmethod
+    def true_validator(match):
+        return int(match.value) < 1850
+
+    @staticmethod
+    def false_validator(match):
+        return int(match.value) >= 1850
+
+    def test_single_string(self):
+        pattern = StringPattern("1849", validator=self.false_validator)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        pattern = StringPattern("1849", validator=self.true_validator)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+    def test_single_re_no_group(self):
+        pattern = RePattern(r"\d+", validator=self.false_validator)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        pattern = RePattern(r"\d+", validator=self.true_validator)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+    def test_single_re_named_groups(self):
+        pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
+                            validator={'intParam': self.false_validator})
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
+                            validator={'intParam': self.true_validator})
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+    def test_single_functional(self):
+        def digit(input_string):
+            i = input_string.find("1849")
+            if i > -1:
+                return i, i + len("1849")
+
+        pattern = FunctionalPattern(digit, validator=self.false_validator)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        pattern = FunctionalPattern(digit, validator=self.true_validator)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
