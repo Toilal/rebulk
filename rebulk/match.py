@@ -6,21 +6,25 @@ Classes and functions related to matches
 from collections import defaultdict, MutableSequence
 import six
 
-from .ordered_set import OrderedSet
-from .loose import ensure_list
+# from .ordered_set import OrderedSet
+from .loose import ensure_list, filter_index
 
 
 class Matches(MutableSequence):
     """
     A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
     """
+    _base = list  # OrderedSet
+    _base_add = _base.append   # OrderedSet.add
+    _base_remove = _base.remove  # OrderedSet.remove
 
     def __init__(self, *matches):
+        self.max_end = 0
         self._delegate = []
-        self._name_dict = defaultdict(OrderedSet)
-        self._tag_dict = defaultdict(OrderedSet)
-        self._start_dict = defaultdict(OrderedSet)
-        self._end_dict = defaultdict(OrderedSet)
+        self._name_dict = defaultdict(Matches._base)
+        self._tag_dict = defaultdict(Matches._base)
+        self._start_dict = defaultdict(Matches._base)
+        self._end_dict = defaultdict(Matches._base)
         if matches:
             if len(matches) == 1:
                 try:
@@ -38,11 +42,13 @@ class Matches(MutableSequence):
         :type match: Match
         """
         if match.name:
-            self._name_dict[match.name].add(match)
+            Matches._base_add(self._name_dict[match.name], (match))
         for tag in match.tags:
-            self._tag_dict[tag].add(match)
-        self._start_dict[match.start].add(match)
-        self._end_dict[match.end].add(match)
+            Matches._base_add(self._tag_dict[tag], match)
+        Matches._base_add(self._start_dict[match.start], match)
+        Matches._base_add(self._end_dict[match.end], match)
+        if match.end > self.max_end:
+            self.max_end = match.end
 
     def _remove_match(self, match):
         """
@@ -51,51 +57,113 @@ class Matches(MutableSequence):
         :type match: Match
         """
         if match.name:
-            self._name_dict[match.name].remove(match)
+            Matches._base_remove(self._name_dict[match.name], match)
         for tag in match.tags:
-            self._tag_dict[tag].remove(match)
-        self._start_dict[match.start].remove(match)
-        self._end_dict[match.end].remove(match)
+            Matches._base_remove(self._tag_dict[tag], match)
+        Matches._base_remove(self._start_dict[match.start], match)
+        Matches._base_remove(self._end_dict[match.end], match)
+        if match.end >= self.max_end and not self._end_dict[match.end]:
+            self.max_end = max(self._end_dict.keys())
 
-    def named(self, name):
+    def previous(self, match, predicate=None, index=None):
         """
-        Retrieves a set of Match objects that have the given name.
+        Retrieves the nearest previous matches.
+
+        :param match:
+        :type match:
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index: int
+        :return:
+        :rtype:
+        """
+        current = match.start
+        while current > -1:
+            current -= 1
+            previous_matches = self.ending(current)
+            if previous_matches:
+                return filter_index(previous_matches, predicate, index)
+        return filter_index(Matches._base(), predicate, index)
+
+    def next(self, match, predicate=None, index=None):
+        """
+        Retrieves the nearest next matches.
+
+        :param match:
+        :type match:
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index: int
+        :return:
+        :rtype:
+        """
+        current = match.start
+        while current <= self.max_end:
+            current += 1
+            next_matches = self.starting(current)
+            if next_matches:
+                return filter_index(next_matches, predicate, index)
+        return filter_index(Matches._base(), predicate, index)
+
+    def named(self, name, predicate=None, index=None):
+        """
+        Retrieves matches that have the given name.
+
         :param name:
         :type name: str
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index: int
         :return: set of matches
         :rtype: set[Match]
         """
-        return self._name_dict[name]
+        return filter_index(self._name_dict[name], predicate, index)
 
-    def tagged(self, tag):
+    def tagged(self, tag, predicate=None, index=None):
         """
-        Retrieves a set of Match objects that have the given tag defined.
+        Retrieves matches that have the given tag.
+
         :param tag:
         :type tag: str
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index: int
         :return: set of matches
         :rtype: set[Match]
         """
-        return self._tag_dict[tag]
+        return filter_index(self._tag_dict[tag], predicate, index)
 
-    def starting(self, start):
+    def starting(self, start, predicate=None, index=None):
         """
-        Retrieves a set of Match objects that starts at given index.
+        Retrieves matches that starts at given index.
+
         :param start: the starting index
         :type start: int
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index: int
         :return: set of matches
         :rtype: set[Match]
         """
-        return self._start_dict[start]
+        return filter_index(self._start_dict[start], predicate, index)
 
-    def ending(self, end):
+    def ending(self, end, predicate=None, index=None):
         """
-        Retrieves a set of Match objects that ends at given index.
+        Retrieves matches that ends at given index.
+
         :param end: the ending index
         :type end: int
+        :param predicate:
+        :type predicate:
         :return: set of matches
         :rtype: set[Match]
         """
-        return self._end_dict[end]
+        return filter_index(self._end_dict[end], predicate, index)
 
     if six.PY2:  # pragma: no cover
         def clear(self):
@@ -156,7 +224,7 @@ class Match(object):
     @property
     def span(self):
         """
-        2-tuple with start and end indices of the match
+        2-tuple (start, end) of match
         """
         return self.start, self.end
 
@@ -200,35 +268,23 @@ class Match(object):
         return "<%s:%s>" % (self.value, self.span)
 
 
-def group_neighbors(matches, input_string, ignore_chars):
+def _filter_match_kwargs(kwargs, children=False):
     """
+    Filters out kwargs for Match construction
 
-    :param matches:
-    :type matches: Matches
-    :param input_string:
-    :type input_string:
-    :param ignore_chars:
-    :type ignore_chars:
-    :return:
-    :rtype:
+    :param kwargs:
+    :type kwargs: dict
+    :param children:
+    :type children: Flag to filter children matches
+    :return: A filtered dict
+    :rtype: dict
     """
-    matches_at_position = []
-
-    current_group = []
-
-    for i in range(len(input_string)):
-        matches_starting = matches.starting(i)
-        matches_ended = matches.ending(i)
-
-        matches_at_position.extend(matches_starting)
-        matches_at_position = [m for m in matches_at_position if m not in matches_ended]
-
-        ignoring = input_string[i] in ignore_chars
-
-        if current_group and not matches_at_position and not ignoring:
-            yield current_group
-            current_group = []
-        current_group.extend(matches_starting)
-
-    if current_group:
-        yield current_group
+    kwargs = kwargs.copy()
+    for key in ('pattern', 'start', 'end', 'parent'):
+        if key in kwargs:
+            del kwargs[key]
+    if children:
+        for key in ('name',):
+            if key in kwargs:
+                del kwargs[key]
+    return kwargs

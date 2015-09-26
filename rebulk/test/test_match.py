@@ -5,8 +5,8 @@
 import pytest
 import six
 
-from ..match import Match, Matches, group_neighbors
-from ..pattern import StringPattern
+from ..match import Match, Matches
+from ..pattern import StringPattern, RePattern
 
 
 class TestMatchClass(object):
@@ -224,26 +224,62 @@ class TestMatchesClass(object):
         assert list(matches.ending(4)) == [self.match3, self.match4]
 
 
-class TestMatchFunctions(object):
-    def test_group_neighbors(self):
-        input_string = "abc.def._._.ghi.klm.nop.qrs.tuv.wyx.z"
+class TestMaches(object):
+    def test_filters(self):
+        input_string = "One Two Three"
 
-        matches = StringPattern("abc", "def", "ghi", "nop", "qrs.tuv", "z").matches(input_string)
-        matches_groups = list(group_neighbors(Matches(matches), input_string, "._"))
+        matches = Matches()
 
-        assert len(matches_groups) == 3
-        assert len(matches_groups[0]) == 3
-        assert len(matches_groups[1]) == 2
-        assert len(matches_groups[2]) == 1
+        matches.extend(StringPattern("One", name="1-str", tags=["One", "str"]).matches(input_string))
+        matches.extend(RePattern("One", name="1-re", tags=["One", "re"]).matches(input_string))
+        matches.extend(StringPattern("Two", name="2-str", tags=["Two", "str"]).matches(input_string))
+        matches.extend(RePattern("Two", name="2-re", tags=["Two", "re"]).matches(input_string))
+        matches.extend(StringPattern("Three", name="3-str", tags=["Three", "str"]).matches(input_string))
+        matches.extend(RePattern("Three", name="3-re", tags=["Three", "re"]).matches(input_string))
 
-        abc, def_, ghi = matches_groups[0]
-        assert abc.value == "abc"
-        assert def_.value == "def"
-        assert ghi.value == "ghi"
+        selection = matches.starting(0)
+        assert len(selection) == 2
 
-        nop, qrstuv = matches_groups[1]
-        assert nop.value == "nop"
-        assert qrstuv.value == "qrs.tuv"
+        selection = matches.starting(0, lambda m: "str" in m.tags)
+        assert len(selection) == 1
+        assert selection[0].pattern.name == "1-str"
 
-        z__ = matches_groups[2][0]
-        assert z__.value == "z"
+        selection = matches.ending(7, predicate=lambda m: "str" in m.tags)
+        assert len(selection) == 1
+        assert selection[0].pattern.name == "2-str"
+
+        selection = matches.previous(matches.named("2-str")[0])
+        assert len(selection) == 2
+        assert selection[0].pattern.name == "1-str"
+        assert selection[1].pattern.name == "1-re"
+
+        selection = matches.previous(matches.named("2-str", 0), lambda m: "str" in m.tags)
+        assert len(selection) == 1
+        assert selection[0].pattern.name == "1-str"
+
+        selection = matches.next(matches.named("2-str", 0))
+        assert len(selection) == 2
+        assert selection[0].pattern.name == "3-str"
+        assert selection[1].pattern.name == "3-re"
+
+        selection = matches.next(matches.named("2-str", 0), index=0, predicate=lambda m: "re" in m.tags)
+        assert selection is not None
+        assert selection.pattern.name == "3-re"
+
+        selection = matches.next(matches.named("2-str", index=0), lambda m: "re" in m.tags)
+        assert len(selection) == 1
+        assert selection[0].pattern.name == "3-re"
+
+        selection = matches.named("2-str", lambda m: "re" in m.tags)
+        assert len(selection) == 0
+
+        selection = matches.named("2-re", lambda m: "re" in m.tags, 0)
+        assert selection is not None
+        assert selection.name == "2-re"
+
+        selection = matches.named("2-re", lambda m: "re" in m.tags)
+        assert len(selection) == 1
+        assert selection[0].name == "2-re"
+
+        selection = matches.named("2-re", lambda m: "re" in m.tags, index=1000)
+        assert selection is None

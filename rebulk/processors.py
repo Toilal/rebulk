@@ -34,3 +34,23 @@ def conflict_prefer_longer(matches):
         matches.remove(match)
 
     return matches
+
+
+def remove_private(matches):
+    """
+    Removes matches from private patterns.
+
+    :param matches:
+    :type matches:
+    :return:
+    :rtype:
+    """
+    to_remove_matches = set()
+    for match in matches:
+        if match.pattern.private:
+            to_remove_matches.add(match)
+
+    for match in list(to_remove_matches):
+        matches.remove(match)
+
+    return matches

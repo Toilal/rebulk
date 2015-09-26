@@ -7,8 +7,9 @@ from .match import Matches
 
 from .pattern import RePattern, StringPattern, FunctionalPattern
 
-from .processors import conflict_prefer_longer
+from .processors import conflict_prefer_longer, remove_private
 from .loose import call
+from .rules import Rules
 
 
 class Rebulk(object):
@@ -41,8 +42,11 @@ class Rebulk(object):
     def __init__(self, default=True):
         self._patterns = []
         self._processors = []
+        self._post_processors = []
         if default:
             self.processor(*DEFAULT_PROCESSORS)
+            self.post_processor(*DEFAULT_POST_PROCESSORS)
+        self._rules = Rules()
 
     def pattern(self, *pattern):
         """
@@ -104,6 +108,28 @@ class Rebulk(object):
         self._processors.extend(func)
         return self
 
+    def post_processor(self, *func):
+        """
+        Add matches post_processor function.
+
+        Default processors can be found in rebulk.processors module.
+
+        :param func:
+        :type func: list[rebulk.match.Match] = function(list[rebulk.match.Match])
+        """
+        self._post_processors.extend(func)
+        return self
+
+    def rules(self, *rules):
+        """
+        Add rules as a module, class or instance.
+        :param rules:
+        :type rules: list[Rule]
+        :return:
+        """
+        self._rules.load(*rules)
+        return self
+
     def matches(self, string):
         """
         Search for all matches with current configuration against input_string
@@ -122,7 +148,13 @@ class Rebulk(object):
         for func in self._processors:
             matches = call(func, matches, context)
 
+        self._rules.execute_all_rules(matches, context)
+
+        for func in self._post_processors:
+            matches = call(func, matches, context)
+
         return matches
 
 
 DEFAULT_PROCESSORS = [conflict_prefer_longer]
+DEFAULT_POST_PROCESSORS = [remove_private]

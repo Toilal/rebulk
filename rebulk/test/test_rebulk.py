@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-self-use, pointless-statement, missing-docstring
 
-from .. import Rebulk
+from .. import Rebulk, Rule
+import rebulk.test.rebulk_rules_module as rm
 
 
 def test_rebulk_simple():
@@ -75,3 +76,68 @@ def test_rebulk_tags_names():
     assert len(matches.tagged("false")) == 0
     assert len(matches.tagged("first")) == 1
     assert len(matches.tagged("other")) == 2
+
+
+def test_rebulk_rules_1():
+    rebulk = Rebulk()
+
+    rebulk.regex(r'\d{4}', name="year")
+    rebulk.rules(rm.RemoveAllButLastYear)
+
+    matches = rebulk.matches("1984 keep only last 1968 entry 1982 case")
+    assert len(matches) == 1
+    assert matches[0].value == "1982"
+
+
+def test_rebulk_rules_2():
+    rebulk = Rebulk()
+
+    rebulk.regex(r'\d{4}', name="year")
+    rebulk.string(r'year', name="yearPrefix", private=True)
+    rebulk.string(r'keep', name="yearSuffix", private=True)
+    rebulk.rules(rm.PrefixedSuffixedYear)
+
+    matches = rebulk.matches("Keep suffix 1984 keep prefixed year 1968 and remove the rest 1982")
+    assert len(matches) == 2
+    assert matches[0].value == "1984"
+    assert matches[1].value == "1968"
+
+
+def test_rebulk_rules_3():
+    rebulk = Rebulk()
+
+    rebulk.regex(r'\d{4}', name="year")
+    rebulk.string(r'year', name="yearPrefix", private=True)
+    rebulk.string(r'keep', name="yearSuffix", private=True)
+    rebulk.rules(rm.PrefixedSuffixedYearNoLambda)
+
+    matches = rebulk.matches("Keep suffix 1984 keep prefixed year 1968 and remove the rest 1982")
+    assert len(matches) == 2
+    assert matches[0].value == "1984"
+    assert matches[1].value == "1968"
+
+
+def test_rebulk_rules_4():
+    class FirstOnlyRule(Rule):
+        def when(self, matches, context):
+            grabbed = matches.named("grabbed", 0)
+            if grabbed and matches.previous(grabbed):
+                return grabbed
+
+        def then(self, matches, when_response, context):
+            matches.remove(when_response)
+
+    rebulk = Rebulk()
+
+    rebulk.regex("This match (.*?)grabbed", name="grabbed")
+    rebulk.regex("if it's (.*?)first match", private=True)
+
+    rebulk.rules(FirstOnlyRule)
+
+    matches = rebulk.matches("This match is grabbed only if it's the first match")
+    assert len(matches) == 1
+    assert matches[0].value == "This match is grabbed"
+
+    matches = rebulk.matches("if it's NOT the first match, This match is NOT grabbed")
+    assert len(matches) == 0
+
