@@ -7,15 +7,18 @@ from collections import defaultdict, MutableSequence
 import six
 
 from .ordered_set import OrderedSet
+from .loose import ensure_list
 
 
 class Matches(MutableSequence):
     """
-    A custom list[Match] that automatically maintains start, end hashes
+    A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
     """
 
     def __init__(self, *matches):
         self._delegate = []
+        self._name_dict = defaultdict(OrderedSet)
+        self._tag_dict = defaultdict(OrderedSet)
         self._start_dict = defaultdict(OrderedSet)
         self._end_dict = defaultdict(OrderedSet)
         if matches:
@@ -34,6 +37,10 @@ class Matches(MutableSequence):
         :param match:
         :type match: Match
         """
+        if match.name:
+            self._name_dict[match.name].add(match)
+        for tag in match.tags:
+            self._tag_dict[tag].add(match)
         self._start_dict[match.start].add(match)
         self._end_dict[match.end].add(match)
 
@@ -43,26 +50,50 @@ class Matches(MutableSequence):
         :param match:
         :type match: Match
         """
+        if match.name:
+            self._name_dict[match.name].remove(match)
+        for tag in match.tags:
+            self._tag_dict[tag].remove(match)
         self._start_dict[match.start].remove(match)
         self._end_dict[match.end].remove(match)
 
+    def named(self, name):
+        """
+        Retrieves a set of Match objects that have the given name.
+        :param name:
+        :type name: str
+        :return: set of matches
+        :rtype: set[Match]
+        """
+        return self._name_dict[name]
+
+    def tagged(self, tag):
+        """
+        Retrieves a set of Match objects that have the given tag defined.
+        :param tag:
+        :type tag: str
+        :return: set of matches
+        :rtype: set[Match]
+        """
+        return self._tag_dict[tag]
+
     def starting(self, start):
         """
-        Retrieves a list of matches starting at start index
+        Retrieves a set of Match objects that starts at given index.
         :param start: the starting index
         :type start: int
-        :return: list of matches
-        :rtype: list[Match]
+        :return: set of matches
+        :rtype: set[Match]
         """
         return self._start_dict[start]
 
     def ending(self, end):
         """
-        Retrieves a list of matches ending at end index
+        Retrieves a set of Match objects that ends at given index.
         :param end: the ending index
         :type end: int
-        :return: list of matches
-        :rtype: list[Match]
+        :return: set of matches
+        :rtype: set[Match]
         """
         return self._end_dict[end]
 
@@ -112,14 +143,15 @@ class Match(object):
     """
     Object storing values related to a single match
     """
-    def __init__(self, pattern, start, end, name=None, parent=None, value=None):
+    def __init__(self, pattern, start, end, value=None, name=None, tags=None, parent=None):
         self.pattern = pattern
         self.start = start
         self.end = end
         self.name = name
+        self.value = value
+        self.tags = ensure_list(tags)
         self.parent = parent
         self.children = []
-        self.value = value
 
     @property
     def span(self):

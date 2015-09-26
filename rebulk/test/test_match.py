@@ -82,12 +82,34 @@ class TestMatchClass(object):
 
 
 class TestMatchesClass(object):
-    pattern = StringPattern("test")
+    match1 = Match(StringPattern("te"), 0, 2, value="te", name="start")
+    match2 = Match(StringPattern("s"), 2, 3, value="s", tags="tag1")
+    match3 = Match(StringPattern("t"), 3, 4, value="t", tags=["tag1", "tag2"])
+    match4 = Match(StringPattern("st"), 2, 4, value="st", name="end")
 
-    match1 = Match(pattern, 0, 2, value="te")
-    match2 = Match(pattern, 2, 3, value="s")
-    match3 = Match(pattern, 3, 4, value="t")
-    match4 = Match(pattern, 2, 4, value="st")
+    def test_tag(self):
+        matches = Matches()
+        matches.append(self.match1)
+        matches.append(self.match2)
+        matches.append(self.match3)
+        matches.append(self.match4)
+
+        tag1 = matches.tagged("tag1")
+        assert len(tag1) == 2
+        assert tag1[0] == self.match2
+        assert tag1[1] == self.match3
+
+        tag2 = matches.tagged("tag2")
+        assert len(tag2) == 1
+        assert tag2[0] == self.match3
+
+        start = matches.named("start")
+        assert len(start) == 1
+        assert start[0] == self.match1
+
+        end = matches.named("end")
+        assert len(end) == 1
+        assert end[0] == self.match4
 
     def test_base(self):
         matches = Matches()

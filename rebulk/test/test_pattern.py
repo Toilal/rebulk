@@ -256,7 +256,7 @@ class TestFunctionalPattern(object):
         def func(input_string):
             i = input_string.find("fly")
             if i > -1:
-                return i, i + len("fly"), "functional"
+                return i, i + len("fly"), "fly", "functional"
 
         pattern = FunctionalPattern(func, label="test")
 

@@ -12,7 +12,7 @@ import six
 
 from .match import Match
 from .utils import find_all
-from .loose import call
+from .loose import call, ensure_list, ensure_dict
 
 
 @six.add_metaclass(ABCMeta)
@@ -21,10 +21,10 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, label=None, examples=None, tags=None, formatter=None, validator=None):
+    def __init__(self, name=None, examples=None, tags=None, formatter=None, validator=None):
         """
-        :param label: Unique label for this pattern
-        :type label: str
+        :param name: Name of this pattern
+        :type name: str
         :param examples: List of example strings that match this pattern
         :type examples: list[str]
         :param tags: List of tags related to this pattern
@@ -38,23 +38,13 @@ class Pattern(object):
         passed as a shortcut for {None: validator}. If return value is False, match will be ignored.
         :type formatter: dict[str, func] || func
         """
-        self.label = label
+        self.name = name
         self.examples = examples
-        self.tags = tags
+        self.tags = ensure_list(tags)
         self._default_formatter = lambda x: x
-        if not formatter:
-            formatter = self._default_formatter
-        if not isinstance(formatter, dict):
-            self.formatters = {None: formatter}
-        else:
-            self.formatters = formatter
+        self.formatters = ensure_dict(formatter, self._default_formatter)
         self._default_validator = lambda match: True
-        if not validator:
-            validator = self._default_validator
-        if not isinstance(validator, dict):
-            self.validators = {None: validator}
-        else:
-            self.validators = validator
+        self.validators = ensure_dict(validator, self._default_validator)
 
     def matches(self, input_string):
         """

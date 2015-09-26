@@ -156,7 +156,15 @@ All patterns have options that can be given as keyword arguments.
       >>> len(matches)
       1
 
-- label, tags, examples
+- name
+
+  The name of the pattern.
+
+- tags
+
+  A list of string that qualifies this pattern
+
+- examples
 
   TODO
 
@@ -199,8 +207,23 @@ Matches
 A ``Matches`` object holds the result of ``Rebulk.matches`` method call. It's a sequence of ``Match`` objects and
 it behaves like a list.
 
-It has additional methods on it, like ``starting(index)``/``ending(index)`` that retrieves a list of ``Match`` objects
-start starts/ends at a given index.
+It has the following additional methods on it
+
+- ``starting(index)``
+
+  retrieves a set of ``Match`` objects that starts at given index.
+
+- ``ending(index)``
+
+  retrieves a set of ``Match`` objects that ends at given index.
+
+- ``tagged(tag)``
+
+  retrieves a set of ``Match`` objects that have the given tag defined.
+
+- ``named(name)``
+
+  retrieves a set of ``Match`` objects that have the given name.
 
 Processors
 ----------
