@@ -4,14 +4,17 @@
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
+from platform import python_implementation
+
 import os
-import sys
 
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 
-install_requires = ['six']
+install_requires = ['six', 'regex']
+if python_implementation() == 'PyPy':
+    install_requires.remove('regex')  # PyPy doesn't support regex module
 
 tests_require = ['pytest']
 

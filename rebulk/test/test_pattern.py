@@ -3,8 +3,9 @@
 # pylint: disable=no-self-use, pointless-statement, missing-docstring
 
 import re
+import pytest
 
-from ..pattern import StringPattern, RePattern, FunctionalPattern
+from ..pattern import StringPattern, RePattern, FunctionalPattern, REGEX_AVAILABLE
 from ..match import Match
 
 class TestStringPattern(object):
@@ -389,6 +390,32 @@ class TestFormatter(object):
         assert group2.pattern == pattern
         assert group2.span == (21, 25)
         assert group2.value == 1849 * 2
+
+    def test_repeated_captures_option(self):
+        pattern = RePattern(r"\[(\d+)\](?:-(\d+))*")
+
+        matches = list(pattern.matches("[02]-03-04-05-06"))
+        assert len(matches) == 1
+
+        match = matches[0]
+        if REGEX_AVAILABLE:
+            assert len(match.children) == 5
+            assert [child.value for child in match.children] == ["02", "03", "04", "05", "06"]
+        else:
+            assert len(match.children) == 2
+            assert [child.value for child in match.children] == ["02", "06"]
+
+            with pytest.raises(NotImplementedError):
+                RePattern(r"\[(\d+)\](?:-(\d+))*", repeated_captures=True)
+
+        pattern = RePattern(r"\[(\d+)\](?:-(\d+))*", repeated_captures=False)
+
+        matches = list(pattern.matches("[02]-03-04-05-06"))
+        assert len(matches) == 1
+
+        match = matches[0]
+        assert len(match.children) == 2
+        assert [child.value for child in match.children] == ["02", "06"]
 
     def test_single_functional(self):
         def digit(input_string):

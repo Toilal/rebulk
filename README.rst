@@ -73,6 +73,8 @@ Regular Expression Patterns
 Regular Expression patterns are based on a compiled regular expression.
 `re.finditer`_ method is used to find matches.
 
+If `regex module`_ is available, it will be used by rebulk instead of default `re module`_.
+
 .. code-block:: python
 
     >>> Rebulk().regex(r'l\w').matches("lolita")
@@ -101,6 +103,21 @@ All keyword arguments from `re.compile`_ are supported.
     >>> Rebulk().regex(('L[A-Z]', re.IGNORECASE), ('L[a-z]KeRs')) \
     ...         .matches("The LaKeRs are from La")
     [<La:(20, 22)>, <LaKeRs:(4, 10)>]
+
+If `regex module`_ is available, it automatically supports repeated captures.
+
+.. code-block:: python
+
+    >>> # If regex module is available, repeated_captures is True by default.
+    >>> matches = Rebulk().regex(r'(\d+)(?:-(\d+))+').matches("01-02-03-04")
+    >>> matches[0].children # doctest:+SKIP
+    [<01:(0, 2)>, <02:(3, 5)>, <03:(6, 8)>, <04:(9, 11)>]
+
+    >>> # If regex module is not available, or if repeated_captures is forced to False.
+    >>> matches = Rebulk().regex(r'(\d+)(?:-(\d+))+', repeated_captures=False) \
+    ...                   .matches("01-02-03-04")
+    >>> matches[0].children
+    [<01:(0, 2)>, <04:(9, 11)>]
 
 Functional Patterns
 -------------------
@@ -246,6 +263,7 @@ Default processors can be disabled when creating ``Rebulk`` object with ``defaul
     [<la:(4, 6)>, <la:(20, 22)>, <lakers:(4, 10)>]
 
 .. _re module: https://docs.python.org/3/library/re.html
+.. _regex module: https://pypi.python.org/pypi/regex
 .. _String methods: https://docs.python.org/3/library/stdtypes.html#str
 .. _str.find: https://docs.python.org/3/library/stdtypes.html#str.find
 .. _re.finditer: https://docs.python.org/3/library/re.html#re.finditer

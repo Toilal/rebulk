@@ -6,7 +6,13 @@ Abstract pattern class definition along with various implementations (regexp, st
 # pylint: disable=super-init-not-called
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-import re
+REGEX_AVAILABLE = None
+try:
+    import regex as re
+    REGEX_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    import re
+    REGEX_AVAILABLE = False
 
 import six
 
@@ -130,6 +136,11 @@ class RePattern(Pattern):
 
     def __init__(self, *patterns, **kwargs):
         call(super(RePattern, self).__init__, **kwargs)
+        self.repeated_captures = REGEX_AVAILABLE
+        if 'repeated_captures' in kwargs:
+            self.repeated_captures = kwargs.get('repeated_captures')
+        if self.repeated_captures and not REGEX_AVAILABLE:  # pragma: no cover
+            raise NotImplementedError("repeated_capture is available only with regex module.")
         self._kwargs = kwargs
         self._match_kwargs = _filter_match_kwargs(kwargs)
         self._children_match_kwargs = _filter_match_kwargs(kwargs, children=True)
@@ -157,11 +168,16 @@ class RePattern(Pattern):
             if pattern.groups:
                 for i in range(1, pattern.groups + 1):
                     name = names.get(i, None)
-                    start = match_object.start(i)
-                    end = match_object.end(i)
-                    child_match = call(Match, self, start, end, name=name, parent=main_match,
-                                       **self._children_match_kwargs)
-                    main_match.children.append(child_match)
+                    if self.repeated_captures:
+                        for start, end in match_object.spans(i):
+                            child_match = call(Match, self, start, end, name=name, parent=main_match,
+                                               **self._children_match_kwargs)
+                            main_match.children.append(child_match)
+                    else:
+                        start, end = match_object.span(i)
+                        child_match = call(Match, self, start, end, name=name, parent=main_match,
+                                           **self._children_match_kwargs)
+                        main_match.children.append(child_match)
 
             yield main_match
 
