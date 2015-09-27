@@ -10,41 +10,32 @@ from .pattern import RePattern, StringPattern, FunctionalPattern
 from .processors import conflict_prefer_longer
 from .loose import call
 
-class Rebulk(object):
-    """
-    Regular expression, string and function based patterns are declared in a Rebulk object with a consistent API.
 
-    It contains a matches method to retrieve all sequence of all matches found by registered patterns.
+class Rebulk(object):
+    r"""
+    Regular expression, string and function based patterns are declared in a ``Rebulk`` object. It use a fluent API to
+    chain ``string``, ``regex``, and ``functional`` methods to define various patterns types.
 
     .. code-block:: python
 
         >>> from rebulk import Rebulk
-        >>> rebulk = Rebulk().regex('qu\\w+').string('brown').functional(lambda s: (20, 25))
-        >>> rebulk.matches("The quick brown fox jumps over the lazy dog")
-        [<quick:(4, 9)>, <brown:(10, 15)>, <jumps:(20, 25)>]
+        >>> bulk = Rebulk().string('brown').regex(r'qu\w+').functional(lambda s: (20, 25))
 
-    If multiple matches are found at the same position, the longer match is kept and shorters are dropped.
+    When ``Rebulk`` object is fully configured, you can call ``matches`` method with an input string to retrieve all
+    ``Match`` objects found by registered pattern.
+
+    .. code-block:: python
+
+        >>> bulk.matches("The quick brown fox jumps over the lazy dog")
+        [<brown:(10, 15)>, <quick:(4, 9)>, <jumps:(20, 25)>]
+
+    If multiple ``Match`` objects are found at the same position, only the longer one is kept.
 
     .. code-block:: python
 
-        >>> rebulk = Rebulk().string('la').string('lakers')
-        >>> rebulk.matches("the lakers are from la") # la string from lakers won't match
-        [<la:(20, 22)>, <lakers:(4, 10)>]
-
-    Regexp options can be given to patterns using keyword arguments ...
-
-    .. code-block:: python
-        >>> import re
-        >>> rebulk = Rebulk().regex('L[A-Z]', flags=re.IGNORECASE).regex('L[A-Z]KERS', flags=re.IGNORECASE)
-        >>> rebulk.matches("The LoKeRs are from Lo")
-        [<Lo:(20, 22)>, <LoKeRs:(4, 10)>]
-
-    ... or using a tuple
-
-    .. code-block:: python
-        >>> rebulk = Rebulk().regex(('L[A-Z]', re.IGNORECASE)).regex(('L[A-Z]KERS', re.IGNORECASE))
-        >>> rebulk.matches("The LoKeRs are from Lo")
-        [<Lo:(20, 22)>, <LoKeRs:(4, 10)>]
+        >>> bulk = Rebulk().string('lakers').string('la')
+        >>> bulk.matches("the lakers are from la")
+        [<lakers:(4, 10)>, <la:(20, 22)>]
     """
 
     def __init__(self, default=True):
