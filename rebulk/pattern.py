@@ -16,7 +16,7 @@ except ImportError:  # pragma: no cover
 
 import six
 
-from .match import Match, _filter_match_kwargs
+from .match import Match
 from .utils import find_all
 from .loose import call, ensure_list, ensure_dict
 
@@ -27,13 +27,11 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, name=None, tags=None, formatter=None, validator=None, private=False):
+    def __init__(self, name=None, tags=None, formatter=None, validator=None, private=False, marker=False):
         """
-        Construct a new pattern
-
-        :param name: name of pattern
+        :param name: Name of this pattern
         :type name: str
-        :param tags: list of tags related to pattern
+        :param tags: List of tags related to this pattern
         :type tags: list[str]
         :param formatter: dict (name, func) of formatter to use with this pattern. name is the match name to support,
         and func a function(input_string) that returns the formatted string. A single formatter function can also be
@@ -42,7 +40,9 @@ class Pattern(object):
         :param validator: dict (name, func) of validator to use with this pattern. name is the match name to support,
         and func a function(match) that returns the a boolean. A single validator function can also be
         passed as a shortcut for {None: validator}. If return value is False, match will be ignored.
-        :param private flag this pattern as private. It will be filtered out by remove_private post processor.
+        :param private: flag this pattern as beeing private.
+        :type private: bool
+        :param marker: flag this pattern as beeing a marker.
         :type private: bool
         :type formatter: dict[str, func] || func
         """
@@ -53,6 +53,7 @@ class Pattern(object):
         self._default_validator = lambda match: True
         self.validators = ensure_dict(validator, self._default_validator)
         self.private = private
+        self.marker = marker
 
     def matches(self, input_string):
         """
@@ -212,4 +213,23 @@ class FunctionalPattern(Pattern):
                 yield call(Match, self, *ret, **self._match_kwargs)
 
 
+def _filter_match_kwargs(kwargs, children=False):
+    """
+    Filters out kwargs for Match construction
 
+    :param kwargs:
+    :type kwargs: dict
+    :param children:
+    :type children: Flag to filter children matches
+    :return: A filtered dict
+    :rtype: dict
+    """
+    kwargs = kwargs.copy()
+    for key in ('pattern', 'start', 'end', 'parent'):
+        if key in kwargs:
+            del kwargs[key]
+    if children:
+        for key in ('name',):
+            if key in kwargs:
+                del kwargs[key]
+    return kwargs

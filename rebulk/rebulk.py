@@ -143,7 +143,10 @@ class Rebulk(object):
 
         for pattern in self._patterns:
             for match in pattern.matches(string):
-                matches.append(match)
+                if match.marker:
+                    matches.markers.append(match)
+                else:
+                    matches.append(match)
 
         for func in self._processors:
             matches = call(func, matches, context)

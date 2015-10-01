@@ -141,3 +141,106 @@ def test_rebulk_rules_4():
     matches = rebulk.matches("if it's NOT the first match, This match is NOT grabbed")
     assert len(matches) == 0
 
+
+class TestMarkers(object):
+    def test_one_marker(self):
+        class MarkerRule(Rule):
+            def when(self, matches, context):
+                word_match = matches.named("word", 0)
+                marker = matches.markers.at_match(word_match, lambda marker: marker.name == "mark1", 0)
+                if not marker:
+                    return word_match
+
+            def then(self, matches, when_response, context):
+                matches.remove(when_response)
+
+        rebulk = Rebulk().regex(r'\(.*?\)', marker=True, name="mark1") \
+            .regex(r'\[.*?\]', marker=True, name="mark2") \
+            .string("word", name="word") \
+            .rules(MarkerRule)
+
+        matches = rebulk.matches("grab (word) only if it's in parenthesis")
+
+        assert len(matches) == 1
+        assert matches[0].value == "word"
+
+        matches = rebulk.matches("don't grab [word] if it's in braket")
+        assert len(matches) == 0
+
+        matches = rebulk.matches("don't grab word at all")
+        assert len(matches) == 0
+
+    def test_multiple_marker(self):
+        class MarkerRule(Rule):
+            def when(self, matches, context):
+                word_match = matches.named("word", 0)
+                marker = matches.markers.at_match(word_match,
+                                                  lambda marker: marker.name == "mark1" or marker.name == "mark2")
+                if len(marker) < 2:
+                    return word_match
+
+            def then(self, matches, when_response, context):
+                matches.remove(when_response)
+
+        rebulk = Rebulk().regex(r'\(.*?\)', marker=True, name="mark1") \
+            .regex(r'\[.*?\]', marker=True, name="mark2") \
+            .regex("w.*?d", name="word") \
+            .rules(MarkerRule)
+
+        matches = rebulk.matches("[grab (word) only] if it's in parenthesis and brakets")
+
+        assert len(matches) == 1
+        assert matches[0].value == "word"
+
+        matches = rebulk.matches("[don't grab](word)[if brakets are outside]")
+        assert len(matches) == 0
+
+        matches = rebulk.matches("(grab w[or)d even] if it's partially in parenthesis and brakets")
+        assert len(matches) == 1
+        assert matches[0].value == "w[or)d"
+
+    def test_at_index_marker(self):
+        class MarkerRule(Rule):
+            def when(self, matches, context):
+                word_match = matches.named("word", 0)
+                marker = matches.markers.at_index(word_match.start,
+                                                  lambda marker: marker.name == "mark1", 0)
+                if not marker:
+                    return word_match
+
+            def then(self, matches, when_response, context):
+                matches.remove(when_response)
+
+        rebulk = Rebulk().regex(r'\(.*?\)', marker=True, name="mark1") \
+            .regex("w.*?d", name="word") \
+            .rules(MarkerRule)
+
+        matches = rebulk.matches("gr(ab wo)rd only if starting of match is inside parenthesis")
+
+        assert len(matches) == 1
+        assert matches[0].value == "wo)rd"
+
+        matches = rebulk.matches("don't grab wo(rd if starting of match is not inside parenthesis")
+
+        assert len(matches) == 0
+
+    def test_remove_marker(self):
+        class MarkerRule(Rule):
+            def when(self, matches, context):
+                marker = matches.markers.named("mark1", 0)
+                if marker:
+                    return marker
+
+            def then(self, matches, when_response, context):
+                matches.markers.remove(when_response)
+
+        rebulk = Rebulk().regex(r'\(.*?\)', marker=True, name="mark1") \
+            .regex("w.*?d", name="word") \
+            .rules(MarkerRule)
+
+        matches = rebulk.matches("grab word event (if it's not) inside parenthesis")
+
+        assert len(matches) == 1
+        assert matches[0].value == "word"
+
+        assert not matches.markers
