@@ -27,7 +27,8 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, name=None, tags=None, formatter=None, validator=None, private=False, marker=False):
+    def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, private=False,
+                 marker=False):
         """
         :param name: Name of this pattern
         :type name: str
@@ -40,6 +41,8 @@ class Pattern(object):
         :param validator: dict (name, func) of validator to use with this pattern. name is the match name to support,
         and func a function(match) that returns the a boolean. A single validator function can also be
         passed as a shortcut for {None: validator}. If return value is False, match will be ignored.
+        :param children: generates children instead of parent
+        :type children: bool
         :param private: flag this pattern as beeing private.
         :type private: bool
         :param marker: flag this pattern as beeing a marker.
@@ -52,6 +55,7 @@ class Pattern(object):
         self.formatters = ensure_dict(formatter, self._default_formatter)
         self._default_validator = lambda match: True
         self.validators = ensure_dict(validator, self._default_validator)
+        self.children = children
         self.private = private
         self.marker = marker
 
@@ -86,7 +90,11 @@ class Pattern(object):
                         validated = False
                         break
                 if validated:
-                    yield match
+                    if self.children and match.children:
+                        for child in match.children:
+                            yield child
+                    else:
+                        yield match
 
     @abstractproperty
     def patterns(self):  # pragma: no cover

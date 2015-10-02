@@ -7,10 +7,10 @@ ReBulk
 
 .. image:: http://img.shields.io/badge/license-MIT-blue.svg
     :target: https://pypi.python.org/pypi/rebulk
-    :alt: License
+    :alt: MIT License
 
 .. image:: http://img.shields.io/travis/Toilal/rebulk.svg
-    :target: http://travis-ci.org/Toilal/rebulk
+    :target: http://travis-ci.org/Toilal/rebulk?branch=master
     :alt: Build Status
 
 .. image:: http://img.shields.io/coveralls/Toilal/rebulk.svg
@@ -22,6 +22,8 @@ ReBulk is a python library that performs advanced searches in strings that would
 
 It includes some features like ``Patterns``, ``Match``, ``Processor`` and ``Rule`` that allows developers to build a
 custom and complex string matcher using a readable and extendable API.
+
+This project is hosted on GitHub: `<https://github.com/Toilal/rebulk>`_
 
 Install
 -------
@@ -188,6 +190,10 @@ All patterns have options that can be given as keyword arguments.
 
   Override value property for generated ``Match`` objects.
 
+- ``children``
+
+  If ``True``, all children ``Match`` objects will be retrieved instead of a single parent ``Match`` object.
+
 - ``private``
 
   If ``True``, ``Match`` objects generated from this pattern is available internally only. They will be removed at
@@ -228,6 +234,16 @@ and all subgroups (1, 2, ... n) will be converted to ``children`` matches of the
     'one = 1'
     'two = 2'
     'three = 3'
+
+It's possible to retrieve only children by using ``children`` parameters.
+
+.. code-block:: python
+
+    >>> matches = Rebulk() \
+    ...         .regex(r"One, (?P<one>\w+), Two, (?P<two>\w+), Three, (?P<three>\w+)", children=True) \
+    ...         .matches("Zero, 0, One, 1, Two, 2, Three, 3, Four, 4")
+    >>> matches
+    [<1:(14, 15)>, <2:(22, 23)>, <3:(32, 33)>]
 
 
 Matches

@@ -5,7 +5,6 @@ include =
 omit =
     rebulk/__version__.py
     rebulk/test/*
-    rebulk/ordered_set.py
 [report]
 exclude_lines =
     pragma: no cover

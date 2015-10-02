@@ -206,6 +206,25 @@ class TestRePattern(object):
         assert group2.value == "violin"
         assert group2.parent == parent
 
+    def test_children(self):
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 2
+        group1, group2 = matches
+
+        assert isinstance(group1, Match)
+        assert group1.pattern == pattern
+        assert group1.span == (28, 34)
+        assert group1.name == "param1"
+        assert group1.value == "Celtic"
+
+        assert isinstance(group2, Match)
+        assert group2.pattern == pattern
+        assert group2.span == (35, 41)
+        assert group2.name == "param2"
+        assert group2.value == "violin"
+
     def test_matches_kwargs(self):
         pattern = RePattern("He.rew", name="test", value="HE")
         matches = list(pattern.matches(self.input_string))
