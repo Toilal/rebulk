@@ -59,3 +59,16 @@ def is_iterable(obj):
     have an `__iter__` attribute anyway.
     """
     return hasattr(obj, '__iter__') and not isinstance(obj, str)
+
+
+def extend_safe(target, source):
+    """
+    Extends source list to target list only if elements doesn't exists in target list.
+    :param target:
+    :type target: list
+    :param source:
+    :type source: list
+    """
+    for elt in source:
+        if elt not in target:
+            target.append(elt)

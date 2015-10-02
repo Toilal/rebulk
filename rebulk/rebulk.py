@@ -9,6 +9,7 @@ from .pattern import RePattern, StringPattern, FunctionalPattern
 
 from .processors import conflict_prefer_longer, remove_private
 from .loose import call
+from .utils import extend_safe
 from .rules import Rules
 
 
@@ -128,6 +129,21 @@ class Rebulk(object):
         :return:
         """
         self._rules.load(*rules)
+        return self
+
+    def rebulk(self, *rebulks):
+        """
+        Add all configuration from given Rebulk objects.
+        :param rebulks:
+        :type rebulks: Rebulk
+        :return:
+        """
+        #pylint: disable=protected-access
+        for rebulk in rebulks:
+            extend_safe(self._patterns, rebulk._patterns)
+            extend_safe(self._processors, rebulk._processors)
+            extend_safe(self._post_processors, rebulk._post_processors)
+            extend_safe(self._rules, rebulk._rules)
         return self
 
     def matches(self, string):

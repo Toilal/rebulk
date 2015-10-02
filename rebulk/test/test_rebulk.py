@@ -40,6 +40,20 @@ def test_rebulk_defaults():
     assert matches[1].value == "brown"
 
 
+def test_rebulk_rebulk():
+    input_string = "The quick brown fox jumps over the lazy dog"
+
+    base = Rebulk().string("quick")
+    child = Rebulk().string("own").regex("br.{2}n")
+
+    matches = base.rebulk(child).matches(input_string)
+
+    assert len(matches) == 2
+
+    assert matches[0].value == "quick"
+    assert matches[1].value == "brown"
+
+
 def test_rebulk_no_default():
     input_string = "The quick brown fox jumps over the lazy dog"
 
