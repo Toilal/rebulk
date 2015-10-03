@@ -159,6 +159,27 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(self._end_dict[end], predicate, index)
 
+    def to_dict(self):
+        """
+        Converts matches to a dict object.
+        :return:
+        :rtype: dict
+        """
+        ret = {}
+        for match in self:
+            if match.name in ret.keys():
+                if not isinstance(ret[match.name], list):
+                    if ret[match.name] == match.value:
+                        continue
+                    ret[match.name] = [ret[match.name]]
+                else:
+                    if match.value in ret[match.name]:
+                        continue
+                ret[match.name].append(match.value)
+            else:
+                ret[match.name] = match.value
+        return ret
+
     if six.PY2:  # pragma: no cover
         def clear(self):
             """

@@ -283,3 +283,25 @@ class TestMaches(object):
 
         selection = matches.named("2-re", lambda m: "re" in m.tags, index=1000)
         assert selection is None
+
+    def test_to_dict(self):
+        input_string = "One Two Two Three"
+
+        matches = Matches()
+
+        matches.extend(StringPattern("One", name="1", tags=["One", "str"]).matches(input_string))
+        matches.extend(RePattern("One", name="1", tags=["One", "re"]).matches(input_string))
+        matches.extend(StringPattern("Two", name="2", tags=["Two", "str"]).matches(input_string))
+        matches.extend(RePattern("Two", name="2", tags=["Two", "re"]).matches(input_string))
+        matches.extend(RePattern("Two", name="2", tags=["Two", "reBis"]).matches(input_string))
+        matches.extend(StringPattern("Three", name="3", tags=["Three", "str"]).matches(input_string))
+        matches.extend(RePattern("Three", name="3bis", tags=["Three", "re"]).matches(input_string))
+        matches.extend(RePattern(r"(\w+)", name="words").matches(input_string))
+
+        kvalues = matches.to_dict()
+        assert kvalues == {"1": "One",
+                           "2": "Two",
+                           "3": "Three",
+                           "3bis": "Three",
+                           "words": ["One", "Two", "Three"]
+                           }
