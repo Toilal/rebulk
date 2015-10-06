@@ -122,6 +122,17 @@ class TestRePattern(object):
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 0
 
+    def test_shortcuts(self):
+        pattern = RePattern("Celtic-violin", abbreviations=[("-", r"[\W_]+")])
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+        pattern = RePattern({"pattern": "celtic-violin", "flags": re.IGNORECASE}, abbreviations=[("-", r"[\W_]+")])
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
     def test_multiple_patterns(self):
         pattern = RePattern("pla.?ing", "ann.?yed", "Heb.?ew")
 

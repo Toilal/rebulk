@@ -152,14 +152,21 @@ class RePattern(Pattern):
             self.repeated_captures = kwargs.get('repeated_captures')
         if self.repeated_captures and not REGEX_AVAILABLE:  # pragma: no cover
             raise NotImplementedError("repeated_capture is available only with regex module.")
+        self.abbreviations = kwargs.get('abbreviations', [])
         self._kwargs = kwargs
         self._match_kwargs = _filter_match_kwargs(kwargs)
         self._children_match_kwargs = _filter_match_kwargs(kwargs, children=True)
         self._patterns = []
         for pattern in patterns:
             if isinstance(pattern, six.string_types):
+                if self.abbreviations and pattern:
+                    for key, replacement in self.abbreviations:
+                        pattern = pattern.replace(key, replacement)
                 pattern = call(re.compile, pattern, **self._kwargs)
             elif isinstance(pattern, dict):
+                if self.abbreviations and 'pattern' in pattern:
+                    for key, replacement in self.abbreviations:
+                        pattern['pattern'] = pattern['pattern'].replace(key, replacement)
                 pattern = re.compile(**pattern)
             elif hasattr(pattern, '__iter__'):
                 pattern = re.compile(*pattern)

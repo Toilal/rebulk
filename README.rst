@@ -124,6 +124,15 @@ If `regex module`_ is available, it automatically supports repeated captures.
     >>> matches[0].children
     [<01:(0, 2)>, <04:(9, 11)>]
 
+- ``abbreviations``
+
+  Defined as a list of 2-tuple, each tuple is an abbreviation.
+
+  >>> Rebulk().regex(r'Custom-separators', abbreviations=[("-", "[\W_]+")])\
+  ...         .matches("Custom_separators using-abbreviations")
+  [<Custom_separators:(0, 17)>]
+
+
 Functional Patterns
 -------------------
 Functional Patterns are based on the evaluation of a function.
