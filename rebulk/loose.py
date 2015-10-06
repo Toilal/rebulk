@@ -149,3 +149,20 @@ def filter_index(collection, predicate=None, index=None):
         except IndexError:
             collection = None
     return collection
+
+
+def set_defaults(defaults, kwargs):
+    """
+    Set defaults from defaults dict to kwargs dict
+    :param defaults:
+    :type defaults:
+    :param kwargs:
+    :type kwargs:
+    :return:
+    :rtype:
+    """
+    for key, value in defaults.items():
+        if key not in kwargs:
+            kwargs[key] = value
+        elif isinstance(value, list) and isinstance(kwargs[key], list):
+            kwargs[key] = list(value) + kwargs[key]

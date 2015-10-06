@@ -8,7 +8,7 @@ from .match import Matches
 from .pattern import RePattern, StringPattern, FunctionalPattern
 
 from .processors import conflict_prefer_longer, remove_private
-from .loose import call
+from .loose import call, set_defaults
 from .utils import extend_safe
 from .rules import Rules
 
@@ -48,6 +48,10 @@ class Rebulk(object):
             self.processor(*DEFAULT_PROCESSORS)
             self.post_processor(*DEFAULT_POST_PROCESSORS)
         self._rules = Rules()
+        self._defaults = {}
+        self._regex_defaults = {}
+        self._string_defaults = {}
+        self._functional_defaults = {}
 
     def pattern(self, *pattern):
         """
@@ -61,6 +65,28 @@ class Rebulk(object):
         self._patterns.extend(pattern)
         return self
 
+    def defaults(self, **kwargs):
+        """
+        Define default keyword arguments for all patterns
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
+        self._defaults = kwargs
+        return self
+
+    def regex_defaults(self, **kwargs):
+        """
+        Define default keyword arguments for functional patterns.
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
+        self._regex_defaults = kwargs
+        return self
+
     def regex(self, *pattern, **kwargs):
         """
         Add re pattern
@@ -70,7 +96,20 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
+        set_defaults(self._regex_defaults, kwargs)
+        set_defaults(self._defaults, kwargs)
         self.pattern(RePattern(*pattern, **kwargs))
+        return self
+
+    def string_defaults(self, **kwargs):
+        """
+        Define default keyword arguments for string patterns.
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
+        self._string_defaults = kwargs
         return self
 
     def string(self, *pattern, **kwargs):
@@ -82,7 +121,20 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
+        set_defaults(self._string_defaults, kwargs)
+        set_defaults(self._defaults, kwargs)
         self.pattern(StringPattern(*pattern, **kwargs))
+        return self
+
+    def functional_defaults(self, **kwargs):
+        """
+        Define default keyword arguments for functional patterns.
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
+        self._functional_defaults = kwargs
         return self
 
     def functional(self, *pattern, **kwargs):
@@ -94,6 +146,8 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
+        set_defaults(self._functional_defaults, kwargs)
+        set_defaults(self._defaults, kwargs)
         self.pattern(FunctionalPattern(*pattern, **kwargs))
         return self
 
