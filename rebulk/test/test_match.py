@@ -303,5 +303,20 @@ class TestMaches(object):
                            "2": "Two",
                            "3": "Three",
                            "3bis": "Three",
-                           "words": ["One", "Two", "Three"]
-                           }
+                           "words": ["One", "Two", "Three"]}
+
+        kvalues = matches.to_dict(details=True)
+        assert kvalues["1"].value == "One"
+
+        assert len(kvalues["2"]) == 2
+        assert kvalues["2"][0].value == "Two"
+        assert kvalues["2"][1].value == "Two"
+
+        assert kvalues["3"].value == "Three"
+        assert kvalues["3bis"].value == "Three"
+
+        assert len(kvalues["words"]) == 4
+        assert kvalues["words"][0].value == "One"
+        assert kvalues["words"][1].value == "Two"
+        assert kvalues["words"][2].value == "Two"
+        assert kvalues["words"][3].value == "Three"
