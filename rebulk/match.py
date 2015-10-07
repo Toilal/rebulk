@@ -10,6 +10,15 @@ import six
 from .loose import ensure_list, filter_index
 
 
+class MatchesDict(dict):
+    """
+    A custom dict with matches property.
+    """
+    def __init__(self):
+        super(MatchesDict, self).__init__()
+        self.matches = defaultdict(list)
+
+
 class _BaseMatches(MutableSequence):
     """
     A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
@@ -167,9 +176,10 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype: dict
         """
-        ret = {}
+        ret = MatchesDict()
         for match in self:
             value = match if details else match.value
+            ret.matches[match.name].append(match)
             if match.name in ret.keys():
                 if not isinstance(ret[match.name], list):
                     if ret[match.name] == value:

@@ -295,6 +295,9 @@ It has the following additional methods and properties on it.
   Convert to a standard dict, with ``Match.name`` as key and ``Match.value`` as value.
   If several distinct values are found for the same name, value will be a list.
 
+  It's a subclass of dict, that contains an additional ``matches`` property which is a dict with  ``Match.name`` as key
+  and list of ``Match`` objects as value.
+
 - ``markers``
 
   A custom ``Matches`` sequences specialized for ``markers`` matches (see below)
