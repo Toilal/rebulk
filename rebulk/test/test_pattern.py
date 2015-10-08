@@ -379,7 +379,7 @@ class TestFormatter(object):
     input_string = "This string contains 1849 a number"
 
     def test_single_string(self):
-        pattern = StringPattern("1849", formatter=lambda x: int(x) / 2)
+        pattern = StringPattern("1849", name="dummy", formatter=lambda x: int(x) / 2)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -401,7 +401,7 @@ class TestFormatter(object):
     def test_single_re_named_groups(self):
         pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
                             formatter={'intParam': lambda x: int(x) * 2,
-                                       'strParam': lambda x: "really " + x})
+                                       'strParam': lambda x: "really " + x}, format_all=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -479,7 +479,7 @@ class TestValidator(object):
         return int(match.value) >= 1850
 
     def test_single_string(self):
-        pattern = StringPattern("1849", validator=self.false_validator)
+        pattern = StringPattern("1849", name="dummy", validator=self.false_validator)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 0
@@ -502,16 +502,65 @@ class TestValidator(object):
 
     def test_single_re_named_groups(self):
         pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
-                            validator={'intParam': self.false_validator})
+                            validator={'intParam': self.false_validator}, validate_all=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 0
 
         pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
-                            validator={'intParam': self.true_validator})
+                            validator={'intParam': self.true_validator}, validate_all=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
+
+    def test_validate_all(self):
+        pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, validator=lambda match: match.value < 100,
+                            children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, validator=lambda match: match.value > 100,
+                            children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+        def invalid_func(match):
+            if match.name == 'intParam':
+                return True
+            else:
+                return match.value.startswith('abc')
+
+        pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, validator=invalid_func, validate_all=True,
+                            children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        def func(match):
+            if match.name == 'intParam':
+                return True
+            else:
+                return match.value.startswith('contains')
+
+        pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, validator=func, validate_all=True,
+                            children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+    def test_format_all(self):
+        pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int,
+                            children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+        with pytest.raises(ValueError):
+            pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, format_all=True,
+                                children=True)
+            list(pattern.matches(self.input_string))
 
     def test_single_functional(self):
         def digit(input_string):

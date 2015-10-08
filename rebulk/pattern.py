@@ -28,7 +28,7 @@ class Pattern(object):
     """
 
     def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, private=False,
-                 marker=False):
+                 marker=False, format_all=False, validate_all=False):
         """
         :param name: Name of this pattern
         :type name: str
@@ -47,17 +47,79 @@ class Pattern(object):
         :type private: bool
         :param marker: flag this pattern as beeing a marker.
         :type private: bool
-        :type formatter: dict[str, func] || func
+        :param format_all if True, pattern will format every match in the hierarchy (even match not yield).
+        :type format_all: bool
+        :param validate_all if True, pattern will validate every match in the hierarchy (even match not yield).
+        :type validate_all: bool
+
         """
         self.name = name
         self.tags = ensure_list(tags)
-        self._default_formatter = lambda x: x
-        self.formatters = ensure_dict(formatter, self._default_formatter)
-        self._default_validator = lambda match: True
-        self.validators = ensure_dict(validator, self._default_validator)
+        self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)
+        self.validators, self._default_validator = ensure_dict(validator, lambda match: True)
         self.children = children
         self.private = private
         self.marker = marker
+        self.format_all = format_all
+        self.validate_all = validate_all
+
+    def _yield_children(self, match):
+        """
+        Does this mat
+        :param match:
+        :type match:
+        :return:
+        :rtype:
+        """
+        return self.children and match.children
+
+    def _match_parent(self, match, input_string, yield_children):
+        """
+        Handle a parent match
+        :param match:
+        :type match:
+        :param input_string:
+        :type input_string:
+        :param yield_children:
+        :type yield_children:
+        :return:
+        :rtype:
+        """
+        if match.value is None:
+            value = input_string[match.start:match.end]
+            if not yield_children or self.format_all:
+                formatter = self.formatters.get(match.name, self._default_formatter)
+                value = formatter(value)
+            match.value = value
+        if not yield_children or self.validate_all:
+            validator = self.validators.get(match.name, self._default_validator)
+            if not validator(match):
+                return False
+        return True
+
+    def _match_child(self, child, input_string, yield_children):
+        """
+        Handle a children match
+        :param child:
+        :type child:
+        :param input_string:
+        :type input_string:
+        :param yield_children:
+        :type yield_children:
+        :return:
+        :rtype:
+        """
+        if child.value is None:
+            value = input_string[child.start:child.end]
+            if yield_children or self.format_all:
+                formatter = self.formatters.get(child.name, self._default_formatter)
+                value = formatter(value)
+            child.value = value
+        if yield_children or self.validate_all:
+            validator = self.validators.get(child.name, self._default_validator)
+            if not validator(child):
+                return False
+        return True
 
     def matches(self, input_string):
         """
@@ -70,27 +132,16 @@ class Pattern(object):
         """
         for pattern in self.patterns:
             for match in self._match(pattern, input_string):
-                if match.value is None:
-                    value = input_string[match.start:match.end]
-                    formatter = self.formatters.get(match.name, self._default_formatter)
-                    value = formatter(value)
-                    match.value = value
-                validator = self.validators.get(match.name, self._default_validator)
-                if not validator(match):
+                yield_children = self._yield_children(match)
+                if not self._match_parent(match, input_string, yield_children):
                     break
                 validated = True
                 for child in match.children:
-                    if child.value is None:
-                        value = input_string[child.start:child.end]
-                        formatter = self.formatters.get(child.name, self._default_formatter)
-                        value = formatter(value)
-                        child.value = value
-                    validator = self.validators.get(child.name, self._default_validator)
-                    if not validator(child):
+                    if not self._match_child(child, input_string, yield_children):
                         validated = False
                         break
                 if validated:
-                    if self.children and match.children:
+                    if yield_children:
                         for child in match.children:
                             yield child
                     else:

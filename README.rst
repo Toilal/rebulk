@@ -159,7 +159,8 @@ All patterns have options that can be given as keyword arguments.
 
 - ``formatter``
 
-  Function to convert ``Match`` value given by the pattern.
+  Function to convert ``Match`` value given by the pattern. Can also be a ``dict``, to use ``formatter`` with pattern
+  named with key.
 
   .. code-block:: python
 
@@ -170,9 +171,15 @@ All patterns have options that can be given as keyword arguments.
       >>> isinstance(matches[0].value, int)
       True
 
+- ``format_all``
+
+  By default, formatter is called for returned ``Match`` values only. Enable this option to format them all, parent and
+  children included.
+
 - ``validator``
 
-  Function to validate ``Match`` value given by the pattern.
+  Function to validate ``Match`` value given by the pattern. Can also be a ``dict``, to use ``validator`` with pattern
+  named with key.
 
   .. code-block:: python
 
@@ -186,6 +193,11 @@ All patterns have options that can be given as keyword arguments.
       ...                   .matches("In year 1984 ...")
       >>> len(matches)
       1
+
+- ``validate_all``
+
+  By default, validator is called for returned ``Match`` objects only. Enable this option to validate them all, parent
+  and children included.
 
 - ``name``
 

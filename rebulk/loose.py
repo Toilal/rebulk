@@ -106,7 +106,9 @@ def ensure_list(param):
 
 def ensure_dict(param, default_value, default_key=None):
     """
-    Retrieves a dict from given parameter.
+    Retrieves a dict and a default value from given parameter.
+
+    if parameter is not a dict, it will be promoted as the default value.
 
     :param param:
     :type param:
@@ -120,8 +122,10 @@ def ensure_dict(param, default_value, default_key=None):
     if not param:
         param = default_value
     if not isinstance(param, dict):
-        return {default_key: param}
-    return param
+        if param:
+            default_value = param
+        return {default_key: param}, default_value
+    return param, default_value
 
 
 def filter_index(collection, predicate=None, index=None):
