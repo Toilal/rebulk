@@ -17,7 +17,7 @@ class Rule3(Rule):
 
     def then(self, matches, when_response, context):
         assert when_response in [True, False]
-        matches.append(Match(pattern, 3, 4))
+        matches.append(Match(None, pattern, 3, 4))
 
 
 class Rule2(Rule):
@@ -28,7 +28,7 @@ class Rule2(Rule):
 
     def then(self, matches, when_response, context):
         assert when_response
-        matches.append(Match(pattern, 3, 4))
+        matches.append(Match(None, pattern, 3, 4))
 
 
 class Rule1(Rule):
@@ -48,7 +48,7 @@ class Rule0(Rule):
 
     def then(self, matches, when_response, context):
         assert when_response
-        matches.append(Match(pattern, 3, 4))
+        matches.append(Match(None, pattern, 3, 4))
 
 
 class Rule1Disabled(Rule1):

@@ -194,6 +194,9 @@ All patterns have options that can be given as keyword arguments.
       >>> len(matches)
       1
 
+Some base validator functions are available in ``rebulk.validators`` module. Most of those functions have to be
+configured using ``functools.partial`` to map them to function accepting a single ``match`` argument.
+
 - ``validate_all``
 
   By default, validator is called for returned ``Match`` objects only. Enable this option to validate them all, parent

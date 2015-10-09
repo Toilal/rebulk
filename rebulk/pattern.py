@@ -188,7 +188,7 @@ class StringPattern(Pattern):
 
     def _match(self, pattern, input_string):
         for index in call(find_all, input_string, pattern, **self._kwargs):
-            yield call(Match, self, index, index + len(pattern), **self._match_kwargs)
+            yield call(Match, input_string, self, index, index + len(pattern), **self._match_kwargs)
 
 
 class RePattern(Pattern):
@@ -232,19 +232,19 @@ class RePattern(Pattern):
         for match_object in pattern.finditer(input_string):
             start = match_object.start()
             end = match_object.end()
-            main_match = call(Match, self, start, end, **self._match_kwargs)
+            main_match = call(Match, input_string, self, start, end, **self._match_kwargs)
 
             if pattern.groups:
                 for i in range(1, pattern.groups + 1):
                     name = names.get(i, main_match.name)
                     if self.repeated_captures:
                         for start, end in match_object.spans(i):
-                            child_match = call(Match, self, start, end, name=name, parent=main_match,
+                            child_match = call(Match, input_string, self, start, end, name=name, parent=main_match,
                                                **self._children_match_kwargs)
                             main_match.children.append(child_match)
                     else:
                         start, end = match_object.span(i)
-                        child_match = call(Match, self, start, end, name=name, parent=main_match,
+                        child_match = call(Match, input_string, self, start, end, name=name, parent=main_match,
                                            **self._children_match_kwargs)
                         main_match.children.append(child_match)
 
@@ -274,9 +274,9 @@ class FunctionalPattern(Pattern):
                 if self._match_kwargs:
                     options = self._match_kwargs.copy()
                     options.update(ret)
-                yield call(Match, self, **options)
+                yield call(Match, input_string, self, **options)
             else:
-                yield call(Match, self, *ret, **self._match_kwargs)
+                yield call(Match, input_string, self, *ret, **self._match_kwargs)
 
 
 def _filter_match_kwargs(kwargs, children=False):
