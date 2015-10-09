@@ -64,9 +64,7 @@ def function_args(callable_, *args, **kwargs):
     :rtype: tuple
     """
     argspec = inspect.getargspec(callable_)
-    call_kwarg = {k: kwargs[k] for k in kwargs if k in argspec.args}
-    call_args = args[:len(argspec.args)]
-    return call_args, call_kwarg
+    return argspec_args(argspec, False, *args, **kwargs)
 
 
 def constructor_args(class_, *args, **kwargs):
@@ -83,8 +81,32 @@ def constructor_args(class_, *args, **kwargs):
     :rtype: tuple
     """
     argspec = inspect.getargspec(_constructor(class_))
-    call_kwarg = {k: kwargs[k] for k in kwargs if k in argspec.args}
-    call_args = args[:len(argspec.args)-1]
+    return argspec_args(argspec, True, *args, **kwargs)
+
+
+def argspec_args(argspec, constructor, *args, **kwargs):
+    """
+    Return (args, kwargs) matching the argspec object
+
+    :param argspec: argspec to use
+    :type argspec: argspec
+    :param constructor: is it a constructor ?
+    :type constructor: bool
+    :param args:
+    :type args:
+    :param kwargs:
+    :type kwargs:
+    :return: (args, kwargs) matching the function signature
+    :rtype: tuple
+    """
+    if argspec.keywords:
+        call_kwarg = kwargs
+    else:
+        call_kwarg = {k: kwargs[k] for k in kwargs if k in argspec.args}
+    if argspec.varargs:
+        call_args = args
+    else:
+        call_args = args[:len(argspec.args) - (1 if constructor else 0)]
     return call_args, call_kwarg
 
 
