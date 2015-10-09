@@ -253,10 +253,10 @@ class TestRePattern(object):
 
         children = matches[0].children
         assert len(children) == 2
-        assert children[0].name is None
+        assert children[0].name is "test"
         assert children[0].value == "HE"
 
-        assert children[1].name is None
+        assert children[1].name is "test"
         assert children[1].value == "HE"
 
         pattern = RePattern("H(?P<first>e.)(?P<second>rew)", name="test", value="HE")

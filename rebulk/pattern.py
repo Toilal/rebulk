@@ -236,7 +236,7 @@ class RePattern(Pattern):
 
             if pattern.groups:
                 for i in range(1, pattern.groups + 1):
-                    name = names.get(i, None)
+                    name = names.get(i, main_match.name)
                     if self.repeated_captures:
                         for start, end in match_object.spans(i):
                             child_match = call(Match, self, start, end, name=name, parent=main_match,
