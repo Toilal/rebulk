@@ -10,16 +10,14 @@ from ..pattern import StringPattern, RePattern
 
 
 class TestMatchClass(object):
-    pattern = StringPattern("test")
-
     def test_repr(self):
-        match1 = Match(None, self.pattern, 1, 3, value="es")
+        match1 = Match(1, 3, value="es")
 
         assert repr(match1) == '<es:(1, 3)>'
 
     def test_equality(self):
-        match1 = Match(None, self.pattern, 1, 3, value="es")
-        match2 = Match(None, self.pattern, 1, 3, value="es")
+        match1 = Match(1, 3, value="es")
+        match2 = Match(1, 3, value="es")
 
         other = object()
 
@@ -30,9 +28,9 @@ class TestMatchClass(object):
         assert not match1 == other
 
     def test_inequality(self):
-        match1 = Match(None, self.pattern, 0, 2, value="te")
-        match2 = Match(None, self.pattern, 2, 4, value="st")
-        match3 = Match(None, self.pattern, 0, 2, value="other")
+        match1 = Match(0, 2, value="te")
+        match2 = Match(2, 4, value="st")
+        match3 = Match(0, 2, value="other")
 
         other = object()
 
@@ -44,15 +42,15 @@ class TestMatchClass(object):
         assert match1 != match3
 
     def test_length(self):
-        match1 = Match(None, self.pattern, 0, 4, value="test")
-        match2 = Match(None, self.pattern, 0, 2, value="spanIsUsed")
+        match1 = Match(0, 4, value="test")
+        match2 = Match(0, 2, value="spanIsUsed")
 
         assert len(match1) == 4
         assert len(match2) == 2
 
     def test_compare(self):
-        match1 = Match(None, self.pattern, 0, 2, value="te")
-        match2 = Match(None, self.pattern, 2, 4, value="st")
+        match1 = Match(0, 2, value="te")
+        match2 = Match(2, 4, value="st")
 
         other = object()
 
@@ -82,10 +80,10 @@ class TestMatchClass(object):
 
 
 class TestMatchesClass(object):
-    match1 = Match(None, StringPattern("te"), 0, 2, value="te", name="start")
-    match2 = Match(None, StringPattern("s"), 2, 3, value="s", tags="tag1")
-    match3 = Match(None, StringPattern("t"), 3, 4, value="t", tags=["tag1", "tag2"])
-    match4 = Match(None, StringPattern("st"), 2, 4, value="st", name="end")
+    match1 = Match(0, 2, value="te", name="start")
+    match2 = Match(2, 3, value="s", tags="tag1")
+    match3 = Match(3, 4, value="t", tags=["tag1", "tag2"])
+    match4 = Match(2, 4, value="st", name="end")
 
     def test_tag(self):
         matches = Matches()

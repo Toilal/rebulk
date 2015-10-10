@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover
 import six
 
 from .match import Match
-from .utils import find_all
+from .utils import find_all, is_iterable
 from .loose import call, ensure_list, ensure_dict
 
 
@@ -188,7 +188,8 @@ class StringPattern(Pattern):
 
     def _match(self, pattern, input_string):
         for index in call(find_all, input_string, pattern, **self._kwargs):
-            yield call(Match, input_string, self, index, index + len(pattern), **self._match_kwargs)
+            yield call(Match, index, index + len(pattern), pattern=self, input_string=input_string,
+                       **self._match_kwargs)
 
 
 class RePattern(Pattern):
@@ -232,20 +233,20 @@ class RePattern(Pattern):
         for match_object in pattern.finditer(input_string):
             start = match_object.start()
             end = match_object.end()
-            main_match = call(Match, input_string, self, start, end, **self._match_kwargs)
+            main_match = call(Match, start, end, pattern=self, input_string=input_string, **self._match_kwargs)
 
             if pattern.groups:
                 for i in range(1, pattern.groups + 1):
                     name = names.get(i, main_match.name)
                     if self.repeated_captures:
                         for start, end in match_object.spans(i):
-                            child_match = call(Match, input_string, self, start, end, name=name, parent=main_match,
-                                               **self._children_match_kwargs)
+                            child_match = call(Match, start, end, name=name, parent=main_match, pattern=self,
+                                               input_string=input_string, **self._children_match_kwargs)
                             main_match.children.append(child_match)
                     else:
                         start, end = match_object.span(i)
-                        child_match = call(Match, input_string, self, start, end, name=name, parent=main_match,
-                                           **self._children_match_kwargs)
+                        child_match = call(Match, start, end, name=name, parent=main_match, pattern=self,
+                                           input_string=input_string, **self._children_match_kwargs)
                         main_match.children.append(child_match)
 
             yield main_match
@@ -269,14 +270,23 @@ class FunctionalPattern(Pattern):
     def _match(self, pattern, input_string):
         ret = call(pattern, input_string, **self._kwargs)
         if ret:
-            if isinstance(ret, dict):
-                options = ret
-                if self._match_kwargs:
-                    options = self._match_kwargs.copy()
-                    options.update(ret)
-                yield call(Match, input_string, self, **options)
+            if not is_iterable(ret) or isinstance(ret, dict) or is_iterable(ret) and isinstance(ret[0], int):
+                args_iterable = [ret]
             else:
-                yield call(Match, input_string, self, *ret, **self._match_kwargs)
+                args_iterable = ret
+            for args in args_iterable:
+                if isinstance(args, Match):
+                    args.input_string = input_string
+                    args.pattern = self
+                    yield args
+                elif isinstance(args, dict):
+                    options = args
+                    if self._match_kwargs:
+                        options = self._match_kwargs.copy()
+                        options.update(args)
+                    yield call(Match, pattern=self, input_string=input_string, **options)
+                else:
+                    yield call(Match, *args, pattern=self, input_string=input_string, **self._match_kwargs)
 
 
 def _filter_match_kwargs(kwargs, children=False):

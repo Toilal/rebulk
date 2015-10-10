@@ -138,7 +138,7 @@ Functional Patterns
 Functional Patterns are based on the evaluation of a function.
 
 The function should have the same parameters as ``Rebulk.matches`` method, that is the input string,
-and must return both start index and end index of the ``Match`` object.
+and must return at least start index and end index of the ``Match`` object.
 
 .. code-block:: python
 
@@ -149,7 +149,10 @@ and must return both start index and end index of the ``Match`` object.
     >>> Rebulk().functional(func).matches("Why do simple ? Forget about it ...")
     [<Why:(0, 3)>]
 
-You can define several patterns with a single ``functional`` method call.
+You can also return a dict of keywords arguments for ``Match`` object, or plain ``rebulk.Match`` instance.
+
+You can define several patterns with a single ``functional`` method call, and function used can return multiple
+matches.
 
 
 Patterns parameters

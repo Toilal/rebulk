@@ -315,6 +315,56 @@ class TestFunctionalPattern(object):
         assert matches[0].name == "functional"
         assert matches[0].value == "fly"
 
+    def test_single_object(self):
+        def func(input_string):
+            i = input_string.find("fly")
+            if i > -1:
+                return Match(i, i + len("fly"), name="functional")
+
+        pattern = FunctionalPattern(func, label="test")
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+        assert isinstance(matches[0], Match)
+        assert matches[0].pattern == pattern
+        assert matches[0].span == (14, 17)
+        assert matches[0].name == "functional"
+        assert matches[0].value == "fly"
+
+    def test_multiple_objects(self):
+        def func(input_string):
+            i = input_string.find("fly")
+            matches = []
+            if i > -1:
+                matches.append(Match(i, i + len("fly"), name="functional"))
+                i = input_string.find("annoyed")
+            if i > -1:
+                matches.append((i, i + len("annoyed")))
+            i = input_string.find("Hebrew")
+            if i > -1:
+                matches.append({"start": i, "end": i + len("Hebrew")})
+            return matches
+
+        pattern = FunctionalPattern(func, label="test")
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 3
+        assert isinstance(matches[0], Match)
+        assert matches[0].pattern == pattern
+        assert matches[0].span == (14, 17)
+        assert matches[0].name == "functional"
+        assert matches[0].value == "fly"
+
+        assert isinstance(matches[1], Match)
+        assert matches[1].pattern == pattern
+        assert matches[1].span == (46, 53)
+        assert matches[1].value == "annoyed"
+
+        assert isinstance(matches[2], Match)
+        assert matches[2].pattern == pattern
+        assert matches[2].span == (88, 94)
+        assert matches[2].value == "Hebrew"
+
     def test_no_match(self):
         pattern = FunctionalPattern(lambda x: None, label="test")
 

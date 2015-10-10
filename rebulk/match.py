@@ -299,9 +299,8 @@ class Match(object):
     """
     Object storing values related to a single match
     """
-    def __init__(self, input_string, pattern, start, end, value=None, name=None, tags=None, marker=False, parent=None):
-        self.input_string = input_string
-        self.pattern = pattern
+    def __init__(self, start, end, value=None, name=None, tags=None, marker=False, parent=None, pattern=None,
+                 input_string=None):
         self.start = start
         self.end = end
         self.name = name
@@ -309,6 +308,8 @@ class Match(object):
         self.tags = ensure_list(tags)
         self.marker = marker
         self.parent = parent
+        self.input_string = input_string
+        self.pattern = pattern
         self.children = []
 
     @property
