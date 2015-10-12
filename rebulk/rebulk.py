@@ -219,12 +219,16 @@ class Rebulk(object):
                     matches.append(match)
 
         for func in self._processors:
-            matches = call(func, matches, context)
+            ret = call(func, matches, context)
+            if isinstance(ret, Matches):
+                matches = ret
 
         self._rules.execute_all_rules(matches, context)
 
         for func in self._post_processors:
-            matches = call(func, matches, context)
+            ret = call(func, matches, context)
+            if isinstance(ret, Matches):
+                matches = ret
 
         return matches
 
