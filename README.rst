@@ -308,6 +308,14 @@ It has the following additional methods and properties on it.
 
   Retrieves a list of ``Match`` objects that have the given name.
 
+- ``names``
+
+  Retrieves a sequence of all ``Match.name`` properties.
+
+- ``tags``
+
+  Retrieves a sequence of all ``Match.tags`` properties.
+
 - ``to_dict()``
 
   Convert to a standard dict, with ``Match.name`` as key and ``Match.value`` as value.

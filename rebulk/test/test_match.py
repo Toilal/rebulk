@@ -92,6 +92,12 @@ class TestMatchesClass(object):
         matches.append(self.match3)
         matches.append(self.match4)
 
+        assert "start" in matches.names
+        assert "end" in matches.names
+
+        assert "tag1" in matches.tags
+        assert "tag2" in matches.tags
+
         tag1 = matches.tagged("tag1")
         assert len(tag1) == 2
         assert tag1[0] == self.match2

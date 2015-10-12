@@ -168,6 +168,22 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(self._end_dict[end], predicate, index)
 
+    @property
+    def names(self):
+        """
+        Retrieve all names.
+        :return:
+        """
+        return self._name_dict.keys()
+
+    @property
+    def tags(self):
+        """
+        Retrieve all tags.
+        :return:
+        """
+        return self._tag_dict.keys()
+
     def to_dict(self, details=False):
         """
         Converts matches to a dict object.
