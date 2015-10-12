@@ -270,17 +270,20 @@ class FunctionalPattern(Pattern):
     def _match(self, pattern, input_string):
         ret = call(pattern, input_string, **self._kwargs)
         if ret:
-            if not is_iterable(ret) or isinstance(ret, dict) or is_iterable(ret) and isinstance(ret[0], int):
+            if not is_iterable(ret) or isinstance(ret, dict) \
+                    or (is_iterable(ret) and hasattr(ret, '__getitem__') and isinstance(ret[0], int)):
                 args_iterable = [ret]
             else:
                 args_iterable = ret
             for args in args_iterable:
                 if isinstance(args, Match):
-                    args.input_string = input_string
-                    args.pattern = self
-                    yield args
-                elif isinstance(args, dict):
+                    args = dict((k, v) for k, v in args.__dict__.items() if
+                                not hasattr(v, '__len__') and v is not None or
+                                hasattr(v, '__len__') and len(v) > 0)
+                if isinstance(args, dict):
                     options = args
+                    options.pop('input_string', None)
+                    options.pop('pattern', None)
                     if self._match_kwargs:
                         options = self._match_kwargs.copy()
                         options.update(args)

@@ -299,7 +299,7 @@ class Match(object):
     """
     Object storing values related to a single match
     """
-    def __init__(self, start, end, value=None, name=None, tags=None, marker=False, parent=None, pattern=None,
+    def __init__(self, start, end, value=None, name=None, tags=None, marker=None, parent=None, pattern=None,
                  input_string=None):
         self.start = start
         self.end = end
