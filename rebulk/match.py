@@ -168,6 +168,28 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(self._end_dict[end], predicate, index)
 
+    def range(self, start=0, end=None, predicate=None, index=None):
+        """
+        Retrieves a set of Match objects that are available in given range
+        :param start: the starting index
+        :type start: int
+        :param end: the ending index
+        :type end: int
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index: int
+        :return: set of matches
+        :rtype: set[Match]
+        """
+        if end is None:
+            end = self.max_end
+        ret = []
+        for match in self:
+            if match.start < end and match.end > start:
+                ret.append(match)
+        return filter_index(ret, predicate, index)
+
     @property
     def names(self):
         """

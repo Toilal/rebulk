@@ -133,6 +133,11 @@ class TestMatchesClass(object):
         assert list(matches.starting(3)) == [self.match3]
         assert list(matches.ending(3)) == [self.match2]
         assert list(matches.ending(4)) == [self.match3, self.match4]
+        assert list(matches.range()) == [self.match1, self.match2, self.match3, self.match4]
+        assert list(matches.range(0)) == [self.match1, self.match2, self.match3, self.match4]
+        assert list(matches.range(0, 3)) == [self.match1, self.match2, self.match4]
+        assert list(matches.range(2, 3)) == [self.match2, self.match4]
+        assert list(matches.range(3, 4)) == [self.match3, self.match4]
 
         matches.remove(self.match1)
         assert len(matches) == 3

@@ -308,6 +308,10 @@ It has the following additional methods and properties on it.
 
   Retrieves a list of ``Match`` objects that have the given name.
 
+- ``range(start=0, end=None, predicate=None, index=None)``
+
+  Retrieves a list of ``Match`` objects for given range.
+
 - ``names``
 
   Retrieves a sequence of all ``Match.name`` properties.
