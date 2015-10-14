@@ -27,7 +27,8 @@ class _BaseMatches(MutableSequence):
     _base_add = _base.append   # OrderedSet.add
     _base_remove = _base.remove  # OrderedSet.remove
 
-    def __init__(self, *matches):
+    def __init__(self, matches=None, input_string=None):
+        self.input_string = input_string
         self.max_end = 0
         self._delegate = []
         self._name_dict = defaultdict(_BaseMatches._base)
@@ -35,13 +36,6 @@ class _BaseMatches(MutableSequence):
         self._start_dict = defaultdict(_BaseMatches._base)
         self._end_dict = defaultdict(_BaseMatches._base)
         if matches:
-            if len(matches) == 1:
-                try:
-                    iterator = iter(matches)
-                    self.extend(next(iterator))
-                    return
-                except TypeError:  # pragma: no cover
-                    pass
             self.extend(matches)
 
     def _add_match(self, match):
@@ -190,6 +184,80 @@ class _BaseMatches(MutableSequence):
                 ret.append(match)
         return filter_index(ret, predicate, index)
 
+    def _close_hole(self, hole_match, end, formatter=None):
+        """
+        Close a hole match by setting it's value using provided formatter.
+        :param hole_match:
+        :type hole_match:
+        :param end:
+        :type end:
+        :param formatter:
+        :type formatter:
+        :return:
+        :rtype:
+        """
+        hole_match.end = end
+        hole_match.value = self.input_string[hole_match.start:hole_match.end]
+        if formatter:
+            hole_match.value = formatter(hole_match.value)
+
+    def holes(self, start=0, end=None, formatter=None, predicate=None, index=None):  # pylint: disable=too-many-branches
+        """
+        Retrieves a set of Match objects that are not defined in given range.
+        :param start:
+        :type start:
+        :param end:
+        :type end:
+        :param formatter:
+        :type formatter:
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        if end is None:
+            end = self.max_end
+        ret = []
+        current = []
+        hole = False
+        rindex = start
+
+        if start > 0:
+            # go the the previous starting element ...
+            for lindex in reversed(range(0, start)):
+                if self.starting(lindex):
+                    start = lindex
+                    break
+
+        for rindex in range(start, end):
+            for starting in self.starting(rindex):
+                if starting not in current:
+                    current.append(starting)
+            for ending in self.ending(rindex):
+                if ending in current:
+                    current.remove(ending)
+            if not current and not hole:
+                # Open a new hole match
+                hole = True
+                ret.append(Match(rindex, None, input_string=self.input_string))
+            elif current and hole:
+                # Close current hole match
+                hole = False
+                self._close_hole(ret[-1], rindex, formatter)
+
+        if ret and hole:
+            lindex = rindex
+
+            # go the the next starting element ...
+            for rindex in range(lindex, self.max_end):
+                if self.starting(rindex):
+                    break
+
+            self._close_hole(ret[-1], rindex, formatter)
+        return filter_index(ret, predicate, index)
+
     @property
     def names(self):
         """
@@ -278,9 +346,9 @@ class Matches(_BaseMatches):
     A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
     Dedicated for non markers matches, it contains a markers list.
     """
-    def __init__(self, *matches):
+    def __init__(self, matches=None, input_string=None):
         self.markers = Markers()
-        super(Matches, self).__init__(*matches)
+        super(Matches, self).__init__(matches=matches, input_string=input_string)
 
     def _add_match(self, match):
         assert not match.marker, "A marker match should not be added to <Matches> object"
@@ -292,9 +360,9 @@ class Markers(_BaseMatches):
     A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
     Dedicated to markers matches.
     """
-    def __init__(self, *matches):
+    def __init__(self, matches=None, input_string=None):
         self._index_dict = defaultdict(Markers._base)
-        super(Markers, self).__init__(*matches)
+        super(Markers, self).__init__(matches=None, input_string=input_string)
 
     def _add_match(self, match):
         assert match.marker, "A non-marker match should not be added to <Markers> object"

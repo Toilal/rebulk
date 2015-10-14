@@ -10,13 +10,13 @@ import rebulk.test.rules_module as rm
 
 
 def test_rule_priority():
-    matches = Matches(Match(1, 2))
+    matches = Matches([Match(1, 2)])
 
     rules = Rules(Rule1, Rule2())
 
     rules.execute_all_rules(matches, {})
     assert len(matches) == 0
-    matches = Matches(Match(1, 2))
+    matches = Matches([Match(1, 2)])
 
     rules = Rules(Rule1(), Rule0)
 
@@ -26,7 +26,7 @@ def test_rule_priority():
 
 
 def test_rule_disabled():
-    matches = Matches(Match(1, 2))
+    matches = Matches([Match(1, 2)])
 
     rules = Rules(Rule1Disabled(), Rule2())
 
@@ -37,7 +37,7 @@ def test_rule_disabled():
 
 
 def test_rule_when():
-    matches = Matches(Match(1, 2))
+    matches = Matches([Match(1, 2)])
 
     rules = Rules(Rule3())
 
@@ -45,7 +45,7 @@ def test_rule_when():
     assert len(matches) == 1
     assert matches[0] == Match(1, 2)
 
-    matches = Matches(Match(1, 2))
+    matches = Matches([Match(1, 2)])
 
     rules.execute_all_rules(matches, {'when': True})
     assert len(matches) == 2
@@ -56,7 +56,7 @@ def test_rule_when():
 def test_rule_module():
     rules = Rules(rm)
 
-    matches = Matches(Match(1, 2))
+    matches = Matches([Match(1, 2)])
     rules.execute_all_rules(matches, {})
 
     assert len(matches) == 1

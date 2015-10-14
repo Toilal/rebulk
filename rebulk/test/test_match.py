@@ -154,6 +154,30 @@ class TestMatchesClass(object):
         assert len(matches.ending(3)) == 0
         assert len(matches.ending(4)) == 0
 
+    def test_holes(self):
+        input_string = '1'*10+'2'*10+'3'*10+'4'*10+'5'*10+'6'*10+'7'*10
+
+        hole1 = Match(0, 10, input_string=input_string)
+        hole2 = Match(20, 30, input_string=input_string)
+        hole3 = Match(30, 40, input_string=input_string)
+        hole4 = Match(60, 70, input_string=input_string)
+
+        matches = Matches([hole1, hole2], input_string=input_string)
+        matches.append(hole3)
+        matches.append(hole4)
+
+        holes = list(matches.holes())
+        assert len(holes) == 2
+        assert holes[0].span == (10, 20)
+        assert holes[0].value == '2'*10
+        assert holes[1].span == (40, 60)
+        assert holes[1].value == '5' * 10 + '6' * 10
+
+        holes = list(matches.holes(5, 15))
+        assert len(holes) == 1
+        assert holes[0].span == (10, 20)
+        assert holes[0].value == '2'*10
+
     def test_get_slices(self):
         matches = Matches()
         matches.append(self.match1)
@@ -210,7 +234,7 @@ class TestMatchesClass(object):
         assert matches[1] == self.match4
         assert matches[2] == self.match3
 
-    def test_iterator_constructor(self):
+    def test_constructor(self):
         matches = Matches([self.match1, self.match2, self.match3, self.match4])
 
         assert len(matches) == 4
@@ -221,10 +245,11 @@ class TestMatchesClass(object):
         assert list(matches.ending(3)) == [self.match2]
         assert list(matches.ending(4)) == [self.match3, self.match4]
 
-    def test_constructor(self):
-        matches = Matches(self.match1, self.match2, self.match3, self.match4)
+    def test_constructor_kwargs(self):
+        matches = Matches([self.match1, self.match2, self.match3, self.match4], input_string="test")
 
         assert len(matches) == 4
+        assert matches.input_string == "test"
         assert list(matches.starting(0)) == [self.match1]
         assert list(matches.ending(2)) == [self.match1]
         assert list(matches.starting(2)) == [self.match2, self.match4]

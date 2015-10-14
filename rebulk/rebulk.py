@@ -208,7 +208,7 @@ class Rebulk(object):
         :return: A custom list of matches
         :rtype: Matches
         """
-        matches = Matches()
+        matches = Matches(input_string=string)
         context = {}
 
         for pattern in self._patterns:

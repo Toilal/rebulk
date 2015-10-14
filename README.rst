@@ -312,6 +312,11 @@ It has the following additional methods and properties on it.
 
   Retrieves a list of ``Match`` objects for given range.
 
+- ``holes(start=0, end=None, formatter=None, predicate=None, index=None)``
+
+  Retrieves a list of *hole* ``Match`` objects for given range. A hole match is created for ranges that where no match
+  is available.
+
 - ``names``
 
   Retrieves a sequence of all ``Match.name`` properties.
