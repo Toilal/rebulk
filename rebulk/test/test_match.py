@@ -178,6 +178,11 @@ class TestMatchesClass(object):
         assert holes[0].span == (10, 20)
         assert holes[0].value == '2'*10
 
+        holes = list(matches.holes(5, 15, formatter=lambda value: "formatted"))
+        assert len(holes) == 1
+        assert holes[0].span == (10, 20)
+        assert holes[0].value == "formatted"
+
     def test_get_slices(self):
         matches = Matches()
         matches.append(self.match1)

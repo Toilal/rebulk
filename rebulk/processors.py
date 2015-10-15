@@ -38,7 +38,7 @@ def conflict_prefer_longer(matches):
 
 def remove_private(matches):
     """
-    Removes matches from private patterns.
+    Removes private matches.
 
     :param matches:
     :type matches:
@@ -47,7 +47,7 @@ def remove_private(matches):
     """
     to_remove_matches = set()
     for match in matches:
-        if match.pattern.private:
+        if match.private:
             to_remove_matches.add(match)
 
     for match in list(to_remove_matches):

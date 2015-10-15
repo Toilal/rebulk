@@ -223,7 +223,7 @@ configured using ``functools.partial`` to map them to function accepting a singl
 
 - ``private``
 
-  If ``True``, ``Match`` objects generated from this pattern is available internally only. They will be removed at
+  If ``True``, ``Match`` objects generated from this pattern are available internally only. They will be removed at
   the end of ``Rebulk.matches`` method call.
 
 - ``marker``
