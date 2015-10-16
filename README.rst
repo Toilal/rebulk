@@ -262,7 +262,8 @@ and all subgroups (1, 2, ... n) will be converted to ``children`` matches of the
     'two = 2'
     'three = 3'
 
-It's possible to retrieve only children by using ``children`` parameters.
+It's possible to retrieve only children by using ``children`` parameters. You can also customize the way structure
+is generated with ``every``, ``private_parent`` and ``private_children`` parameters.
 
 .. code-block:: python
 

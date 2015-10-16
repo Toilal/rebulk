@@ -27,8 +27,9 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, private=False,
-                 marker=False, format_all=False, validate_all=False):
+    def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, every=False,
+                 private_parent=False, private_children=False, private=False, marker=False, format_all=False,
+                 validate_all=False):
         """
         :param name: Name of this pattern
         :type name: str
@@ -43,8 +44,14 @@ class Pattern(object):
         passed as a shortcut for {None: validator}. If return value is False, match will be ignored.
         :param children: generates children instead of parent
         :type children: bool
+        :param every: generates both parent and children.
+        :type every: bool
         :param private: flag this pattern as beeing private.
         :type private: bool
+        :param private_parent: force yielding of parent and flag parent matches as private.
+        :type private_parent: bool
+        :param private_parent: force yielding of children and flag children matches as private.
+        :type private_parent: bool
         :param marker: flag this pattern as beeing a marker.
         :type private: bool
         :param format_all if True, pattern will format every match in the hierarchy (even match not yield).
@@ -57,8 +64,11 @@ class Pattern(object):
         self.tags = ensure_list(tags)
         self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)
         self.validators, self._default_validator = ensure_dict(validator, lambda match: True)
+        self.every = every
         self.children = children
         self.private = private
+        self.private_parent = private_parent
+        self.private_children = private_children
         self.marker = marker
         self.format_all = format_all
         self.validate_all = validate_all
@@ -71,27 +81,37 @@ class Pattern(object):
         :return:
         :rtype:
         """
-        return self.children and match.children
+        return match.children and (self.children or self.every)
 
-    def _match_parent(self, match, input_string, yield_children):
+    def _yield_parent(self):
+        """
+        Does this mat
+        :param match:
+        :type match:
+        :return:
+        :rtype:
+        """
+        return not self.children or self.every
+
+    def _match_parent(self, match, input_string, yield_parent):
         """
         Handle a parent match
         :param match:
         :type match:
         :param input_string:
         :type input_string:
-        :param yield_children:
-        :type yield_children:
+        :param yield_parent:
+        :type yield_parent:
         :return:
         :rtype:
         """
         if match.value is None:
             value = input_string[match.start:match.end]
-            if not yield_children or self.format_all:
+            if yield_parent or self.format_all:
                 formatter = self.formatters.get(match.name, self._default_formatter)
                 value = formatter(value)
             match.value = value
-        if not yield_children or self.validate_all:
+        if yield_parent or self.validate_all:
             validator = self.validators.get(match.name, self._default_validator)
             if not validator(match):
                 return False
@@ -131,9 +151,10 @@ class Pattern(object):
         :rtype: iterator[Match]
         """
         for pattern in self.patterns:
+            yield_parent = self._yield_parent()
             for match in self._match(pattern, input_string):
                 yield_children = self._yield_children(match)
-                if not self._match_parent(match, input_string, yield_children):
+                if not self._match_parent(match, input_string, yield_parent):
                     break
                 validated = True
                 for child in match.children:
@@ -141,11 +162,16 @@ class Pattern(object):
                         validated = False
                         break
                 if validated:
-                    if yield_children:
+                    if self.private_parent:
+                        match.private = True
+                    if self.private_children:
+                        for child in match.children:
+                            child.private = True
+                    if yield_parent or self.private_parent:
+                        yield match
+                    if yield_children or self.private_children:
                         for child in match.children:
                             yield child
-                    else:
-                        yield match
 
     @abstractproperty
     def patterns(self):  # pragma: no cover

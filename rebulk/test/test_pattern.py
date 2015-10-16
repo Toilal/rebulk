@@ -236,6 +236,90 @@ class TestRePattern(object):
         assert group2.name == "param2"
         assert group2.value == "violin"
 
+    def test_children_parent_private(self):
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", children=True, private_parent=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 3
+        parent, group1, group2 = matches
+
+        assert isinstance(group1, Match)
+        assert parent.private
+        assert parent.pattern == pattern
+        assert parent.span == (28, 41)
+        assert parent.name is None
+        assert parent.value == "Celtic violin"
+
+        assert isinstance(group1, Match)
+        assert not group1.private
+        assert group1.pattern == pattern
+        assert group1.span == (28, 34)
+        assert group1.name == "param1"
+        assert group1.value == "Celtic"
+
+        assert isinstance(group2, Match)
+        assert not group2.private
+        assert group2.pattern == pattern
+        assert group2.span == (35, 41)
+        assert group2.name == "param2"
+        assert group2.value == "violin"
+
+    def test_parent_children_private(self):
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", private_children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 3
+        parent, group1, group2 = matches
+
+        assert isinstance(group1, Match)
+        assert not parent.private
+        assert parent.pattern == pattern
+        assert parent.span == (28, 41)
+        assert parent.name is None
+        assert parent.value == "Celtic violin"
+
+        assert isinstance(group1, Match)
+        assert group1.private
+        assert group1.pattern == pattern
+        assert group1.span == (28, 34)
+        assert group1.name == "param1"
+        assert group1.value == "Celtic"
+
+        assert isinstance(group2, Match)
+        assert group2.private
+        assert group2.pattern == pattern
+        assert group2.span == (35, 41)
+        assert group2.name == "param2"
+        assert group2.value == "violin"
+
+    def test_every(self):
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", every=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 3
+        parent, group1, group2 = matches
+
+        assert isinstance(group1, Match)
+        assert not parent.private
+        assert parent.pattern == pattern
+        assert parent.span == (28, 41)
+        assert parent.name is None
+        assert parent.value == "Celtic violin"
+
+        assert isinstance(group1, Match)
+        assert not group1.private
+        assert group1.pattern == pattern
+        assert group1.span == (28, 34)
+        assert group1.name == "param1"
+        assert group1.value == "Celtic"
+
+        assert isinstance(group2, Match)
+        assert not group2.private
+        assert group2.pattern == pattern
+        assert group2.span == (35, 41)
+        assert group2.name == "param2"
+        assert group2.value == "violin"
+
     def test_matches_kwargs(self):
         pattern = RePattern("He.rew", name="test", value="HE")
         matches = list(pattern.matches(self.input_string))
