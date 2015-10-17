@@ -183,6 +183,9 @@ class TestMatchesClass(object):
         assert holes[0].span == (10, 15)
         assert holes[0].value == "formatted"
 
+        holes = list(matches.holes(5, 15, predicate=lambda hole: False))
+        assert len(holes) == 0
+
     def test_get_slices(self):
         matches = Matches()
         matches.append(self.match1)

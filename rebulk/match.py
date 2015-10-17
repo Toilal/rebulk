@@ -184,23 +184,6 @@ class _BaseMatches(MutableSequence):
                 ret.append(match)
         return filter_index(ret, predicate, index)
 
-    def _close_hole(self, hole_match, end, formatter=None):
-        """
-        Close a hole match by setting it's value using provided formatter.
-        :param hole_match:
-        :type hole_match:
-        :param end:
-        :type end:
-        :param formatter:
-        :type formatter:
-        :return:
-        :rtype:
-        """
-        hole_match.end = end
-        hole_match.value = self.input_string[hole_match.start:hole_match.end]
-        if formatter:
-            hole_match.value = formatter(hole_match.value)
-
     def holes(self, start=0, end=None, formatter=None, predicate=None, index=None):  # pylint: disable=too-many-branches
         """
         Retrieves a set of Match objects that are not defined in given range.
@@ -242,11 +225,11 @@ class _BaseMatches(MutableSequence):
             if not current and not hole:
                 # Open a new hole match
                 hole = True
-                ret.append(Match(max(rindex, start), None, input_string=self.input_string))
+                ret.append(Match(max(rindex, start), None, input_string=self.input_string, formatter=formatter))
             elif current and hole:
                 # Close current hole match
                 hole = False
-                self._close_hole(ret[-1], rindex, formatter)
+                ret[-1].end = rindex
 
         if ret and hole:
             lindex = rindex
@@ -256,7 +239,7 @@ class _BaseMatches(MutableSequence):
                 if self.starting(rindex):
                     break
 
-            self._close_hole(ret[-1], min(rindex, end), formatter)
+            ret[-1].end = min(rindex, end)
         return filter_index(ret, predicate, index)
 
     @property
@@ -407,7 +390,7 @@ class Match(object):
     Object storing values related to a single match
     """
     def __init__(self, start, end, value=None, name=None, tags=None, marker=None, parent=None, private=None,
-                 pattern=None, input_string=None):
+                 pattern=None, input_string=None, formatter=None):
         self.start = start
         self.end = end
         self.name = name
@@ -416,6 +399,7 @@ class Match(object):
         self.marker = marker
         self.parent = parent
         self.input_string = input_string
+        self.formatter = formatter
         self.pattern = pattern
         self.private = private
         self.children = []
@@ -426,6 +410,41 @@ class Match(object):
         2-tuple with start and end indices of the match
         """
         return self.start, self.end
+
+    @property
+    def value(self):
+        """
+        Get the value of the match, using formatter if defined.
+        :return:
+        :rtype:
+        """
+        if self._value:
+            return self._value
+        if self.formatter:
+            return self.formatter(self.raw)
+        return self.raw
+
+    @value.setter
+    def value(self, value):
+        """
+        Set the value (hardcode)
+        :param value:
+        :type value:
+        :return:
+        :rtype:
+        """
+        self._value = value  # pylint: disable=attribute-defined-outside-init
+
+    @property
+    def raw(self):
+        """
+        Get the raw value of the match, without using hardcoded value nor formatter.
+        :return:
+        :rtype:
+        """
+        if self.input_string:
+            return self.input_string[self.start:self.end]
+        return None
 
     def __len__(self):
         return self.end - self.start

@@ -93,48 +93,36 @@ class Pattern(object):
         """
         return not self.children or self.every
 
-    def _match_parent(self, match, input_string, yield_parent):
+    def _match_parent(self, match, yield_parent):
         """
         Handle a parent match
         :param match:
         :type match:
-        :param input_string:
-        :type input_string:
         :param yield_parent:
         :type yield_parent:
         :return:
         :rtype:
         """
-        if match.value is None:
-            value = input_string[match.start:match.end]
-            if yield_parent or self.format_all:
-                formatter = self.formatters.get(match.name, self._default_formatter)
-                value = formatter(value)
-            match.value = value
+        if yield_parent or self.format_all:
+            match.formatter = self.formatters.get(match.name, self._default_formatter)
         if yield_parent or self.validate_all:
             validator = self.validators.get(match.name, self._default_validator)
             if not validator(match):
                 return False
         return True
 
-    def _match_child(self, child, input_string, yield_children):
+    def _match_child(self, child, yield_children):
         """
         Handle a children match
         :param child:
         :type child:
-        :param input_string:
-        :type input_string:
         :param yield_children:
         :type yield_children:
         :return:
         :rtype:
         """
-        if child.value is None:
-            value = input_string[child.start:child.end]
-            if yield_children or self.format_all:
-                formatter = self.formatters.get(child.name, self._default_formatter)
-                value = formatter(value)
-            child.value = value
+        if yield_children or self.format_all:
+            child.formatter = self.formatters.get(child.name, self._default_formatter)
         if yield_children or self.validate_all:
             validator = self.validators.get(child.name, self._default_validator)
             if not validator(child):
@@ -154,11 +142,11 @@ class Pattern(object):
             yield_parent = self._yield_parent()
             for match in self._match(pattern, input_string):
                 yield_children = self._yield_children(match)
-                if not self._match_parent(match, input_string, yield_parent):
+                if not self._match_parent(match, yield_parent):
                     break
                 validated = True
                 for child in match.children:
-                    if not self._match_child(child, input_string, yield_children):
+                    if not self._match_child(child, yield_children):
                         validated = False
                         break
                 if validated:
@@ -335,7 +323,7 @@ def _filter_match_kwargs(kwargs, children=False):
     :rtype: dict
     """
     kwargs = kwargs.copy()
-    for key in ('pattern', 'start', 'end', 'parent'):
+    for key in ('pattern', 'start', 'end', 'parent', 'formatter'):
         if key in kwargs:
             del kwargs[key]
     if children:

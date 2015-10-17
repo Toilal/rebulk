@@ -722,11 +722,14 @@ class TestValidator(object):
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
+        for match in matches:
+            assert match.value is not None
 
         with pytest.raises(ValueError):
-            pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, format_all=True,
-                                children=True)
-            list(pattern.matches(self.input_string))
+            pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, format_all=True)
+            matches = list(pattern.matches(self.input_string))
+            for match in matches:
+                assert match.value is not None
 
     def test_single_functional(self):
         def digit(input_string):
