@@ -45,12 +45,8 @@ def remove_private(matches):
     :return:
     :rtype:
     """
-    to_remove_matches = set()
-    for match in matches:
+    for match in list(matches):
         if match.private:
-            to_remove_matches.add(match)
-
-    for match in list(to_remove_matches):
-        matches.remove(match)
+            matches.remove(match)
 
     return matches
