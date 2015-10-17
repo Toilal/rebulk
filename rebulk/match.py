@@ -164,7 +164,7 @@ class _BaseMatches(MutableSequence):
 
     def range(self, start=0, end=None, predicate=None, index=None):
         """
-        Retrieves a set of Match objects that are available in given range
+        Retrieves a set of Match objects that are available in given range, sorted from start to end.
         :param start: the starting index
         :type start: int
         :param end: the ending index
@@ -179,7 +179,7 @@ class _BaseMatches(MutableSequence):
         if end is None:
             end = self.max_end
         ret = []
-        for match in self:
+        for match in sorted(self):
             if match.start < end and match.end > start:
                 ret.append(match)
         return filter_index(ret, predicate, index)

@@ -311,7 +311,7 @@ It has the following additional methods and properties on it.
 
 - ``range(start=0, end=None, predicate=None, index=None)``
 
-  Retrieves a list of ``Match`` objects for given range.
+  Retrieves a list of ``Match`` objects for given range, sorted from start to end.
 
 - ``holes(start=0, end=None, formatter=None, predicate=None, index=None)``
 
