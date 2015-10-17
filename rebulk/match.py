@@ -223,15 +223,16 @@ class _BaseMatches(MutableSequence):
         current = []
         hole = False
         rindex = start
+        loop_start = start
 
         if start > 0:
             # go the the previous starting element ...
             for lindex in reversed(range(0, start)):
                 if self.starting(lindex):
-                    start = lindex
+                    loop_start = lindex
                     break
 
-        for rindex in range(start, end):
+        for rindex in range(loop_start, end):
             for starting in self.starting(rindex):
                 if starting not in current:
                     current.append(starting)
@@ -241,7 +242,7 @@ class _BaseMatches(MutableSequence):
             if not current and not hole:
                 # Open a new hole match
                 hole = True
-                ret.append(Match(rindex, None, input_string=self.input_string))
+                ret.append(Match(max(rindex, start), None, input_string=self.input_string))
             elif current and hole:
                 # Close current hole match
                 hole = False
@@ -255,7 +256,7 @@ class _BaseMatches(MutableSequence):
                 if self.starting(rindex):
                     break
 
-            self._close_hole(ret[-1], rindex, formatter)
+            self._close_hole(ret[-1], min(rindex, end), formatter)
         return filter_index(ret, predicate, index)
 
     @property
