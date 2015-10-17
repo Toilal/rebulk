@@ -315,7 +315,12 @@ class FunctionalPattern(Pattern):
                         options.update(args)
                     yield call(Match, pattern=self, input_string=input_string, **options)
                 else:
-                    yield call(Match, *args, pattern=self, input_string=input_string, **self._match_kwargs)
+                    kwargs = self._match_kwargs
+                    if isinstance(args[-1], dict):
+                        kwargs = dict(kwargs)
+                        kwargs.update(args[-1])
+                        args = args[:-1]
+                    yield call(Match, *args, pattern=self, input_string=input_string, **kwargs)
 
 
 def _filter_match_kwargs(kwargs, children=False):

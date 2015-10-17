@@ -459,7 +459,7 @@ class TestFunctionalPattern(object):
                 yield (i, i + len("annoyed"))
             i = input_string.find("Hebrew")
             if i > -1:
-                yield {"start": i, "end": i + len("Hebrew")}
+                yield (i, {"end": i + len("Hebrew")})
 
         pattern = FunctionalPattern(func, label="test")
 
