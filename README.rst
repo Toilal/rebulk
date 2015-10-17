@@ -399,6 +399,8 @@ objects, or any other truthy object. When triggered, ``Rule.then`` method is cal
 When many rules are registered, it can be useful to set ``priority`` class variable to define a priority integer
 between all rule executions (higher priorities will be executed first).
 
+For all rules with the same ``priority`` value, ``when`` is called before, and ``then`` is called after all.
+
 .. code-block:: python
 
     >>> from rebulk import Rule

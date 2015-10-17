@@ -5,6 +5,7 @@ Abstract rule class definition and rule engine implementation
 """
 from abc import ABCMeta, abstractmethod
 import inspect
+from itertools import groupby
 
 import six
 
@@ -124,7 +125,8 @@ class Rules(list):
 
     def execute_all_rules(self, matches, context):
         """
-        Execute all rules from this rules list
+        Execute all rules from this rules list. All when condition with same priority will be performed before
+        calling then actions.
 
         :param matches:
         :type matches:
@@ -134,28 +136,18 @@ class Rules(list):
         :rtype:
         """
         ret = []
-        for rule in sorted(self):
-            when_response = self.execute_rule(rule, matches, context)
-            if when_response:
+        rules = sorted(self)
+        for _, priority_rules in groupby(rules, lambda rule: rule.priority):
+            then_futures = []
+            for rule in priority_rules:
+                if rule.enabled(context):
+                    when_response = rule.when(matches, context)
+                    if when_response:
+                        then_futures.append((rule, matches, when_response, context))
+            for then_future in then_futures:
+                rule = then_future[0]
+                args = then_future[1:]
+                when_response = then_future[2]
+                rule.then(*args)
                 ret.append((rule, when_response))
         return ret
-
-    @staticmethod
-    def execute_rule(rule, matches, context):
-        """
-        Execute a single rule
-
-        :param rule:
-        :type rule:
-        :param matches:
-        :type matches:
-        :param context:
-        :type context:
-        :return:
-        :rtype:
-        """
-        if rule.enabled(context):
-            when_response = rule.when(matches, context)
-            if when_response:
-                rule.then(matches, when_response, context)
-                return when_response
