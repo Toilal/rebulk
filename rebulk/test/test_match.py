@@ -154,6 +154,47 @@ class TestMatchesClass(object):
         assert len(matches.ending(3)) == 0
         assert len(matches.ending(4)) == 0
 
+    def test_crop(self):
+        input_string = "abcdefghijklmnopqrstuvwxyz"
+
+        match1 = Match(1, 10, input_string=input_string)
+        match2 = Match(0, 2, input_string=input_string)
+        match3 = Match(8, 15, input_string=input_string)
+
+        ret = match1.crop(match2, match3.span)
+
+        assert len(ret) == 1
+
+        assert ret[0].span == (2, 8)
+        assert ret[0].value == "cdefgh"
+
+        ret = match1.crop((1, 10))
+        assert len(ret) == 0
+
+        ret = match1.crop((1, 3))
+        assert len(ret) == 1
+        assert ret[0].span == (3, 10)
+
+        ret = match1.crop((7, 10))
+        assert len(ret) == 1
+        assert ret[0].span == (1, 7)
+
+        ret = match1.crop((0, 12))
+        assert len(ret) == 0
+
+        ret = match1.crop((4, 6))
+        assert len(ret) == 2
+
+        assert ret[0].span == (1, 4)
+        assert ret[1].span == (6, 10)
+
+        ret = match1.crop((3, 5), (7, 9))
+        assert len(ret) == 3
+
+        assert ret[0].span == (1, 3)
+        assert ret[1].span == (5, 7)
+        assert ret[2].span == (9, 10)
+
     def test_holes(self):
         input_string = '1'*10+'2'*10+'3'*10+'4'*10+'5'*10+'6'*10+'7'*10
 

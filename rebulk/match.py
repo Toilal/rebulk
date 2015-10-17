@@ -4,6 +4,7 @@
 Classes and functions related to matches
 """
 from collections import defaultdict, MutableSequence
+import copy
 import six
 
 #from .ordered_set import OrderedSet
@@ -445,6 +446,40 @@ class Match(object):
         if self.input_string:
             return self.input_string[self.start:self.end]
         return None
+
+    def crop(self, *crops, predicate=None, index=None):
+        """
+        crop the match with given Match objects or spans tuples
+        :param crops:
+        :type crops:
+        :return: a list of Match objects
+        :rtype: list[Match]
+        """
+        initial = copy.copy(self)
+        ret = [initial]
+        for crop in crops:
+            if hasattr(crop, 'span'):
+                start, end = crop.span
+            else:
+                start, end = crop
+            for current in list(ret):
+                if start <= current.start and end >= current.end:
+                    # self is included in crop, remove current ...
+                    ret.remove(current)
+                elif start >= current.start and end <= current.end:
+                    # crop is included in self, split current ...
+                    right = copy.copy(current)
+                    current.end = start
+                    if len(current) <= 0:
+                        ret.remove(current)
+                    right.start = end
+                    if len(right) > 0:
+                        ret.append(right)
+                elif end <= current.end and end > current.start:
+                    current.start = end
+                elif start >= current.start and start < current.end:
+                    current.end = start
+        return filter_index(ret, predicate, index)
 
     def __len__(self):
         return self.end - self.start
