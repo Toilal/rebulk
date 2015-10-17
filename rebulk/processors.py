@@ -17,7 +17,7 @@ def conflict_prefer_longer(matches):
     :rtype: list[rebulk.match.Match]
     """
     to_remove_matches = set()
-    for match in matches:
+    for match in filter(lambda match: not match.private, matches):
         conflicting_matches = set()
 
         for i in range(*match.span):
@@ -26,7 +26,7 @@ def conflict_prefer_longer(matches):
 
         if conflicting_matches:
             # keep the match only if it's the longest
-            for conflicting_match in conflicting_matches:
+            for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
                 if len(conflicting_match) < len(match):
                     to_remove_matches.add(conflicting_match)
 
