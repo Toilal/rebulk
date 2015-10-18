@@ -59,12 +59,19 @@ If multiple ``Match`` objects are found at the same position, only the longer on
 
 String Patterns
 ---------------
-String patterns are based on `str.find`_ method to find matches, but returns all matches in the string.
+String patterns are based on `str.find`_ method to find matches, but returns all matches in the string. ``ignore_case``
+can be enabled to ignore case.
 
 .. code-block:: python
 
     >>> Rebulk().string('la').matches("lalalilala")
     [<la:(0, 2)>, <la:(2, 4)>, <la:(6, 8)>, <la:(8, 10)>]
+
+    >>> Rebulk().string('la').matches("LalAlilAla")
+    [<la:(8, 10)>]
+
+    >>> Rebulk().string('la', ignore_case=True).matches("LalAlilAla")
+    [<La:(0, 2)>, <lA:(2, 4)>, <lA:(6, 8)>, <la:(8, 10)>]
 
 You can define several patterns with a single ``string`` method call.
 

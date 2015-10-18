@@ -26,6 +26,19 @@ class TestStringPattern(object):
         assert matches[0].span == (28, 34)
         assert matches[0].value == "Celtic"
 
+    def test_ignore_case(self):
+        pattern = StringPattern("celtic", label="test", ignore_case=False)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
+        pattern = StringPattern("celtic", label="test", ignore_case=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+        assert matches[0].value == "Celtic"
+
+
     def test_no_match(self):
         pattern = StringPattern("Python")
 

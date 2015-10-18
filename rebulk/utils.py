@@ -6,7 +6,7 @@ Various utilities functions
 from types import GeneratorType
 
 
-def find_all(string, sub, start=None, end=None):
+def find_all(string, sub, start=None, end=None, ignore_case=False):
     """
     Return all indices in string s where substring sub is
     found, such that sub is contained in the slice s[start:end].
@@ -39,6 +39,9 @@ def find_all(string, sub, start=None, end=None):
     :return: all indices in the input string
     :rtype: __generator[str]
     """
+    if ignore_case:
+        sub = sub.lower()
+        string = string.lower()
     while True:
         start = string.find(sub, start, end)
         if start == -1:
