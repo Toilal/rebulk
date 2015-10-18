@@ -404,6 +404,8 @@ class Match(object):
         self.pattern = pattern
         self.private = private
         self.children = []
+        self._raw_start = None
+        self._raw_end = None
 
     @property
     def span(self):
@@ -437,6 +439,46 @@ class Match(object):
         self._value = value  # pylint: disable=attribute-defined-outside-init
 
     @property
+    def raw_start(self):
+        """
+        start index of raw value
+        :return:
+        :rtype:
+        """
+        if self._raw_start is None:
+            return self.start
+        return self._raw_start
+
+    @raw_start.setter
+    def raw_start(self, value):
+        """
+        Set start index of raw value
+        :return:
+        :rtype:
+        """
+        self._raw_start = value
+
+    @property
+    def raw_end(self):
+        """
+        end index of raw value
+        :return:
+        :rtype:
+        """
+        if self._raw_end is None:
+            return self.end
+        return self._raw_end
+
+    @raw_end.setter
+    def raw_end(self, value):
+        """
+        Set end index of raw value
+        :return:
+        :rtype:
+        """
+        self._raw_end = value
+
+    @property
     def raw(self):
         """
         Get the raw value of the match, without using hardcoded value nor formatter.
@@ -444,7 +486,7 @@ class Match(object):
         :rtype:
         """
         if self.input_string:
-            return self.input_string[self.start:self.end]
+            return self.input_string[self.raw_start:self.raw_end]
         return None
 
     def crop(self, *crops, predicate=None, index=None):

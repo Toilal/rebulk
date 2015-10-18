@@ -367,6 +367,26 @@ class TestMaches(object):
         selection = matches.named("2-re", lambda m: "re" in m.tags, index=1000)
         assert selection is None
 
+    def test_raw(self):
+        input_string = "0123456789"
+
+        match = Match(0, 10, input_string=input_string, formatter=lambda s: s*2)
+
+        assert match.value == match.raw * 2
+        assert match.raw == input_string
+
+        match.raw_end = 9
+        match.raw_start = 1
+
+        assert match.value == match.raw * 2
+        assert match.raw == input_string[1:9]
+
+        match.raw_end = None
+        match.raw_start = None
+
+        assert match.value == match.raw * 2
+        assert match.raw == input_string
+
     def test_to_dict(self):
         input_string = "One Two Two Three"
 
