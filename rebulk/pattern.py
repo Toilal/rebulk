@@ -143,7 +143,7 @@ class Pattern(object):
             for match in self._match(pattern, input_string):
                 yield_children = self._yield_children(match)
                 if not self._match_parent(match, yield_parent):
-                    break
+                    continue
                 validated = True
                 for child in match.children:
                     if not self._match_child(child, yield_children):
