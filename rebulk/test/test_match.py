@@ -161,7 +161,7 @@ class TestMatchesClass(object):
         match2 = Match(0, 2, input_string=input_string)
         match3 = Match(8, 15, input_string=input_string)
 
-        ret = match1.crop(match2, match3.span)
+        ret = match1.crop([match2, match3.span])
 
         assert len(ret) == 1
 
@@ -188,7 +188,7 @@ class TestMatchesClass(object):
         assert ret[0].span == (1, 4)
         assert ret[1].span == (6, 10)
 
-        ret = match1.crop((3, 5), (7, 9))
+        ret = match1.crop([(3, 5), (7, 9)])
         assert len(ret) == 3
 
         assert ret[0].span == (1, 3)

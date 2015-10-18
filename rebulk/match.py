@@ -9,6 +9,7 @@ import six
 
 #from .ordered_set import OrderedSet
 from .loose import ensure_list, filter_index
+from .utils import is_iterable
 
 
 class MatchesDict(dict):
@@ -489,14 +490,16 @@ class Match(object):
             return self.input_string[self.raw_start:self.raw_end]
         return None
 
-    def crop(self, *crops, predicate=None, index=None):
+    def crop(self, crops, predicate=None, index=None):
         """
         crop the match with given Match objects or spans tuples
         :param crops:
-        :type crops:
+        :type crops: list or object
         :return: a list of Match objects
         :rtype: list[Match]
         """
+        if not is_iterable(crops) or len(crops) == 2 and isinstance(crops[0], int):
+            crops = [crops]
         initial = copy.copy(self)
         ret = [initial]
         for crop in crops:
