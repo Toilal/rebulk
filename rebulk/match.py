@@ -84,10 +84,10 @@ class _BaseMatches(MutableSequence):
         """
         current = match.start
         while current > -1:
-            current -= 1
             previous_matches = self.ending(current)
             if previous_matches:
                 return filter_index(previous_matches, predicate, index)
+            current -= 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
     def next(self, match, predicate=None, index=None):
@@ -102,12 +102,12 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
-        current = match.start
+        current = match.start + 1
         while current <= self.max_end:
-            current += 1
             next_matches = self.starting(current)
             if next_matches:
                 return filter_index(next_matches, predicate, index)
+            current += 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
     def named(self, name, predicate=None, index=None):
