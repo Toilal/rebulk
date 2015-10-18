@@ -8,6 +8,7 @@ import inspect
 from itertools import groupby
 
 import six
+from .utils import is_iterable
 
 
 @six.add_metaclass(ABCMeta)
@@ -68,6 +69,30 @@ class Rule(object):
 
     def __repr__(self):
         return self.name if self.name else self.__class__.__name__
+
+
+class RemoveMatchRule(Rule):  # pylint: disable=abstract-method
+    """
+    Remove matches returned by then
+    """
+    def then(self, matches, when_response, context):
+        if is_iterable(when_response):
+            for match in when_response:
+                matches.remove(match)
+        else:
+            matches.remove(when_response)
+
+
+class AppendMatchRule(Rule):  # pylint: disable=abstract-method
+    """
+    Append matches returned by then
+    """
+    def then(self, matches, when_response, context):
+        if is_iterable(when_response):
+            for match in when_response:
+                matches.append(match)
+        else:
+            matches.append(when_response)
 
 
 class Rules(list):

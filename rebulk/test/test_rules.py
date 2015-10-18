@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, invalid-name
+from rebulk.test.default_rules_module import RuleRemove0, RuleAppend0, RuleAppend1, RuleRemove1
 
 from ..rules import Rules
 from ..match import Matches, Match
@@ -51,6 +52,36 @@ def test_rule_when():
     assert len(matches) == 2
     assert matches[0] == Match(1, 2)
     assert matches[1] == Match(3, 4)
+
+
+def test_default_rules():
+    rules = Rules(RuleRemove0)
+
+    matches = Matches([Match(1, 2)])
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches) == 0
+
+    rules = Rules(RuleAppend0)
+
+    matches = Matches([Match(1, 2)])
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches) == 2
+
+    rules = Rules(RuleRemove1)
+
+    matches = Matches([Match(1, 2)])
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches) == 0
+
+    rules = Rules(RuleAppend1)
+
+    matches = Matches([Match(1, 2)])
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches) == 2
 
 
 def test_rule_module():
