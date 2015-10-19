@@ -36,3 +36,22 @@ def test_conflict_prefer_longer():
     values = [x.value for x in processed_matches]
 
     assert values == ["ijklmnopqrst"]
+
+    input_string = "123456789"
+
+    pattern = StringPattern("123", "456789")
+    matches = Matches(pattern.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+
+    values = [x.value for x in processed_matches]
+    assert values == ["123", "456789"]
+
+    pattern = StringPattern("123456", "789")
+    matches = Matches(pattern.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+
+    values = [x.value for x in processed_matches]
+    assert values == ["123456", "789"]
+
