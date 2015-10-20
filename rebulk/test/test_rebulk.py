@@ -295,3 +295,28 @@ class TestMarkers(object):
         assert matches[0].value == "word"
 
         assert not matches.markers
+
+
+class TestUnicode(object):
+    def test_rebulk_simple(self):
+        input_string = u"敏捷的棕色狐狸跳過懶狗"
+
+        rebulk = Rebulk()
+
+        rebulk.string(u"敏")
+        rebulk.regex(u"捷")
+
+        def func(input_string):
+            i = input_string.find(u"的")
+            if i > -1:
+                return i, i + len(u"的")
+
+        rebulk.functional(func)
+
+        matches = rebulk.matches(input_string)
+        assert len(matches) == 3
+
+        assert matches[0].value == u"敏"
+        assert matches[1].value == u"捷"
+        assert matches[2].value == u"的"
+
