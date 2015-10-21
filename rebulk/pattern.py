@@ -29,7 +29,7 @@ class Pattern(object):
 
     def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, every=False,
                  private_parent=False, private_children=False, private=False, marker=False, format_all=False,
-                 validate_all=False):
+                 validate_all=False, disabled=False):
         """
         :param name: Name of this pattern
         :type name: str
@@ -58,6 +58,8 @@ class Pattern(object):
         :type format_all: bool
         :param validate_all if True, pattern will validate every match in the hierarchy (even match not yield).
         :type validate_all: bool
+        :param disabled: if True, this pattern. Can also be a function(context).
+        :type disabled: bool|function
 
         """
         self.name = name
@@ -72,6 +74,10 @@ class Pattern(object):
         self.marker = marker
         self.format_all = format_all
         self.validate_all = validate_all
+        if not callable(disabled):
+            self.disabled = lambda context: disabled
+        else:
+            self.disabled = disabled
 
     def _yield_children(self, match):
         """
@@ -129,18 +135,20 @@ class Pattern(object):
                 return False
         return True
 
-    def matches(self, input_string):
+    def matches(self, input_string, context=None):
         """
         Computes all matches for a given input
 
         :param input_string: the string to parse
         :type input_string: str
+        :param context: the context
+        :type context: dict
         :return: matches based on input_string for this pattern
         :rtype: iterator[Match]
         """
         for pattern in self.patterns:
             yield_parent = self._yield_parent()
-            for match in self._match(pattern, input_string):
+            for match in self._match(pattern, input_string, context):
                 yield_children = self._yield_children(match)
                 if not self._match_parent(match, yield_parent):
                     continue
@@ -172,13 +180,15 @@ class Pattern(object):
         pass
 
     @abstractmethod
-    def _match(self, pattern, input_string):  # pragma: no cover
+    def _match(self, pattern, input_string, context=None):  # pragma: no cover
         """
         Computes all matches for a given pattern and input
 
         :param pattern: the pattern to use
         :param input_string: the string to parse
         :type input_string: str
+        :param context: the context
+        :type context: dict
         :return: matches based on input_string for this pattern
         :rtype: iterator[Match]
         """
@@ -200,7 +210,7 @@ class StringPattern(Pattern):
     def patterns(self):
         return self._patterns
 
-    def _match(self, pattern, input_string):
+    def _match(self, pattern, input_string, context=None):
         for index in call(find_all, input_string, pattern, **self._kwargs):
             yield call(Match, index, index + len(pattern), pattern=self, input_string=input_string,
                        **self._match_kwargs)
@@ -242,7 +252,7 @@ class RePattern(Pattern):
     def patterns(self):
         return self._patterns
 
-    def _match(self, pattern, input_string):
+    def _match(self, pattern, input_string, context=None):
         names = {v: k for k, v in pattern.groupindex.items()}
         for match_object in pattern.finditer(input_string):
             start = match_object.start()
@@ -281,8 +291,8 @@ class FunctionalPattern(Pattern):
     def patterns(self):
         return self._patterns
 
-    def _match(self, pattern, input_string):
-        ret = call(pattern, input_string, **self._kwargs)
+    def _match(self, pattern, input_string, context=None):
+        ret = call(pattern, input_string, context, **self._kwargs)
         if ret:
             if not is_iterable(ret) or isinstance(ret, dict) \
                     or (is_iterable(ret) and hasattr(ret, '__getitem__') and isinstance(ret[0], int)):

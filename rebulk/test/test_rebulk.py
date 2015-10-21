@@ -29,6 +29,31 @@ def test_rebulk_simple():
     assert matches[2].value == "over"
 
 
+def test_rebulk_context():
+    rebulk = Rebulk()
+
+    context = {'nostring': True, 'word': 'lazy'}
+
+    rebulk.string("quick", disabled=lambda context: context.get('nostring', False))
+    rebulk.regex("f.x", disabled=lambda context: context.get('noregex', False))
+
+    def func(input_string, context):
+        word = context.get('word', 'over')
+        i = input_string.find(word)
+        if i > -1:
+            return i, i + len(word)
+
+    rebulk.functional(func)
+
+    input_string = "The quick brown fox jumps over the lazy dog"
+
+    matches = rebulk.matches(input_string, context)
+    assert len(matches) == 2
+
+    assert matches[0].value == "fox"
+    assert matches[1].value == "lazy"
+
+
 def test_rebulk_prefer_longer():
     input_string = "The quick brown fox jumps over the lazy dog"
 

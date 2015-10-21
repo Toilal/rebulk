@@ -200,23 +200,27 @@ class Rebulk(object):
             extend_safe(self._rules, rebulk._rules)
         return self
 
-    def matches(self, string):
+    def matches(self, string, context=None):
         """
         Search for all matches with current configuration against input_string
         :param string: string to search into
         :type string: str
+        :param context: context to use
+        :type context: dict
         :return: A custom list of matches
         :rtype: Matches
         """
         matches = Matches(input_string=string)
-        context = {}
+        if context is None:
+            context = {}
 
         for pattern in self._patterns:
-            for match in pattern.matches(string):
-                if match.marker:
-                    matches.markers.append(match)
-                else:
-                    matches.append(match)
+            if not pattern.disabled(context):
+                for match in pattern.matches(string, context):
+                    if match.marker:
+                        matches.markers.append(match)
+                    else:
+                        matches.append(match)
 
         for func in self._processors:
             ret = call(func, matches, context)
