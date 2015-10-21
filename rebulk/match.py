@@ -3,16 +3,15 @@
 """
 Classes and functions related to matches
 """
-from collections import defaultdict, MutableSequence
+from collections import defaultdict, MutableSequence, OrderedDict
 import copy
 import six
 
-#from .ordered_set import OrderedSet
 from .loose import ensure_list, filter_index
 from .utils import is_iterable
 
 
-class MatchesDict(dict):
+class MatchesDict(OrderedDict):
     """
     A custom dict with matches property.
     """
@@ -269,7 +268,7 @@ class _BaseMatches(MutableSequence):
         :rtype: dict
         """
         ret = MatchesDict()
-        for match in self:
+        for match in sorted(self):
             value = match if details else match.value
             ret.matches[match.name].append(match)
             if match.name in ret.keys():
