@@ -396,7 +396,7 @@ class Match(object):
         self.start = start
         self.end = end
         self.name = name
-        self.value = value
+        self._value = value
         self.tags = ensure_list(tags)
         self.marker = marker
         self.parent = parent
