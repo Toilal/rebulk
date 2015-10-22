@@ -81,6 +81,9 @@ def extend_safe(target, source):
 
 
 class _Ref(object):
+    """
+    Reference for IdentitySet
+    """
     def __init__(self, value):
         self.value = value
 
@@ -92,7 +95,12 @@ class _Ref(object):
 
 
 class IdentitySet(MutableSet):
-    def __init__(self, items = []):
+    """
+    Set based on identity
+    """
+    def __init__(self, items=None):
+        if items is None:
+            items = []
         self.refs = set(map(_Ref, items))
 
     def __contains__(self, elem):
@@ -111,8 +119,15 @@ class IdentitySet(MutableSet):
         self.refs.discard(_Ref(elem))
 
     def update(self, iterable):
+        """
+        Update set with iterable
+        :param iterable:
+        :type iterable:
+        :return:
+        :rtype:
+        """
         for elem in iterable:
             self.add(elem)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return "%s(%s)" % (type(self).__name__, list(self))

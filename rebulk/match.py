@@ -391,7 +391,7 @@ class Match(object):
     Object storing values related to a single match
     """
     def __init__(self, start, end, value=None, name=None, tags=None, marker=None, parent=None, private=None,
-                 pattern=None, input_string=None, formatter=None):
+                 pattern=None, input_string=None, formatter=None, conflict_solver=None):
         self.start = start
         self.end = end
         self.name = name
@@ -403,6 +403,7 @@ class Match(object):
         self.formatter = formatter
         self.pattern = pattern
         self.private = private
+        self.conflict_solver = conflict_solver
         self.children = []
         self._raw_start = None
         self._raw_end = None
