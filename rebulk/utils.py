@@ -5,6 +5,8 @@ Various utilities functions
 """
 from types import GeneratorType
 
+from collections import MutableSet
+
 
 def find_all(string, sub, start=None, end=None, ignore_case=False):
     """
@@ -76,3 +78,41 @@ def extend_safe(target, source):
     for elt in source:
         if elt not in target:
             target.append(elt)
+
+
+class _Ref(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return self.value is other.value
+
+    def __hash__(self):
+        return id(self.value)
+
+
+class IdentitySet(MutableSet):
+    def __init__(self, items = []):
+        self.refs = set(map(_Ref, items))
+
+    def __contains__(self, elem):
+        return _Ref(elem) in self.refs
+
+    def __iter__(self):
+        return (ref.value for ref in self.refs)
+
+    def __len__(self):
+        return len(self.refs)
+
+    def add(self, elem):
+        self.refs.add(_Ref(elem))
+
+    def discard(self, elem):
+        self.refs.discard(_Ref(elem))
+
+    def update(self, iterable):
+        for elem in iterable:
+            self.add(elem)
+
+    def __repr__(self):
+        return "%s(%s)" % (type(self).__name__, list(self))

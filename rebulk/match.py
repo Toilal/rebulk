@@ -24,9 +24,9 @@ class _BaseMatches(MutableSequence):
     """
     A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
     """
-    _base = list  # OrderedSet
-    _base_add = _base.append   # OrderedSet.add
-    _base_remove = _base.remove  # OrderedSet.remove
+    _base = list
+    _base_add = _base.append
+    _base_remove = _base.remove
 
     def __init__(self, matches=None, input_string=None):
         self.input_string = input_string
@@ -533,12 +533,12 @@ class Match(object):
 
     def __eq__(self, other):
         if isinstance(other, Match):
-            return self.span == other.span and self.value == other.value
+            return self.span == other.span and self.value == other.value and self.parent == other.parent
         return NotImplemented
 
     def __ne__(self, other):
         if isinstance(other, Match):
-            return self.span != other.span or self.value != other.value
+            return self.span != other.span or self.value != other.value or self.parent != other.parent
         return NotImplemented
 
     def __lt__(self, other):

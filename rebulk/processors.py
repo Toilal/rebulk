@@ -3,6 +3,20 @@
 """
 Processor functions
 """
+from rebulk.utils import IdentitySet
+
+
+def initiator(match):
+    """
+    Retrieve the initiator parent of a match
+    :param match:
+    :type match:
+    :return:
+    :rtype:
+    """
+    while match.parent:
+        match = match.parent
+    return match
 
 
 def conflict_prefer_longer(matches):
@@ -16,9 +30,9 @@ def conflict_prefer_longer(matches):
     :return:
     :rtype: list[rebulk.match.Match]
     """
-    to_remove_matches = set()
+    to_remove_matches = IdentitySet()
     for match in filter(lambda match: not match.private, matches):
-        conflicting_matches = set()
+        conflicting_matches = IdentitySet()
 
         for i in range(*match.span):
             conflicting_matches.update(matches.starting(i))
@@ -29,10 +43,10 @@ def conflict_prefer_longer(matches):
         if conflicting_matches:
             # keep the match only if it's the longest
             for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
-                if len(conflicting_match) < len(match):
+                if len(initiator(conflicting_match)) < len(initiator(match)):
                     to_remove_matches.add(conflicting_match)
 
-    for match in list(to_remove_matches):
+    for match in to_remove_matches:
         matches.remove(match)
 
     return matches
