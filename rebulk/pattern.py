@@ -110,9 +110,10 @@ class Pattern(object):
         :rtype:
         """
         if yield_parent or self.format_all:
-            match.formatter = self.formatters.get(match.name, self._default_formatter)
+            match.formatter = self.formatters.get(match.name,
+                                                  self.formatters.get('__parent__', self._default_formatter))
         if yield_parent or self.validate_all:
-            validator = self.validators.get(match.name, self._default_validator)
+            validator = self.validators.get(match.name, self.validators.get('__parent__', self._default_validator))
             if not validator(match):
                 return False
         return True
@@ -128,9 +129,10 @@ class Pattern(object):
         :rtype:
         """
         if yield_children or self.format_all:
-            child.formatter = self.formatters.get(child.name, self._default_formatter)
+            child.formatter = self.formatters.get(child.name,
+                                                  self.formatters.get('__children__', self._default_formatter))
         if yield_children or self.validate_all:
-            validator = self.validators.get(child.name, self._default_validator)
+            validator = self.validators.get(child.name, self.validators.get('__children__', self._default_validator))
             if not validator(child):
                 return False
         return True
