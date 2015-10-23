@@ -7,7 +7,7 @@ from collections import defaultdict, MutableSequence, OrderedDict
 import copy
 import six
 
-from .loose import ensure_list, filter_index
+from .loose import ensure_list, filter_index, call
 from .utils import is_iterable
 
 
@@ -185,7 +185,7 @@ class _BaseMatches(MutableSequence):
                 ret.append(match)
         return filter_index(ret, predicate, index)
 
-    def holes(self, start=0, end=None, formatter=None, predicate=None, index=None):  # pylint: disable=too-many-branches
+    def holes(self, start=0, end=None, formatter=None, ignore=None, predicate=None, index=None):  # pylint: disable=too-many-branches
         """
         Retrieves a set of Match objects that are not defined in given range.
         :param start:
@@ -194,6 +194,8 @@ class _BaseMatches(MutableSequence):
         :type end:
         :param formatter:
         :type formatter:
+        :param ignore:
+        :type ignore:
         :param predicate:
         :type predicate:
         :param index:
@@ -218,7 +220,7 @@ class _BaseMatches(MutableSequence):
 
         for rindex in range(loop_start, end):
             for starting in self.starting(rindex):
-                if starting not in current:
+                if starting not in current and (not ignore or not call(ignore, starting, rindex, loop_start)):
                     current.append(starting)
             for ending in self.ending(rindex):
                 if ending in current:
