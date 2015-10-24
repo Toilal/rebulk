@@ -78,6 +78,12 @@ class TestMatchClass(object):
             assert not match1 > other
             assert not match1 >= other
 
+    def test_value(self):
+        match1 = Match(1, 3)
+        match1.value = "test"
+
+        assert match1.value == "test"
+
 
 class TestMatchesClass(object):
     match1 = Match(0, 2, value="te", name="start")
@@ -423,3 +429,49 @@ class TestMaches(object):
         assert kvalues["words"][1].value == "Two"
         assert kvalues["words"][2].value == "Two"
         assert kvalues["words"][3].value == "Three"
+
+    def test_chains(self):
+        input_string = "wordX 10 20 30 40 wordA, wordB, wordC 70 80 wordX"
+
+        matches = Matches(input_string=input_string)
+
+        matches.extend(RePattern(r"\d+", name="digit").matches(input_string))
+        matches.extend(RePattern("[a-zA-Z]+", name="word").matches(input_string))
+
+        assert len(matches) == 11
+
+        a_start = input_string.find('wordA')
+
+        b_start = input_string.find('wordB')
+        b_end = b_start + len('wordB')
+
+        c_start = input_string.find('wordC')
+        c_end = c_start + len('wordC')
+
+        chain_before = matches.chain_before(b_start, " ,", predicate=lambda match: match.name == "word")
+        assert len(chain_before) == 1
+        assert chain_before[0].value == 'wordA'
+
+        chain_before = matches.chain_before(b_start, " ,", predicate=lambda match: match.name == "digit")
+        assert len(chain_before) == 0
+
+        chain_before = matches.chain_before(a_start, " ,", predicate=lambda match: match.name == "digit")
+        assert len(chain_before) == 4
+        assert [match.value for match in chain_before] == ["40", "30", "20", "10"]
+
+        chain_after = matches.chain_after(b_end, " ,", predicate=lambda match: match.name == "word")
+        assert len(chain_after) == 1
+        assert chain_after[0].value == 'wordC'
+
+        chain_after = matches.chain_after(b_end, " ,", predicate=lambda match: match.name == "digit")
+        assert len(chain_after) == 0
+
+        chain_after = matches.chain_after(c_end, " ,", predicate=lambda match: match.name == "digit")
+        assert len(chain_after) == 2
+        assert [match.value for match in chain_after] == ["70", "80"]
+
+
+
+
+
+

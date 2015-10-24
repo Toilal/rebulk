@@ -6,22 +6,10 @@ Processor functions
 from .utils import IdentitySet
 
 
-def initiator(match):
+def default_conflict_solver(match, conflicting_match):
     """
-    Retrieve the initiator parent of a match
-    :param match:
-    :type match:
-    :return:
-    :rtype:
-    """
-    while match.parent:
-        match = match.parent
-    return match
+    Default conflict solver for matches, shorter matches if they conflicts with longer ones
 
-
-def default_conflict_solver(conflicting_match, match):
-    """
-    Default conflict solver for matches
     :param conflicting_match:
     :type conflicting_match:
     :param match:
@@ -29,7 +17,11 @@ def default_conflict_solver(conflicting_match, match):
     :return:
     :rtype:
     """
-    return len(initiator(conflicting_match)) < len(initiator(match))
+    if len(conflicting_match.initiator) < len(match.initiator):
+        return conflicting_match
+    elif len(match.initiator) < len(conflicting_match.initiator):
+        return match
+    return None
 
 
 def conflict_prefer_longer(matches):
@@ -56,12 +48,14 @@ def conflict_prefer_longer(matches):
         if conflicting_matches:
             # keep the match only if it's the longest
             for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
+                conflict_solver = default_conflict_solver
                 if conflicting_match.conflict_solver:
-                    if conflicting_match.conflict_solver(match):
-                        to_remove_matches.add(conflicting_match)
-                else:
-                    if default_conflict_solver(conflicting_match, match):
-                        to_remove_matches.add(conflicting_match)
+                    conflict_solver = conflicting_match.conflict_solver
+                elif match.conflict_solver:
+                    conflict_solver = match.conflict_solver
+                to_remove = conflict_solver(match, conflicting_match)
+                if to_remove and to_remove not in to_remove_matches:
+                    to_remove_matches.add(to_remove)
 
     for match in to_remove_matches:
         matches.remove(match)

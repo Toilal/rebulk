@@ -167,25 +167,6 @@ Patterns parameters
 
 All patterns have options that can be given as keyword arguments.
 
-- ``formatter``
-
-  Function to convert ``Match`` value given by the pattern. Can also be a ``dict``, to use ``formatter`` with pattern
-  named with key.
-
-  .. code-block:: python
-
-      >>> def year_formatter(value):
-      ...     return int(value)
-      >>> matches = Rebulk().regex(r'\d{4}', formatter=year_formatter) \
-      ...                   .matches("In year 1982 ...")
-      >>> isinstance(matches[0].value, int)
-      True
-
-- ``format_all``
-
-  By default, formatter is called for returned ``Match`` values only. Enable this option to format them all, parent and
-  children included.
-
 - ``validator``
 
   Function to validate ``Match`` value given by the pattern. Can also be a ``dict``, to use ``validator`` with pattern
@@ -280,6 +261,32 @@ is generated with ``every``, ``private_parent`` and ``private_children`` paramet
     >>> matches
     [<1:(14, 15)>, <2:(22, 23)>, <3:(32, 33)>]
 
+Match object has the following properties that can be given to Pattern objects
+
+- ``formatter``
+
+  Function to convert ``Match`` value given by the pattern. Can also be a ``dict``, to use ``formatter`` with pattern
+  named with key.
+
+  .. code-block:: python
+
+      >>> def year_formatter(value):
+      ...     return int(value)
+      >>> matches = Rebulk().regex(r'\d{4}', formatter=year_formatter) \
+      ...                   .matches("In year 1982 ...")
+      >>> isinstance(matches[0].value, int)
+      True
+
+- ``format_all``
+
+  By default, formatter is called for returned ``Match`` values only. Enable this option to format them all, parent and
+  children included.
+
+- ``conflict_solver``
+
+  A ``function(match, conflicting_match)`` used to solve conflict. Returned object will be removed from matches by
+  ``conflict_prefer_longer`` processor.
+
 
 Matches
 -------
@@ -320,10 +327,30 @@ It has the following additional methods and properties on it.
 
   Retrieves a list of ``Match`` objects for given range, sorted from start to end.
 
-- ``holes(start=0, end=None, formatter=None, predicate=None, index=None)``
+- ``holes(start=0, end=None, formatter=None, ignore=None, predicate=None, index=None)``
 
-  Retrieves a list of *hole* ``Match`` objects for given range. A hole match is created for ranges that where no match
+  Retrieves a list of *hole* ``Match`` objects for given range. A hole match is created for each range where no match
   is available.
+
+- ``chain_before(self, position, seps, start=0, predicate=None, index=None)``:
+
+  Retrieves a list of chained matches, before position, matching predicate and separated by characters from seps only.
+
+- ``chain_after(self, position, seps, end=None, predicate=None, index=None)``:
+
+  Retrieves a list of chained matches, after position, matching predicate and separated by characters from seps only.
+
+- ``at_match(match, predicate=None, index=None)``
+
+  Retrieves a list of ``Match`` objects at the same position as match.
+
+- ``at_span(span, predicate=None, index=None)``
+
+  Retrieves a list of ``Match`` objects from given (start, end) tuple.
+
+- ``at_index(pos, predicate=None, index=None)``
+
+  Retrieves a list of ``Match`` objects from given position.
 
 - ``names``
 
@@ -349,20 +376,7 @@ Markers
 -------
 
 If you have defined some patterns with ``markers`` property, then ``Matches.markers`` points to a special ``Matches``
-sequence that contains only ``markers`` matches. This sequence supports all methods from ``Matches``, but also the
-following.
-
-- ``at_match(match, predicate=None, index=None)``
-
-  Retrieves a list of markers ``Match`` objects at the same position as match.
-
-- ``at_span(span, predicate=None, index=None)``
-
-  Retrieves a list of markers ``Match`` objects from given (start, end) tuple.
-
-- ``at_index(pos, predicate=None, index=None)``
-
-  Retrieves a list of markers ``Match`` objects from given position.
+sequence that contains only ``markers`` matches. This sequence supports all methods from ``Matches``.
 
 Markers matches are not intended to be used in final result, but can be used to implement custom ``Processor`` or
 ``Rule``.

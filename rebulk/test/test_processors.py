@@ -7,7 +7,7 @@ from ..processors import conflict_prefer_longer
 from rebulk.match import Matches
 
 
-def test_conflict_prefer_longer():
+def test_conflict_1():
     input_string = "abcdefghijklmnopqrstuvwxyz"
 
     pattern = StringPattern("ijklmn", "kl", "abcdef", "ab", "ef", "yz")
@@ -19,6 +19,10 @@ def test_conflict_prefer_longer():
 
     assert values == ["ijklmn", "abcdef", "yz"]
 
+
+def test_conflict_2():
+    input_string = "abcdefghijklmnopqrstuvwxyz"
+
     pattern = StringPattern("ijklmn", "jklmnopqrst")
     matches = Matches(pattern.matches(input_string))
 
@@ -27,6 +31,10 @@ def test_conflict_prefer_longer():
     values = [x.value for x in processed_matches]
 
     assert values == ["jklmnopqrst"]
+
+
+def test_conflict_3():
+    input_string = "abcdefghijklmnopqrstuvwxyz"
 
     pattern = StringPattern("ijklmnopqrst", "jklmnopqrst")
     matches = Matches(pattern.matches(input_string))
@@ -37,6 +45,8 @@ def test_conflict_prefer_longer():
 
     assert values == ["ijklmnopqrst"]
 
+
+def test_conflict_4():
     input_string = "123456789"
 
     pattern = StringPattern("123", "456789")
@@ -46,6 +56,10 @@ def test_conflict_prefer_longer():
 
     values = [x.value for x in processed_matches]
     assert values == ["123", "456789"]
+
+
+def test_conflict_5():
+    input_string = "123456789"
 
     pattern = StringPattern("123456", "789")
     matches = Matches(pattern.matches(input_string))
@@ -71,3 +85,76 @@ def test_prefer_longer_parent():
     assert processed_matches[1].value == 2
 
 
+def test_conflict_solver():
+    input_string = "123456789"
+
+    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: match)
+    re2 = StringPattern("34567")
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 1
+    assert processed_matches[0].value == "34567"
+
+    re1 = StringPattern("2345678")
+    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: match)
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 1
+    assert processed_matches[0].value == "34567"
+
+    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: conflicting)
+    re2 = StringPattern("34567")
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 1
+    assert processed_matches[0].value == "2345678"
+
+    re1 = StringPattern("2345678")
+    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 1
+    assert processed_matches[0].value == "2345678"
+
+
+def test_unresolved():
+    input_string = "123456789"
+
+    re1 = StringPattern("23456")
+    re2 = StringPattern("34567")
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 2
+
+    re1 = StringPattern("34567")
+    re2 = StringPattern("2345678", conflict_solver=lambda match, conflicting: None)
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 2
+
+    re1 = StringPattern("34567", conflict_solver=lambda match, conflicting: None)
+    re2 = StringPattern("2345678")
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 2

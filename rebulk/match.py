@@ -36,6 +36,7 @@ class _BaseMatches(MutableSequence):
         self._tag_dict = defaultdict(_BaseMatches._base)
         self._start_dict = defaultdict(_BaseMatches._base)
         self._end_dict = defaultdict(_BaseMatches._base)
+        self._index_dict = defaultdict(_BaseMatches._base)
         if matches:
             self.extend(matches)
 
@@ -51,6 +52,8 @@ class _BaseMatches(MutableSequence):
             _BaseMatches._base_add(self._tag_dict[tag], match)
         _BaseMatches._base_add(self._start_dict[match.start], match)
         _BaseMatches._base_add(self._end_dict[match.end], match)
+        for index in range(*match.span):
+            _BaseMatches._base_add(self._index_dict[index], match)
         if match.end > self.max_end:
             self.max_end = match.end
 
@@ -66,6 +69,8 @@ class _BaseMatches(MutableSequence):
             _BaseMatches._base_remove(self._tag_dict[tag], match)
         _BaseMatches._base_remove(self._start_dict[match.start], match)
         _BaseMatches._base_remove(self._end_dict[match.end], match)
+        for index in range(*match.span):
+            _BaseMatches._base_remove(self._index_dict[index], match)
         if match.end >= self.max_end and not self._end_dict[match.end]:
             self.max_end = max(self._end_dict.keys())
 
@@ -185,6 +190,71 @@ class _BaseMatches(MutableSequence):
                 ret.append(match)
         return filter_index(ret, predicate, index)
 
+    def chain_before(self, position, seps, start=0, predicate=None, index=None):
+        """
+        Retrieves a list of chained matches, before position, matching predicate and separated by characters from seps
+        only.
+        :param position:
+        :type position:
+        :param seps:
+        :type seps:
+        :param start:
+        :type start:
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        chain = []
+
+        for i in reversed(range(start, position)):
+            index_matches = self.at_index(i)
+            filtered_matches = [index_match for index_match in index_matches if predicate and predicate(index_match)]
+            if filtered_matches:
+                for chain_match in filtered_matches:
+                    if chain_match not in chain:
+                        chain.append(chain_match)
+            elif self.input_string[i] not in seps:
+                break
+
+        return filter_index(chain, predicate, index)
+
+    def chain_after(self, position, seps, end=None, predicate=None, index=None):
+        """
+        Retrieves a list of chained matches, after position, matching predicate and separated by characters from seps
+        only.
+        :param position:
+        :type position:
+        :param seps:
+        :type seps:
+        :param end:
+        :type end:
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        chain = []
+
+        if end is None:
+            end = self.max_end
+
+        for i in range(position, end):
+            index_matches = self.at_index(i)
+            filtered_matches = [index_match for index_match in index_matches if predicate and predicate(index_match)]
+            if filtered_matches:
+                for chain_match in filtered_matches:
+                    if chain_match not in chain:
+                        chain.append(chain_match)
+            elif self.input_string[i] not in seps:
+                break
+
+        return filter_index(chain, predicate, index)
+
     def holes(self, start=0, end=None, formatter=None, ignore=None, predicate=None, index=None):  # pylint: disable=too-many-branches
         """
         Retrieves a set of Match objects that are not defined in given range.
@@ -244,6 +314,32 @@ class _BaseMatches(MutableSequence):
 
             ret[-1].end = min(rindex, end)
         return filter_index(ret, predicate, index)
+
+    def at_match(self, match, predicate=None, index=None):
+        """
+        Retrieves a list of matches from given match.
+        """
+        return self.at_span(match.span, predicate, index)
+
+    def at_span(self, span, predicate=None, index=None):
+        """
+        Retrieves a list of matches from given (start, end) tuple.
+        """
+        starting = self._index_dict[span[0]]
+        ending = self._index_dict[span[1]]
+
+        merged = list(starting)
+        for marker in ending:
+            if marker not in merged:
+                merged.append(marker)
+
+        return filter_index(merged, predicate, index)
+
+    def at_index(self, pos, predicate=None, index=None):
+        """
+        Retrieves a list of matches from given position
+        """
+        return filter_index(self._index_dict[pos], predicate, index)
 
     @property
     def names(self):
@@ -330,8 +426,7 @@ class _BaseMatches(MutableSequence):
 
 class Matches(_BaseMatches):
     """
-    A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
-    Dedicated for non markers matches, it contains a markers list.
+    A custom list[Match] contains matches list.
     """
     def __init__(self, matches=None, input_string=None):
         self.markers = Markers()
@@ -344,48 +439,14 @@ class Matches(_BaseMatches):
 
 class Markers(_BaseMatches):
     """
-    A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
-    Dedicated to markers matches.
+    A custom list[Match] containing markers list.
     """
     def __init__(self, matches=None, input_string=None):
-        self._index_dict = defaultdict(Markers._base)
         super(Markers, self).__init__(matches=None, input_string=input_string)
 
     def _add_match(self, match):
         assert match.marker, "A non-marker match should not be added to <Markers> object"
         super(Markers, self)._add_match(match)
-        for index in range(*match.span):
-            Markers._base_add(self._index_dict[index], match)
-
-    def _remove_match(self, match):
-        for index in range(*match.span):
-            Markers._base_remove(self._index_dict[index], match)
-
-    def at_match(self, match, predicate=None, index=None):
-        """
-        Retrieves a list of markers from given match.
-        """
-        return self.at_span(match.span, predicate, index)
-
-    def at_span(self, span, predicate=None, index=None):
-        """
-        Retrieves a list of markers from given (start, end) tuple.
-        """
-        starting = self._index_dict[span[0]]
-        ending = self._index_dict[span[1]]
-
-        merged = list(starting)
-        for marker in ending:
-            if marker not in merged:
-                merged.append(marker)
-
-        return filter_index(merged, predicate, index)
-
-    def at_index(self, pos, predicate=None, index=None):
-        """
-        Retrieves a list of markers from given position
-        """
-        return filter_index(self._index_dict[pos], predicate, index)
 
 
 class Match(object):
@@ -491,6 +552,20 @@ class Match(object):
         if self.input_string:
             return self.input_string[self.raw_start:self.raw_end]
         return None
+
+    @property
+    def initiator(self):
+        """
+        Retrieve the initiator parent of a match
+        :param match:
+        :type match:
+        :return:
+        :rtype:
+        """
+        match = self
+        while match.parent:
+            match = match.parent
+        return match
 
     def crop(self, crops, predicate=None, index=None):
         """
