@@ -77,6 +77,7 @@ class RemoveMatchRule(Rule):  # pylint: disable=abstract-method
     """
     def then(self, matches, when_response, context):
         if is_iterable(when_response):
+            when_response = list(when_response)
             for match in when_response:
                 matches.remove(match)
         else:
@@ -89,6 +90,7 @@ class AppendMatchRule(Rule):  # pylint: disable=abstract-method
     """
     def then(self, matches, when_response, context):
         if is_iterable(when_response):
+            when_response = list(when_response)
             for match in when_response:
                 matches.append(match)
         else:
@@ -102,11 +104,13 @@ class AppendRemoveMatchRule(Rule):  # pylint: disable=abstract-method
     def then(self, matches, when_response, context):
         to_append, to_remove = when_response
         if is_iterable(to_append):
+            to_append = list(to_append)
             for match in to_append:
                 matches.append(match)
         else:
             matches.append(to_append)
         if is_iterable(to_remove):
+            to_remove = list(to_remove)
             for match in to_remove:
                 matches.remove(match)
         else:
