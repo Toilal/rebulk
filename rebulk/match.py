@@ -634,12 +634,14 @@ class Match(object):
 
     def __eq__(self, other):
         if isinstance(other, Match):
-            return self.span == other.span and self.value == other.value and self.parent == other.parent
+            return self.span == other.span and self.value == other.value and self.name == other.name and \
+                self.parent == other.parent
         return NotImplemented
 
     def __ne__(self, other):
         if isinstance(other, Match):
-            return self.span != other.span or self.value != other.value or self.parent != other.parent
+            return self.span != other.span or self.value != other.value or self.name != other.name or \
+                self.parent != other.parent
         return NotImplemented
 
     def __lt__(self, other):
