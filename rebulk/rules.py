@@ -95,6 +95,26 @@ class AppendMatchRule(Rule):  # pylint: disable=abstract-method
             matches.append(when_response)
 
 
+class AppendRemoveMatchRule(Rule):  # pylint: disable=abstract-method
+    """
+    Append matches returned by then[0] and remove matches returned by then[1]
+    """
+    def then(self, matches, when_response, context):
+        to_append, to_remove = when_response
+        if is_iterable(to_append):
+            for match in to_append:
+                matches.append(match)
+        else:
+            matches.append(to_append)
+        if is_iterable(to_remove):
+            for match in to_remove:
+                matches.remove(match)
+        else:
+            matches.append(to_remove)
+
+
+
+
 class Rules(list):
     """
     list of rules ready to execute.
