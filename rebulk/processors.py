@@ -37,14 +37,8 @@ def conflict_prefer_longer(matches):
     """
     to_remove_matches = IdentitySet()
     for match in filter(lambda match: not match.private, matches):
-        conflicting_matches = IdentitySet()
+        conflicting_matches = matches.conflicting(match)
 
-        for i in range(*match.span):
-            conflicting_matches.update(matches.starting(i))
-            if i != match.span[0]:
-                conflicting_matches.update(matches.ending(i))
-
-        conflicting_matches.remove(match)
         if conflicting_matches:
             # keep the match only if it's the longest
             for conflicting_match in filter(lambda match: not match.private, conflicting_matches):

@@ -332,6 +332,10 @@ It has the following additional methods and properties on it.
   Retrieves a list of *hole* ``Match`` objects for given range. A hole match is created for each range where no match
   is available.
 
+- ``conflicting(match, predicate=None, index=None)``
+
+  Retrieves a list of ``Match`` objects that conflicts with given match.
+
 - ``chain_before(self, position, seps, start=0, predicate=None, index=None)``:
 
   Retrieves a list of chained matches, before position, matching predicate and separated by characters from seps only.

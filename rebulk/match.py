@@ -211,7 +211,7 @@ class _BaseMatches(MutableSequence):
 
         for i in reversed(range(start, position)):
             index_matches = self.at_index(i)
-            filtered_matches = [index_match for index_match in index_matches if predicate and predicate(index_match)]
+            filtered_matches = [index_match for index_match in index_matches if not predicate or predicate(index_match)]
             if filtered_matches:
                 for chain_match in filtered_matches:
                     if chain_match not in chain:
@@ -313,6 +313,29 @@ class _BaseMatches(MutableSequence):
                     break
 
             ret[-1].end = min(rindex, end)
+        return filter_index(ret, predicate, index)
+
+    def conflicting(self, match, predicate=None, index=None):
+        """
+        Retrieves a list of ``Match`` objects that conflicts with given match.
+        :param match:
+        :type match:
+        :param predicate:
+        :type predicate:
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        ret = []
+
+        for i in range(*match.span):
+            ret.extend(self.starting(i))
+            if i != match.span[0]:
+                ret.extend(self.ending(i))
+
+        ret.remove(match)
+
         return filter_index(ret, predicate, index)
 
     def at_match(self, match, predicate=None, index=None):
