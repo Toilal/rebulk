@@ -44,21 +44,24 @@ def conflict_prefer_longer(matches):
         if conflicting_matches:
             # keep the match only if it's the longest
             for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
-                conflict_solver = default_conflict_solver
                 reverse = False
+                conflict_solvers = [(default_conflict_solver, False)]
+
                 if match.conflict_solver:
-                    conflict_solver = match.conflict_solver
-                elif conflicting_match.conflict_solver:
-                    conflict_solver = conflicting_match.conflict_solver
-                    reverse = True
-                if reverse:
-                    to_remove = conflict_solver(conflicting_match, match)
-                else:
-                    to_remove = conflict_solver(match, conflicting_match)
-                if to_remove == DEFAULT:
-                    to_remove = default_conflict_solver(match, conflicting_match)
-                if to_remove and to_remove not in to_remove_matches:
-                    to_remove_matches.add(to_remove)
+                    conflict_solvers.append((match.conflict_solver, False))
+                if conflicting_match.conflict_solver:
+                    conflict_solvers.append((conflicting_match.conflict_solver, True))
+
+                for conflict_solver, reverse in reversed(conflict_solvers):
+                    if reverse:
+                        to_remove = conflict_solver(conflicting_match, match)
+                    else:
+                        to_remove = conflict_solver(match, conflicting_match)
+                    if to_remove == DEFAULT:
+                        continue
+                    if to_remove and to_remove not in to_remove_matches:
+                        to_remove_matches.add(to_remove)
+                    break
 
     for match in to_remove_matches:
         matches.remove(match)
