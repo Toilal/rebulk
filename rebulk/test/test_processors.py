@@ -88,6 +88,16 @@ def test_prefer_longer_parent():
 def test_conflict_solver():
     input_string = "123456789"
 
+    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: '__default__')
+    re2 = StringPattern("34567")
+
+    matches = Matches(re1.matches(input_string))
+    matches.extend(re2.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 1
+    assert processed_matches[0].value == "2345678"
+
     re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: match)
     re2 = StringPattern("34567")
 
@@ -99,7 +109,7 @@ def test_conflict_solver():
     assert processed_matches[0].value == "34567"
 
     re1 = StringPattern("2345678")
-    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: match)
+    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
 
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
@@ -126,7 +136,7 @@ def test_conflict_solver():
 
     processed_matches = conflict_prefer_longer(matches)
     assert len(processed_matches) == 1
-    assert processed_matches[0].value == "2345678"
+    assert processed_matches[0].value == "34567"
 
 
 def test_unresolved():

@@ -94,7 +94,7 @@ class _Ref(object):
         return id(self.value)
 
 
-class IdentitySet(MutableSet):
+class IdentitySet(MutableSet):  # pragma: no cover
     """
     Set based on identity
     """

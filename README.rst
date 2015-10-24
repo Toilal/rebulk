@@ -285,7 +285,8 @@ Match object has the following properties that can be given to Pattern objects
 - ``conflict_solver``
 
   A ``function(match, conflicting_match)`` used to solve conflict. Returned object will be removed from matches by
-  ``conflict_prefer_longer`` processor.
+  ``conflict_prefer_longer`` processor. If ``__default__`` string is returned, it will fallback to default behavior
+  keeping longer match.
 
 
 Matches
