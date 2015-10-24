@@ -85,7 +85,7 @@ def test_prefer_longer_parent():
     assert processed_matches[1].value == 2
 
 
-def test_conflict_solver():
+def test_conflict_solver_1():
     input_string = "123456789"
 
     re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: '__default__')
@@ -98,6 +98,10 @@ def test_conflict_solver():
     assert len(processed_matches) == 1
     assert processed_matches[0].value == "2345678"
 
+
+def test_conflict_solver_2():
+    input_string = "123456789"
+
     re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: '__default__')
     re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
 
@@ -107,6 +111,10 @@ def test_conflict_solver():
     processed_matches = conflict_prefer_longer(matches)
     assert len(processed_matches) == 1
     assert processed_matches[0].value == "34567"
+
+
+def test_conflict_solver_3():
+    input_string = "123456789"
 
     re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: match)
     re2 = StringPattern("34567")
@@ -118,6 +126,10 @@ def test_conflict_solver():
     assert len(processed_matches) == 1
     assert processed_matches[0].value == "34567"
 
+
+def test_conflict_solver_4():
+    input_string = "123456789"
+
     re1 = StringPattern("2345678")
     re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
 
@@ -127,6 +139,9 @@ def test_conflict_solver():
     processed_matches = conflict_prefer_longer(matches)
     assert len(processed_matches) == 1
     assert processed_matches[0].value == "34567"
+
+def test_conflict_solver_5():
+    input_string = "123456789"
 
     re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: conflicting)
     re2 = StringPattern("34567")
@@ -138,6 +153,10 @@ def test_conflict_solver():
     assert len(processed_matches) == 1
     assert processed_matches[0].value == "2345678"
 
+
+def test_conflict_solver_6():
+    input_string = "123456789"
+
     re1 = StringPattern("2345678")
     re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
 
@@ -147,6 +166,20 @@ def test_conflict_solver():
     processed_matches = conflict_prefer_longer(matches)
     assert len(processed_matches) == 1
     assert processed_matches[0].value == "34567"
+
+
+def test_conflict_solver_7():
+    input_string = "102"
+
+    re1 = StringPattern("102")
+    re2 = StringPattern("02")
+
+    matches = Matches(re2.matches(input_string))
+    matches.extend(re1.matches(input_string))
+
+    processed_matches = conflict_prefer_longer(matches)
+    assert len(processed_matches) == 1
+    assert processed_matches[0].value == "102"
 
 
 def test_unresolved():
