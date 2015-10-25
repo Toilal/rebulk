@@ -665,4 +665,13 @@ class Match(object):
         return NotImplemented
 
     def __repr__(self):
-        return "<%s:%s>" % (self.value, self.span)
+        flags = ""
+        name = ""
+        tags = ""
+        if self.private:
+            flags += '+private'
+        if self.name:
+            name = "+name=" + self.name
+        if self.tags:
+            tags = "+tags=" + six.text_type(self.tags)
+        return "<%s:%s%s%s%s>" % (self.value, self.span, flags, name, tags)
