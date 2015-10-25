@@ -5,7 +5,7 @@
 
 from rebulk.pattern import StringPattern
 
-from ..validators import chars_before, chars_after, chars_surround, chain
+from ..validators import chars_before, chars_after, chars_surround, validators
 
 from functools import partial
 
@@ -52,18 +52,16 @@ def test_surrounding_chars():
 
 
 def test_chain():
-    both = partial(chain, [left, right])
-
-    matches = list(StringPattern("word", validator=both).matches("xxxword xxx"))
+    matches = list(StringPattern("word", validator=validators(left, right)).matches("xxxword xxx"))
     assert len(matches) == 0
 
-    matches = list(StringPattern("word", validator=both).matches("xxx.wordxxx"))
+    matches = list(StringPattern("word", validator=validators(left, right)).matches("xxx.wordxxx"))
     assert len(matches) == 0
 
-    matches = list(StringPattern("word", validator=both).matches("xxx word_xxx"))
+    matches = list(StringPattern("word", validator=validators(left, right)).matches("xxx word_xxx"))
     assert len(matches) == 1
 
-    matches = list(StringPattern("word", validator=both).matches("word"))
+    matches = list(StringPattern("word", validator=validators(left, right)).matches("word"))
     assert len(matches) == 1
 
 

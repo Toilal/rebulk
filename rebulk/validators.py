@@ -53,16 +53,18 @@ def chars_surround(chars, match):
     return chars_before(chars, match) and chars_after(chars, match)
 
 
-def chain(validators, match):
+def validators(*chained_validators):
     """
     Creates a validator chain from several validator functions.
 
-    :param validators:
-    :type validators:
+    :param chained_validators:
+    :type chained_validators:
     :return:
     :rtype:
     """
-    for validator in validators:
-        if not validator(match):
-            return False
-    return True
+    def validator_chain(match):  # pylint:disable=missing-docstring
+        for chained_validator in chained_validators:
+            if not chained_validator(match):
+                return False
+        return True
+    return validator_chain

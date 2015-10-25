@@ -7,6 +7,7 @@ import six
 
 from ..match import Match, Matches
 from ..pattern import StringPattern, RePattern
+from ..formatters import formatters
 
 
 class TestMatchClass(object):
@@ -392,6 +393,16 @@ class TestMaches(object):
 
         assert match.value == match.raw * 2
         assert match.raw == input_string
+
+
+    def test_formatter_chain(self):
+        input_string = "100"
+
+        match = Match(0, 3, input_string=input_string, formatter=formatters(int, lambda s: s*2, lambda  s: s+10))
+
+        assert match.raw == input_string
+        assert match.value == 100 * 2 + 10
+
 
     def test_to_dict(self):
         input_string = "One Two Two Three"
