@@ -12,6 +12,9 @@ from .loose import call, set_defaults
 from .utils import extend_safe
 from .rules import Rules
 
+from logging import getLogger
+log = getLogger(__name__).log
+
 
 class Rebulk(object):
     r"""
@@ -214,13 +217,7 @@ class Rebulk(object):
         if context is None:
             context = {}
 
-        for pattern in self._patterns:
-            if not pattern.disabled(context):
-                for match in pattern.matches(string, context):
-                    if match.marker:
-                        matches.markers.append(match)
-                    else:
-                        matches.append(match)
+        self._matches_patterns(string, matches, context)
 
         for func in self._processors:
             ret = call(func, matches, context)
@@ -235,6 +232,36 @@ class Rebulk(object):
                 matches = ret
 
         return matches
+
+    def _matches_patterns(self, string, matches, context):
+        """
+        Search for all matches with current paterns agains input_string
+        :param string: string to search into
+        :type string: str
+        :param matches: matches list
+        :type matches: Matches
+        :param context: context to use
+        :type context: dict
+        :return:
+        :rtype:
+        """
+        for pattern in self._patterns:
+            if not pattern.disabled(context):
+                pattern_matches = pattern.matches(string, context)
+                if pattern_matches:
+                    log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
+                else:
+                    pass
+                    # log(pattern.log_level, "Pattern doesn't match. (%s)" % (pattern,))
+                for match in pattern_matches:
+                    if match.marker:
+                        log(pattern.log_level, "Marker found. (%s)", match)
+                        matches.markers.append(match)
+                    else:
+                        log(pattern.log_level, "Match found. (%s)", match)
+                        matches.append(match)
+            else:
+                log(pattern.log_level, "Pattern is disabled. (%s)", pattern)
 
 
 DEFAULT_PROCESSORS = [conflict_prefer_longer]

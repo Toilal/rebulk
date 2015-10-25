@@ -7,6 +7,11 @@ from .utils import IdentitySet
 
 DEFAULT = '__default__'
 
+from . import debug
+
+from logging import getLogger
+log = getLogger(__name__).log
+
 
 def default_conflict_solver(match, conflicting_match):
     """
@@ -64,6 +69,7 @@ def conflict_prefer_longer(matches):
                     break
 
     for match in to_remove_matches:
+        log(debug.LOG_LEVEL, "Remove conflicting match: %s", match)
         matches.remove(match)
 
     return matches
@@ -80,6 +86,7 @@ def remove_private(matches):
     """
     for match in list(matches):
         if match.private:
+            log(debug.LOG_LEVEL, "Remove private match: %s", match)
             matches.remove(match)
 
     return matches

@@ -19,6 +19,7 @@ import six
 from .match import Match
 from .utils import find_all, is_iterable
 from .loose import call, ensure_list, ensure_dict
+from . import debug
 
 
 @six.add_metaclass(ABCMeta)
@@ -29,7 +30,7 @@ class Pattern(object):
 
     def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, every=False,
                  private_parent=False, private_children=False, private=False, marker=False, format_all=False,
-                 validate_all=False, disabled=False):
+                 validate_all=False, disabled=False, log_level=None):
         """
         :param name: Name of this pattern
         :type name: str
@@ -60,6 +61,8 @@ class Pattern(object):
         :type validate_all: bool
         :param disabled: if True, this pattern. Can also be a function(context).
         :type disabled: bool|function
+        :param log_lvl: Log level associated to this pattern
+        :type log_lvl: int
 
         """
         self.name = name
@@ -78,6 +81,17 @@ class Pattern(object):
             self.disabled = lambda context: disabled
         else:
             self.disabled = disabled
+        self._log_level = log_level
+        self.defined_at = debug.defined_at()
+
+    @property
+    def log_level(self):
+        """
+        Log level for this pattern.
+        :return:
+        :rtype:
+        """
+        return self._log_level if self._log_level is not None else debug.LOG_LEVEL
 
     def _yield_children(self, match):
         """
@@ -148,6 +162,7 @@ class Pattern(object):
         :return: matches based on input_string for this pattern
         :rtype: iterator[Match]
         """
+        ret = []
         for pattern in self.patterns:
             yield_parent = self._yield_parent()
             for match in self._match(pattern, input_string, context):
@@ -166,10 +181,11 @@ class Pattern(object):
                         for child in match.children:
                             child.private = True
                     if yield_parent or self.private_parent:
-                        yield match
+                        ret.append(match)
                     if yield_children or self.private_children:
                         for child in match.children:
-                            yield child
+                            ret.append(child)
+        return ret
 
     @abstractproperty
     def patterns(self):  # pragma: no cover
@@ -195,6 +211,12 @@ class Pattern(object):
         :rtype: iterator[Match]
         """
         pass
+
+    def __repr__(self):
+        defined = ""
+        if self.defined_at:
+            defined = "@" + six.text_type(self.defined_at)
+        return "<%s%s:%s>" % (self.__class__.__name__, defined, self.patterns)
 
 
 class StringPattern(Pattern):

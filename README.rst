@@ -259,7 +259,7 @@ is generated with ``every``, ``private_parent`` and ``private_children`` paramet
     ...         .regex(r"One, (?P<one>\w+), Two, (?P<two>\w+), Three, (?P<three>\w+)", children=True) \
     ...         .matches("Zero, 0, One, 1, Two, 2, Three, 3, Four, 4")
     >>> matches
-    [<1:(14, 15)>, <2:(22, 23)>, <3:(32, 33)>]
+    [<1:(14, 15)+name=one>, <2:(22, 23)+name=two>, <3:(32, 33)+name=three>]
 
 Match object has the following properties that can be given to Pattern objects
 
@@ -451,7 +451,7 @@ For all rules with the same ``priority`` value, ``when`` is called before, and `
     <...Rebulk object at ...>
 
     >>> rebulk.matches("This match is grabbed only if it's the first match")
-    [<This match is grabbed:(0, 21)>]
+    [<This match is grabbed:(0, 21)+name=grabbed>]
     >>> rebulk.matches("if it's NOT the first match, This match is NOT grabbed")
     []
 

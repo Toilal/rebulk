@@ -94,7 +94,7 @@ def test_rule_module():
 
 
 def test_rule_repr():
-    assert str(Rule0()) == "Rule0"
-    assert str(Rule1()) == "Rule1"
-    assert str(Rule2()) == "Rule2"
-    assert str(Rule1Disabled()) == "Disabled Rule1"
+    assert str(Rule0()) == "<Rule0>"
+    assert str(Rule1()) == "<Rule1>"
+    assert str(Rule2()) == "<Rule2>"
+    assert str(Rule1Disabled()) == "<Disabled Rule1>"

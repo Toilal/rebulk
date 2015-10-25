@@ -9,6 +9,7 @@ import six
 
 from .loose import ensure_list, filter_index, call
 from .utils import is_iterable
+from .debug import defined_at
 
 
 class MatchesDict(OrderedDict):
@@ -493,6 +494,7 @@ class Match(object):
         self.children = []
         self._raw_start = None
         self._raw_end = None
+        self.defined_at = pattern.defined_at if pattern else defined_at()
 
     @property
     def span(self):
@@ -668,10 +670,13 @@ class Match(object):
         flags = ""
         name = ""
         tags = ""
+        defined = ""
         if self.private:
             flags += '+private'
         if self.name:
             name = "+name=" + self.name
         if self.tags:
             tags = "+tags=" + six.text_type(self.tags)
-        return "<%s:%s%s%s%s>" % (self.value, self.span, flags, name, tags)
+        if self.defined_at:
+            defined += "@" + six.text_type(self.defined_at)
+        return "<%s:%s%s%s%s%s>" % (self.value, self.span, flags, name, tags, defined)

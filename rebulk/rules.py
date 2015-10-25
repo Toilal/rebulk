@@ -10,6 +10,10 @@ from itertools import groupby
 import six
 from .utils import is_iterable
 
+from logging import getLogger
+log = getLogger(__name__).log
+
+from . import debug
 
 @six.add_metaclass(ABCMeta)
 class Rule(object):
@@ -20,8 +24,10 @@ class Rule(object):
     priority = 0
     name = None
 
-    def __init__(self):
-        pass
+    def __init__(self, log_level=None):
+        self.defined_at = debug.defined_at()
+        if log_level is None and not hasattr(self, 'log_level'):
+            self.log_level = debug.LOG_LEVEL
 
     def enabled(self, context):
         """
@@ -68,7 +74,10 @@ class Rule(object):
         return self.priority > other.priority
 
     def __repr__(self):
-        return self.name if self.name else self.__class__.__name__
+        defined = ""
+        if self.defined_at:
+            defined = "@" + six.text_type(self.defined_at)
+        return "<%s%s>" % (self.name if self.name else self.__class__.__name__, defined)
 
 
 class RemoveMatchRule(Rule):  # pylint: disable=abstract-method
@@ -115,8 +124,6 @@ class AppendRemoveMatchRule(Rule):  # pylint: disable=abstract-method
                 matches.remove(match)
         else:
             matches.append(to_remove)
-
-
 
 
 class Rules(list):
@@ -186,17 +193,31 @@ class Rules(list):
         """
         ret = []
         rules = sorted(self)
-        for _, priority_rules in groupby(rules, lambda rule: rule.priority):
+        for priority, priority_rules in groupby(rules, lambda rule: rule.priority):
             then_futures = []
+            priority_rules = list(priority_rules)
+            group_log_level = None
+            for rule in priority_rules:
+                if group_log_level is None or group_log_level < rule.log_level:
+                    group_log_level = rule.log_level
+            log(group_log_level, "%s rule(s) at priority %s.", len(priority_rules), priority)
             for rule in priority_rules:
                 if rule.enabled(context):
+                    log(rule.log_level, "Checking rule condition: %s", rule)
                     when_response = rule.when(matches, context)
                     if when_response:
+                        log(rule.log_level, "Rule was triggered: %s", when_response)
                         then_futures.append((rule, matches, when_response, context))
+                    else:
+                        pass
+                        #log(rule.log_level, "Rule was not triggered.")
+                else:
+                    log(rule.log_level, "Rule is disabled: %s", rule)
             for then_future in then_futures:
                 rule = then_future[0]
                 args = then_future[1:]
                 when_response = then_future[2]
+                log(rule.log_level, "Running rule consequence: %s %s", rule, when_response)
                 rule.then(*args)
                 ret.append((rule, when_response))
         return ret
