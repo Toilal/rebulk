@@ -161,100 +161,6 @@ class TestMatchesClass(object):
         assert len(matches.ending(3)) == 0
         assert len(matches.ending(4)) == 0
 
-    def test_crop(self):
-        input_string = "abcdefghijklmnopqrstuvwxyz"
-
-        match1 = Match(1, 10, input_string=input_string)
-        match2 = Match(0, 2, input_string=input_string)
-        match3 = Match(8, 15, input_string=input_string)
-
-        ret = match1.crop([match2, match3.span])
-
-        assert len(ret) == 1
-
-        assert ret[0].span == (2, 8)
-        assert ret[0].value == "cdefgh"
-
-        ret = match1.crop((1, 10))
-        assert len(ret) == 0
-
-        ret = match1.crop((1, 3))
-        assert len(ret) == 1
-        assert ret[0].span == (3, 10)
-
-        ret = match1.crop((7, 10))
-        assert len(ret) == 1
-        assert ret[0].span == (1, 7)
-
-        ret = match1.crop((0, 12))
-        assert len(ret) == 0
-
-        ret = match1.crop((4, 6))
-        assert len(ret) == 2
-
-        assert ret[0].span == (1, 4)
-        assert ret[1].span == (6, 10)
-
-        ret = match1.crop([(3, 5), (7, 9)])
-        assert len(ret) == 3
-
-        assert ret[0].span == (1, 3)
-        assert ret[1].span == (5, 7)
-        assert ret[2].span == (9, 10)
-
-    def test_holes(self):
-        input_string = '1'*10+'2'*10+'3'*10+'4'*10+'5'*10+'6'*10+'7'*10
-
-        hole1 = Match(0, 10, input_string=input_string)
-        hole2 = Match(20, 30, input_string=input_string)
-        hole3 = Match(30, 40, input_string=input_string)
-        hole4 = Match(60, 70, input_string=input_string)
-
-        matches = Matches([hole1, hole2], input_string=input_string)
-        matches.append(hole3)
-        matches.append(hole4)
-
-        holes = list(matches.holes())
-        assert len(holes) == 2
-        assert holes[0].span == (10, 20)
-        assert holes[0].value == '2'*10
-        assert holes[1].span == (40, 60)
-        assert holes[1].value == '5' * 10 + '6' * 10
-
-        holes = list(matches.holes(5, 15))
-        assert len(holes) == 1
-        assert holes[0].span == (10, 15)
-        assert holes[0].value == '2'*5
-
-        holes = list(matches.holes(5, 15, formatter=lambda value: "formatted"))
-        assert len(holes) == 1
-        assert holes[0].span == (10, 15)
-        assert holes[0].value == "formatted"
-
-        holes = list(matches.holes(5, 15, predicate=lambda hole: False))
-        assert len(holes) == 0
-
-    def test_holes_empty(self):
-        input_string = "Test hole on empty matches"
-        matches = Matches(input_string=input_string)
-        holes = matches.holes()
-        assert len(holes) == 1
-        assert holes[0].value == input_string
-
-    def test_holes_seps(self):
-        input_string = "Test hole - with many separators + included"
-        match = StringPattern("many").matches(input_string)
-
-        matches = Matches(match, input_string)
-        holes = matches.holes()
-
-        assert len(holes) == 2
-
-        holes = matches.holes(seps="-+")
-
-        assert len(holes) == 4
-        assert [hole.value for hole in holes] == ["Test hole ", " with ", " separators ", " included"]
-
     def test_get_slices(self):
         matches = Matches()
         matches.append(self.match1)
@@ -333,6 +239,55 @@ class TestMatchesClass(object):
         assert list(matches.starting(3)) == [self.match3]
         assert list(matches.ending(3)) == [self.match2]
         assert list(matches.ending(4)) == [self.match3, self.match4]
+
+    def test_crop(self):
+        input_string = "abcdefghijklmnopqrstuvwxyz"
+
+        match1 = Match(1, 10, input_string=input_string)
+        match2 = Match(0, 2, input_string=input_string)
+        match3 = Match(8, 15, input_string=input_string)
+
+        ret = match1.crop([match2, match3.span])
+
+        assert len(ret) == 1
+
+        assert ret[0].span == (2, 8)
+        assert ret[0].value == "cdefgh"
+
+        ret = match1.crop((1, 10))
+        assert len(ret) == 0
+
+        ret = match1.crop((1, 3))
+        assert len(ret) == 1
+        assert ret[0].span == (3, 10)
+
+        ret = match1.crop((7, 10))
+        assert len(ret) == 1
+        assert ret[0].span == (1, 7)
+
+        ret = match1.crop((0, 12))
+        assert len(ret) == 0
+
+        ret = match1.crop((4, 6))
+        assert len(ret) == 2
+
+        assert ret[0].span == (1, 4)
+        assert ret[1].span == (6, 10)
+
+        ret = match1.crop([(3, 5), (7, 9)])
+        assert len(ret) == 3
+
+        assert ret[0].span == (1, 3)
+        assert ret[1].span == (5, 7)
+        assert ret[2].span == (9, 10)
+
+    def test_split(self):
+        input_string = "123 +word1  -  word2  + word3  456"
+        match = Match(3, len(input_string) - 3, input_string=input_string)
+        splitted = match.split(" -+")
+
+        assert len(splitted) == 3
+        assert [split.value for split in splitted] == ["word1", "word2", "word3"]
 
 
 class TestMaches(object):
@@ -501,6 +456,59 @@ class TestMaches(object):
         chain_after = matches.chain_after(c_end, " ,", predicate=lambda match: match.name == "digit")
         assert len(chain_after) == 2
         assert [match.value for match in chain_after] == ["70", "80"]
+
+    def test_holes(self):
+        input_string = '1'*10+'2'*10+'3'*10+'4'*10+'5'*10+'6'*10+'7'*10
+
+        hole1 = Match(0, 10, input_string=input_string)
+        hole2 = Match(20, 30, input_string=input_string)
+        hole3 = Match(30, 40, input_string=input_string)
+        hole4 = Match(60, 70, input_string=input_string)
+
+        matches = Matches([hole1, hole2], input_string=input_string)
+        matches.append(hole3)
+        matches.append(hole4)
+
+        holes = list(matches.holes())
+        assert len(holes) == 2
+        assert holes[0].span == (10, 20)
+        assert holes[0].value == '2'*10
+        assert holes[1].span == (40, 60)
+        assert holes[1].value == '5' * 10 + '6' * 10
+
+        holes = list(matches.holes(5, 15))
+        assert len(holes) == 1
+        assert holes[0].span == (10, 15)
+        assert holes[0].value == '2'*5
+
+        holes = list(matches.holes(5, 15, formatter=lambda value: "formatted"))
+        assert len(holes) == 1
+        assert holes[0].span == (10, 15)
+        assert holes[0].value == "formatted"
+
+        holes = list(matches.holes(5, 15, predicate=lambda hole: False))
+        assert len(holes) == 0
+
+    def test_holes_empty(self):
+        input_string = "Test hole on empty matches"
+        matches = Matches(input_string=input_string)
+        holes = matches.holes()
+        assert len(holes) == 1
+        assert holes[0].value == input_string
+
+    def test_holes_seps(self):
+        input_string = "Test hole - with many separators + included"
+        match = StringPattern("many").matches(input_string)
+
+        matches = Matches(match, input_string)
+        holes = matches.holes()
+
+        assert len(holes) == 2
+
+        holes = matches.holes(seps="-+")
+
+        assert len(holes) == 4
+        assert [hole.value for hole in holes] == ["Test hole ", " with ", " separators ", " included"]
 
 
 

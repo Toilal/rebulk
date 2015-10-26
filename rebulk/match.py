@@ -651,6 +651,33 @@ class Match(object):
                     current.end = start
         return filter_index(ret, predicate, index)
 
+    def split(self, seps, predicate=None, index=None):
+        """
+        Split this match in multiple matches using given separators.
+        :param seps:
+        :type seps: string containing separator characters
+        :return: list of new Match objects
+        :rtype: list
+        """
+        split_match = copy.copy(self)
+        current_match = split_match
+        ret = []
+
+        for i in range(0, len(self.raw)):
+            if self.raw[i] in seps:
+                if not split_match:
+                    split_match = copy.copy(current_match)
+                    current_match.end = self.start + i
+
+            else:
+                if split_match:
+                    split_match.start = self.start + i
+                    current_match = split_match
+                    ret.append(split_match)
+                    split_match = None
+
+        return filter_index(ret, predicate, index)
+
     def __len__(self):
         return self.end - self.start
 
