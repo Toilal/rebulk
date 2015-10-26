@@ -31,7 +31,7 @@ class _BaseMatches(MutableSequence):
 
     def __init__(self, matches=None, input_string=None):
         self.input_string = input_string
-        self.max_end = 0
+        self._max_end = 0
         self._delegate = []
         self._name_dict = defaultdict(_BaseMatches._base)
         self._tag_dict = defaultdict(_BaseMatches._base)
@@ -55,8 +55,8 @@ class _BaseMatches(MutableSequence):
         _BaseMatches._base_add(self._end_dict[match.end], match)
         for index in range(*match.span):
             _BaseMatches._base_add(self._index_dict[index], match)
-        if match.end > self.max_end:
-            self.max_end = match.end
+        if match.end > self._max_end:
+            self._max_end = match.end
 
     def _remove_match(self, match):
         """
@@ -72,8 +72,8 @@ class _BaseMatches(MutableSequence):
         _BaseMatches._base_remove(self._end_dict[match.end], match)
         for index in range(*match.span):
             _BaseMatches._base_remove(self._index_dict[index], match)
-        if match.end >= self.max_end and not self._end_dict[match.end]:
-            self.max_end = max(self._end_dict.keys())
+        if match.end >= self._max_end and not self._end_dict[match.end]:
+            self._max_end = max(self._end_dict.keys())
 
     def previous(self, match, predicate=None, index=None):
         """
@@ -108,7 +108,7 @@ class _BaseMatches(MutableSequence):
         :rtype:
         """
         current = match.start + 1
-        while current <= self.max_end:
+        while current <= self._max_end:
             next_matches = self.starting(current)
             if next_matches:
                 return filter_index(next_matches, predicate, index)
@@ -185,6 +185,8 @@ class _BaseMatches(MutableSequence):
         """
         if end is None:
             end = self.max_end
+        else:
+            end = min(self.max_end, end)
         ret = []
         for match in sorted(self):
             if match.start < end and match.end > start:
@@ -209,6 +211,7 @@ class _BaseMatches(MutableSequence):
         :rtype:
         """
         chain = []
+        position = min(self.max_end, position)
 
         for i in reversed(range(start, position)):
             index_matches = self.at_index(i)
@@ -243,6 +246,8 @@ class _BaseMatches(MutableSequence):
 
         if end is None:
             end = self.max_end
+        else:
+            end = min(self.max_end, end)
 
         for i in range(position, end):
             index_matches = self.at_index(i)
@@ -256,7 +261,15 @@ class _BaseMatches(MutableSequence):
 
         return filter_index(chain, predicate, index)
 
-    def holes(self, start=0, end=None, formatter=None, ignore=None, predicate=None, index=None):  # pylint: disable=too-many-branches
+    @property
+    def max_end(self):
+        """
+        Retrieves the maximum index.
+        :return:
+        """
+        return max(len(self.input_string), self._max_end) if self.input_string else self._max_end
+
+    def holes(self, start=0, end=None, formatter=None, ignore=None, seps=None, predicate=None, index=None):  # pylint: disable=too-many-branches,too-many-locals
         """
         Retrieves a set of Match objects that are not defined in given range.
         :param start:
@@ -267,6 +280,8 @@ class _BaseMatches(MutableSequence):
         :type formatter:
         :param ignore:
         :type ignore:
+        :param seps:
+        :type seps:
         :param predicate:
         :type predicate:
         :param index:
@@ -274,8 +289,11 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
+        assert self.input_string if seps else True, "input_string must be defined when using seps parameter"
         if end is None:
             end = self.max_end
+        else:
+            end = min(self.max_end, end)
         ret = []
         current = []
         hole = False
@@ -296,14 +314,19 @@ class _BaseMatches(MutableSequence):
             for ending in self.ending(rindex):
                 if ending in current:
                     current.remove(ending)
-            if not current and not hole:
-                # Open a new hole match
-                hole = True
-                ret.append(Match(max(rindex, start), None, input_string=self.input_string, formatter=formatter))
-            elif current and hole:
-                # Close current hole match
+
+            if seps and hole and self.input_string and self.input_string[rindex] in seps:
                 hole = False
                 ret[-1].end = rindex
+            else:
+                if not current and not hole:
+                    # Open a new hole match
+                    hole = True
+                    ret.append(Match(max(rindex, start), None, input_string=self.input_string, formatter=formatter))
+                elif current and hole:
+                    # Close current hole match
+                    hole = False
+                    ret[-1].end = rindex
 
         if ret and hole:
             lindex = rindex
@@ -313,7 +336,7 @@ class _BaseMatches(MutableSequence):
                 if self.starting(rindex):
                     break
 
-            ret[-1].end = min(rindex, end)
+            ret[-1].end = min(rindex+1, end)
         return filter_index(ret, predicate, index)
 
     def conflicting(self, match, predicate=None, index=None):
@@ -453,7 +476,7 @@ class Matches(_BaseMatches):
     A custom list[Match] contains matches list.
     """
     def __init__(self, matches=None, input_string=None):
-        self.markers = Markers()
+        self.markers = Markers(input_string=input_string)
         super(Matches, self).__init__(matches=matches, input_string=input_string)
 
     def _add_match(self, match):

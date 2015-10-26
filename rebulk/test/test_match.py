@@ -234,6 +234,27 @@ class TestMatchesClass(object):
         holes = list(matches.holes(5, 15, predicate=lambda hole: False))
         assert len(holes) == 0
 
+    def test_holes_empty(self):
+        input_string = "Test hole on empty matches"
+        matches = Matches(input_string=input_string)
+        holes = matches.holes()
+        assert len(holes) == 1
+        assert holes[0].value == input_string
+
+    def test_holes_seps(self):
+        input_string = "Test hole - with many separators + included"
+        match = StringPattern("many").matches(input_string)
+
+        matches = Matches(match, input_string)
+        holes = matches.holes()
+
+        assert len(holes) == 2
+
+        holes = matches.holes(seps="-+")
+
+        assert len(holes) == 4
+        assert [hole.value for hole in holes] == ["Test hole ", " with ", " separators ", " included"]
+
     def test_get_slices(self):
         matches = Matches()
         matches.append(self.match1)
