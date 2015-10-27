@@ -3,10 +3,10 @@
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, protected-access, invalid-name
 
 from ..pattern import StringPattern
-from .. import Match, Rebulk
+from .. import Rebulk
+from ..match import Match
 from .. import debug
 debug.DEBUG = True
-
 
 
 

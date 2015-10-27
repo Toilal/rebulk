@@ -412,28 +412,12 @@ class TestFunctionalPattern(object):
         assert matches[0].name == "functional"
         assert matches[0].value == "fly"
 
-    def test_single_object(self):
-        def func(input_string):
-            i = input_string.find("fly")
-            if i > -1:
-                return Match(i, i + len("fly"), name="functional")
-
-        pattern = FunctionalPattern(func, label="test")
-
-        matches = list(pattern.matches(self.input_string))
-        assert len(matches) == 1
-        assert isinstance(matches[0], Match)
-        assert matches[0].pattern == pattern
-        assert matches[0].span == (14, 17)
-        assert matches[0].name == "functional"
-        assert matches[0].value == "fly"
-
     def test_multiple_objects(self):
         def func(input_string):
             i = input_string.find("fly")
             matches = []
             if i > -1:
-                matches.append(Match(i, i + len("fly"), name="functional"))
+                matches.append((i, i + len("fly"), {'name': "functional"}))
                 i = input_string.find("annoyed")
             if i > -1:
                 matches.append((i, i + len("annoyed")))
@@ -466,7 +450,7 @@ class TestFunctionalPattern(object):
         def func(input_string):
             i = input_string.find("fly")
             if i > -1:
-                yield Match(i, i + len("fly"), name="functional")
+                yield (i, i + len("fly"), {'name': "functional"})
             i = input_string.find("annoyed")
             if i > -1:
                 yield (i, i + len("annoyed"))

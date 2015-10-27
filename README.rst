@@ -156,7 +156,7 @@ and must return at least start index and end index of the ``Match`` object.
     >>> Rebulk().functional(func).matches("Why do simple ? Forget about it ...")
     [<Why:(0, 3)>]
 
-You can also return a dict of keywords arguments for ``Match`` object, or plain ``rebulk.Match`` instance.
+You can also return a dict of keywords arguments for ``Match`` object.
 
 You can define several patterns with a single ``functional`` method call, and function used can return multiple
 matches.

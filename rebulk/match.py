@@ -7,7 +7,7 @@ from collections import defaultdict, MutableSequence, OrderedDict
 import copy
 import six
 
-from .loose import ensure_list, filter_index, call
+from .loose import ensure_list, filter_index
 from .utils import is_iterable
 from .debug import defined_at
 
@@ -269,6 +269,38 @@ class _BaseMatches(MutableSequence):
         """
         return max(len(self.input_string), self._max_end) if self.input_string else self._max_end
 
+    def _hole_start(self, position, ignore=None):
+        """
+        Retrieves the start of hole index from position.
+        :param position:
+        :type position:
+        :param ignore:
+        :type ignore:
+        :return:
+        :rtype:
+        """
+        for lindex in reversed(range(0, position)):
+            for starting in self.starting(lindex):
+                if not ignore or not ignore(starting):
+                    return lindex
+        return 0
+
+    def _hole_end(self, position, ignore=None):
+        """
+        Retrieves the end of hole index from position.
+        :param position:
+        :type position:
+        :param ignore:
+        :type ignore:
+        :return:
+        :rtype:
+        """
+        for rindex in range(position, self.max_end):
+            for starting in self.starting(rindex):
+                if not ignore or not ignore(starting):
+                    return rindex
+        return self.max_end
+
     def holes(self, start=0, end=None, formatter=None, ignore=None, seps=None, predicate=None, index=None):  # pylint: disable=too-many-branches,too-many-locals
         """
         Retrieves a set of Match objects that are not defined in given range.
@@ -298,18 +330,12 @@ class _BaseMatches(MutableSequence):
         current = []
         hole = False
         rindex = start
-        loop_start = start
 
-        if start > 0:
-            # go the the previous starting element ...
-            for lindex in reversed(range(0, start)):
-                if self.starting(lindex):
-                    loop_start = lindex
-                    break
+        loop_start = self._hole_start(start, ignore)
 
         for rindex in range(loop_start, end):
             for starting in self.starting(rindex):
-                if starting not in current and (not ignore or not call(ignore, starting, rindex, loop_start)):
+                if starting not in current and (not ignore or not ignore(starting)):
                     current.append(starting)
             for ending in self.ending(rindex):
                 if ending in current:
@@ -329,14 +355,8 @@ class _BaseMatches(MutableSequence):
                     ret[-1].end = rindex
 
         if ret and hole:
-            lindex = rindex
-
             # go the the next starting element ...
-            for rindex in range(lindex, self.max_end):
-                if self.starting(rindex):
-                    break
-
-            ret[-1].end = min(rindex+1, end)
+            ret[-1].end = min(self._hole_end(rindex, ignore), end)
         return filter_index(ret, predicate, index)
 
     def conflicting(self, match, predicate=None, index=None):

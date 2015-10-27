@@ -324,10 +324,6 @@ class FunctionalPattern(Pattern):
             else:
                 args_iterable = ret
             for args in args_iterable:
-                if isinstance(args, Match):
-                    args = dict((k, v) for k, v in args.__dict__.items() if
-                                not hasattr(v, '__len__') and v is not None or
-                                hasattr(v, '__len__') and len(v) > 0)
                 if isinstance(args, dict):
                     options = args
                     options.pop('input_string', None)
