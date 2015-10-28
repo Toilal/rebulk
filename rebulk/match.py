@@ -127,7 +127,7 @@ class _BaseMatches(MutableSequence):
         :return: set of matches
         :rtype: set[Match]
         """
-        return filter_index(self._name_dict[name], predicate, index)
+        return filter_index(_BaseMatches._base(self._name_dict[name]), predicate, index)
 
     def tagged(self, tag, predicate=None, index=None):
         """
@@ -141,7 +141,7 @@ class _BaseMatches(MutableSequence):
         :return: set of matches
         :rtype: set[Match]
         """
-        return filter_index(self._tag_dict[tag], predicate, index)
+        return filter_index(_BaseMatches._base(self._tag_dict[tag]), predicate, index)
 
     def starting(self, start, predicate=None, index=None):
         """
@@ -155,7 +155,7 @@ class _BaseMatches(MutableSequence):
         :return: set of matches
         :rtype: set[Match]
         """
-        return filter_index(self._start_dict[start], predicate, index)
+        return filter_index(_BaseMatches._base(self._start_dict[start]), predicate, index)
 
     def ending(self, end, predicate=None, index=None):
         """
@@ -167,7 +167,7 @@ class _BaseMatches(MutableSequence):
         :return: set of matches
         :rtype: set[Match]
         """
-        return filter_index(self._end_dict[end], predicate, index)
+        return filter_index(_BaseMatches._base(self._end_dict[end]), predicate, index)
 
     def range(self, start=0, end=None, predicate=None, index=None):
         """
@@ -187,7 +187,7 @@ class _BaseMatches(MutableSequence):
             end = self.max_end
         else:
             end = min(self.max_end, end)
-        ret = []
+        ret = _BaseMatches._base()
         for match in sorted(self):
             if match.start < end and match.end > start:
                 ret.append(match)
@@ -210,7 +210,7 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
-        chain = []
+        chain = _BaseMatches._base()
         position = min(self.max_end, position)
 
         for i in reversed(range(start, position)):
@@ -242,7 +242,7 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
-        chain = []
+        chain = _BaseMatches._base()
 
         if end is None:
             end = self.max_end
@@ -326,7 +326,7 @@ class _BaseMatches(MutableSequence):
             end = self.max_end
         else:
             end = min(self.max_end, end)
-        ret = []
+        ret = _BaseMatches._base()
         current = []
         hole = False
         rindex = start
@@ -371,7 +371,7 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
-        ret = []
+        ret = _BaseMatches._base()
 
         for i in range(*match.span):
             ret.extend(self.starting(i))

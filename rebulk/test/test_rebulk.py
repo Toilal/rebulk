@@ -345,3 +345,38 @@ class TestUnicode(object):
         assert matches[1].value == u"捷"
         assert matches[2].value == u"的"
 
+
+class TestImmutable(object):
+    def test_starting(self):
+        input_string = "The quick brown fox jumps over the lazy dog"
+        matches = Rebulk().string("quick").string("over").string("fox").matches(input_string)
+
+        for i in range(0, len(input_string)):
+            starting = matches.starting(i)
+            for match in list(starting):
+                starting.remove(match)
+
+        assert len(matches) == 3
+
+    def test_ending(self):
+        input_string = "The quick brown fox jumps over the lazy dog"
+        matches = Rebulk().string("quick").string("over").string("fox").matches(input_string)
+
+        for i in range(0, len(input_string)):
+            starting = matches.ending(i)
+            for match in list(starting):
+                starting.remove(match)
+
+        assert len(matches) == 3
+
+    def test_named(self):
+        input_string = "The quick brown fox jumps over the lazy dog"
+        matches = Rebulk().defaults(name='test').string("quick").string("over").string("fox").matches(input_string)
+
+        named = matches.named('test')
+        for match in list(named):
+            named.remove(match)
+
+        assert len(named) == 0
+        assert len(matches) == 3
+

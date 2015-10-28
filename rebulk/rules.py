@@ -88,9 +88,11 @@ class RemoveMatchRule(Rule):  # pylint: disable=abstract-method
         if is_iterable(when_response):
             when_response = list(when_response)
             for match in when_response:
-                matches.remove(match)
+                if match in matches:
+                    matches.remove(match)
         else:
-            matches.remove(when_response)
+            if when_response in matches:
+                matches.remove(when_response)
 
 
 class AppendMatchRule(Rule):  # pylint: disable=abstract-method
@@ -101,9 +103,11 @@ class AppendMatchRule(Rule):  # pylint: disable=abstract-method
         if is_iterable(when_response):
             when_response = list(when_response)
             for match in when_response:
-                matches.append(match)
+                if match not in matches:
+                    matches.append(match)
         else:
-            matches.append(when_response)
+            if when_response not in matches:
+                matches.append(when_response)
 
 
 class AppendRemoveMatchRule(Rule):  # pylint: disable=abstract-method
@@ -115,15 +119,19 @@ class AppendRemoveMatchRule(Rule):  # pylint: disable=abstract-method
         if is_iterable(to_append):
             to_append = list(to_append)
             for match in to_append:
-                matches.append(match)
+                if match not in matches:
+                    matches.append(match)
         else:
-            matches.append(to_append)
+            if to_append not in matches:
+                matches.append(to_append)
         if is_iterable(to_remove):
             to_remove = list(to_remove)
             for match in to_remove:
-                matches.remove(match)
+                if match in matches:
+                    matches.remove(match)
         else:
-            matches.append(to_remove)
+            if to_remove in matches:
+                matches.remove(to_remove)
 
 
 class Rules(list):
@@ -208,9 +216,6 @@ class Rules(list):
                     if when_response:
                         log(rule.log_level, "Rule was triggered: %s", when_response)
                         then_futures.append((rule, matches, when_response, context))
-                    else:
-                        pass
-                        #log(rule.log_level, "Rule was not triggered.")
                 else:
                     log(rule.log_level, "Rule is disabled: %s", rule)
             for then_future in then_futures:
