@@ -422,6 +422,11 @@ For a rule to be triggered, ``Rule.when`` method must return ``True``, or a non 
 objects, or any other truthy object. When triggered, ``Rule.then`` method is called to perform the action with
 ``when_response`` parameter defined as the response of ``Rule.when`` call.
 
+Instead of implementing ``Rule.then`` method, you can define ``consequence`` class property with a Consequence classe
+or instance, like ``RemoveMatch``, ``RenameMatch`` or ``AppendMatch``. You can also use a list of consequence when
+required : ``when_response`` must then be iterable, and elements of this iterable will be given to each consequence in
+the same order.
+
 When many rules are registered, it can be useful to set ``priority`` class variable to define a priority integer
 between all rule executions (higher priorities will be executed first).
 
@@ -429,17 +434,15 @@ For all rules with the same ``priority`` value, ``when`` is called before, and `
 
 .. code-block:: python
 
-    >>> from rebulk import Rule
+    >>> from rebulk import Rule, RemoveMatch
 
     >>> class FirstOnlyRule(Rule):
+    ...     consequence = RemoveMatch
+    ...
     ...     def when(self, matches, context):
     ...         grabbed = matches.named("grabbed", 0)
     ...         if grabbed and matches.previous(grabbed):
     ...             return grabbed
-    ...
-    ...     def then(self, matches, when_response, context):
-    ...         # when_response reference the return object of when method
-    ...         matches.remove(when_response)
 
     >>> rebulk = Rebulk()
 

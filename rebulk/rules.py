@@ -15,12 +15,55 @@ log = getLogger(__name__).log
 
 from . import debug
 
+
 @six.add_metaclass(ABCMeta)
-class Rule(object):
+class Consequence(object):
+    """
+    Definition of a consequence to apply.
+    """
+    @abstractmethod
+    def then(self, matches, when_response, context):  # pragma: no cover
+        """
+        Action implementation.
+
+        :param matches:
+        :type matches: rebulk.match.Matches
+        :param context:
+        :type context:
+        :param when_response: return object from when call.
+        :type when_response: object
+        :return: True if the action was runned, False if it wasn't.
+        :rtype: bool
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
+class Condition(object):
+    """
+    Definition of a condition to check.
+    """
+    @abstractmethod
+    def when(self, matches, context):  # pragma: no cover
+        """
+        Condition implementation.
+
+        :param matches:
+        :type matches: rebulk.match.Matches
+        :param context:
+        :type context:
+        :return: truthy if rule should be triggered and execute then action, falsy if it should not.
+        :rtype: object
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
+class CustomRule(Condition, Consequence):
     """
     Definition of a rule to apply
     """
-    # pylint: disable=no-self-use, unused-argument
+    # pylint: disable=no-self-use, unused-argument, abstract-method
     priority = 0
     name = None
 
@@ -40,36 +83,6 @@ class Rule(object):
         """
         return True
 
-    @abstractmethod
-    def when(self, matches, context):  # pragma: no cover
-        """
-        Condition implementation.
-
-        :param matches:
-        :type matches: rebulk.match.Matches
-        :param context:
-        :type context:
-        :return: truthy if rule should be triggered and execute then action, falsy if it should not.
-        :rtype: object
-        """
-        pass
-
-    @abstractmethod
-    def then(self, matches, when_response, context):  # pragma: no cover
-        """
-        Action implementation.
-
-        :param matches:
-        :type matches: rebulk.match.Matches
-        :param context:
-        :type context:
-        :param when_response: return object from when call.
-        :type when_response: object
-        :return: True if the action was runned, False if it wasn't.
-        :rtype: bool
-        """
-        pass
-
     def __lt__(self, other):
         return self.priority > other.priority
 
@@ -80,58 +93,92 @@ class Rule(object):
         return "<%s%s>" % (self.name if self.name else self.__class__.__name__, defined)
 
 
-class RemoveMatchRule(Rule):  # pylint: disable=abstract-method
+class Rule(CustomRule):
+    """
+    Definition of a rule to apply
+    """
+    # pylint:disable=abstract-method
+    consequence = None
+
+    def then(self, matches, when_response, context):
+        assert self.consequence
+        if is_iterable(self.consequence):
+            iterator = iter(when_response)
+            for cons in self.consequence:
+                if inspect.isclass(cons):
+                    cons = cons()
+                cons.then(matches, next(iterator), context)
+        else:
+            cons = self.consequence
+            if inspect.isclass(cons):
+                cons = cons()  # pylint:disable=not-callable
+            cons.then(matches, when_response, context)
+
+
+class RemoveMatch(Consequence):  # pylint: disable=abstract-method
     """
     Remove matches returned by then
     """
     def then(self, matches, when_response, context):
         if is_iterable(when_response):
+            ret = []
             when_response = list(when_response)
             for match in when_response:
                 if match in matches:
                     matches.remove(match)
+                    ret.append(match)
+            return ret
         else:
             if when_response in matches:
                 matches.remove(when_response)
+                return when_response
 
 
-class AppendMatchRule(Rule):  # pylint: disable=abstract-method
+class AppendMatch(Consequence):  # pylint: disable=abstract-method
     """
     Append matches returned by then
     """
+    def __init__(self, match_name=None):
+        self.match_name = match_name
+
     def then(self, matches, when_response, context):
         if is_iterable(when_response):
+            ret = []
             when_response = list(when_response)
             for match in when_response:
                 if match not in matches:
+                    if self.match_name:
+                        match.name = self.match_name
                     matches.append(match)
+                    ret.append(match)
+            return ret
         else:
+            if self.match_name:
+                when_response.name = self.match_name
             if when_response not in matches:
                 matches.append(when_response)
+                return when_response
 
 
-class AppendRemoveMatchRule(Rule):  # pylint: disable=abstract-method
+class RenameMatch(Consequence):  # pylint: disable=abstract-method
     """
-    Append matches returned by then[0] and remove matches returned by then[1]
+    Rename matches returned by then
     """
+    def __init__(self, match_name):
+        self.match_name = match_name
+        self.remove = RemoveMatch()
+        self.append = AppendMatch()
+
     def then(self, matches, when_response, context):
-        to_append, to_remove = when_response
-        if is_iterable(to_append):
-            to_append = list(to_append)
-            for match in to_append:
-                if match not in matches:
-                    matches.append(match)
-        else:
-            if to_append not in matches:
-                matches.append(to_append)
-        if is_iterable(to_remove):
-            to_remove = list(to_remove)
-            for match in to_remove:
-                if match in matches:
-                    matches.remove(match)
-        else:
-            if to_remove in matches:
-                matches.remove(to_remove)
+        removed = self.remove.then(matches, when_response, context)
+        if is_iterable(removed):
+            removed = list(removed)
+            for match in removed:
+                match.name = self.match_name
+        elif removed:
+            removed.name = self.match_name
+        if removed:
+            self.append.then(matches, removed, context)
 
 
 class Rules(list):
@@ -226,3 +273,5 @@ class Rules(list):
                 rule.then(*args)
                 ret.append((rule, when_response))
         return ret
+
+
