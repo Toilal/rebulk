@@ -428,7 +428,8 @@ required : ``when_response`` must then be iterable, and elements of this iterabl
 the same order.
 
 When many rules are registered, it can be useful to set ``priority`` class variable to define a priority integer
-between all rule executions (higher priorities will be executed first).
+between all rule executions (higher priorities will be executed first). You can also define ``dependency`` to declare
+another Rule class as dependency for the current rule, meaning that it will be executed before.
 
 For all rules with the same ``priority`` value, ``when`` is called before, and ``then`` is called after all.
 

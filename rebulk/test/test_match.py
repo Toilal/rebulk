@@ -341,7 +341,7 @@ class TestMaches(object):
 
         selection = matches.named("2-re", lambda m: "re" in m.tags, 0)
         assert selection is not None
-        assert selection.name == "2-re"  #pylint:disable=no-member
+        assert selection.name == "2-re"  # pylint:disable=no-member
 
         selection = matches.named("2-re", lambda m: "re" in m.tags)
         assert len(selection) == 1

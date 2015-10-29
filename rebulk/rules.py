@@ -10,6 +10,8 @@ from itertools import groupby
 import six
 from .utils import is_iterable
 
+from .toposort import toposort
+
 from logging import getLogger
 log = getLogger(__name__).log
 
@@ -66,6 +68,7 @@ class CustomRule(Condition, Consequence):
     # pylint: disable=no-self-use, unused-argument, abstract-method
     priority = 0
     name = None
+    dependency = None
 
     def __init__(self, log_level=None):
         self.defined_at = debug.defined_at()
@@ -247,31 +250,62 @@ class Rules(list):
         :rtype:
         """
         ret = []
-        rules = sorted(self)
-        for priority, priority_rules in groupby(rules, lambda rule: rule.priority):
-            then_futures = []
-            priority_rules = list(priority_rules)
-            group_log_level = None
-            for rule in priority_rules:
-                if group_log_level is None or group_log_level < rule.log_level:
-                    group_log_level = rule.log_level
-            log(group_log_level, "%s rule(s) at priority %s.", len(priority_rules), priority)
-            for rule in priority_rules:
-                if rule.enabled(context):
-                    log(rule.log_level, "Checking rule condition: %s", rule)
-                    when_response = rule.when(matches, context)
-                    if when_response:
-                        log(rule.log_level, "Rule was triggered: %s", when_response)
-                        then_futures.append((rule, matches, when_response, context))
-                else:
-                    log(rule.log_level, "Rule is disabled: %s", rule)
-            for then_future in then_futures:
-                rule = then_future[0]
-                args = then_future[1:]
-                when_response = then_future[2]
-                log(rule.log_level, "Running rule consequence: %s %s", rule, when_response)
-                rule.then(*args)
-                ret.append((rule, when_response))
+        for priority, priority_rules in groupby(sorted(self), lambda rule: rule.priority):
+            sorted_rules = toposort_rules(list(priority_rules))
+            for rules_group in sorted_rules:
+                then_futures = []
+                group_log_level = None
+                for rule in rules_group:
+                    if group_log_level is None or group_log_level < rule.log_level:
+                        group_log_level = rule.log_level
+                log(group_log_level, "%s independent rule(s) at priority %s.", len(rules_group), priority)
+                for rule in rules_group:
+                    if rule.enabled(context):
+                        log(rule.log_level, "Checking rule condition: %s", rule)
+                        when_response = rule.when(matches, context)
+                        if when_response:
+                            log(rule.log_level, "Rule was triggered: %s", when_response)
+                            then_futures.append((rule, matches, when_response, context))
+                    else:
+                        log(rule.log_level, "Rule is disabled: %s", rule)
+                for then_future in then_futures:
+                    rule = then_future[0]
+                    args = then_future[1:]
+                    when_response = then_future[2]
+                    log(rule.log_level, "Running rule consequence: %s %s", rule, when_response)
+                    rule.then(*args)
+                    ret.append((rule, when_response))
         return ret
+
+
+def toposort_rules(rules):
+    """
+    Sort given rules using toposort with dependency parameter.
+    :param rules:
+    :type rules:
+    :return:
+    :rtype:
+    """
+    graph = {}
+    class_dict = {}
+    for rule in rules:
+        if rule.__class__ in class_dict:
+            raise ValueError("Duplicate class rules are not allowed: %s" % rule.__class__)
+        class_dict[rule.__class__] = rule
+    for rule in rules:
+        if not is_iterable(rule.dependency) and rule.dependency:
+            rule_dependencies = [rule.dependency]
+        else:
+            rule_dependencies = rule.dependency
+        dependencies = set()
+        if rule_dependencies:
+            for dependency in rule_dependencies:
+                if inspect.isclass(dependency):
+                    dependency = class_dict.get(dependency)
+                if dependency:
+                    dependencies.add(dependency)
+        graph[rule] = dependencies
+    return toposort(graph)
+
 
 

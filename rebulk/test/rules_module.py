@@ -6,8 +6,6 @@ from ..rules import Rule
 
 
 class Rule3(Rule):
-    priority = 3
-
     def when(self, matches, context):
         return context.get('when')
 
@@ -17,7 +15,7 @@ class Rule3(Rule):
 
 
 class Rule2(Rule):
-    priority = 2
+    dependency = Rule3
 
     def when(self, matches, context):
         return True
@@ -28,7 +26,7 @@ class Rule2(Rule):
 
 
 class Rule1(Rule):
-    priority = 1
+    dependency = Rule2
 
     def when(self, matches, context):
         return True
@@ -39,6 +37,8 @@ class Rule1(Rule):
 
 
 class Rule0(Rule):
+    dependency = Rule1
+
     def when(self, matches, context):
         return True
 
