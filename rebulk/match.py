@@ -571,6 +571,22 @@ class Match(object):
         self._value = value  # pylint: disable=attribute-defined-outside-init
 
     @property
+    def names(self):
+        """
+        Get all names of children
+        :return:
+        :rtype:
+        """
+        if not self.children:
+            return set([self.name])
+        else:
+            ret = set()
+            for child in self.children:
+                for name in child.names:
+                    ret.add(name)
+            return ret
+
+    @property
     def raw_start(self):
         """
         start index of raw value
