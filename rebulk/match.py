@@ -210,6 +210,9 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
+        if hasattr(position, 'start'):
+            position = position.start
+
         chain = _BaseMatches._base()
         position = min(self.max_end, position)
 
@@ -242,6 +245,8 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
+        if hasattr(position, 'end'):
+            position = position.end
         chain = _BaseMatches._base()
 
         if end is None:
@@ -327,19 +332,16 @@ class _BaseMatches(MutableSequence):
         else:
             end = min(self.max_end, end)
         ret = _BaseMatches._base()
-        current = []
         hole = False
         rindex = start
 
         loop_start = self._hole_start(start, ignore)
 
         for rindex in range(loop_start, end):
-            for starting in self.starting(rindex):
-                if starting not in current and (not ignore or not ignore(starting)):
-                    current.append(starting)
-            for ending in self.ending(rindex):
-                if ending in current:
-                    current.remove(ending)
+            current = []
+            for at_index in self.at_index(rindex):
+                if not ignore or not ignore(at_index):
+                    current.append(at_index)
 
             if seps and hole and self.input_string and self.input_string[rindex] in seps:
                 hole = False
