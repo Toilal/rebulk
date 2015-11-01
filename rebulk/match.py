@@ -393,7 +393,7 @@ class _BaseMatches(MutableSequence):
         Retrieves a list of matches from given (start, end) tuple.
         """
         starting = self._index_dict[span[0]]
-        ending = self._index_dict[span[1]]
+        ending = self._index_dict[span[1] - 1]
 
         merged = list(starting)
         for marker in ending:
