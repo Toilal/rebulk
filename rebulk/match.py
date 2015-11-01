@@ -251,7 +251,7 @@ class _BaseMatches(MutableSequence):
 
         for i in range(position, end):
             index_matches = self.at_index(i)
-            filtered_matches = [index_match for index_match in index_matches if predicate and predicate(index_match)]
+            filtered_matches = [index_match for index_match in index_matches if not predicate or predicate(index_match)]
             if filtered_matches:
                 for chain_match in filtered_matches:
                     if chain_match not in chain:
