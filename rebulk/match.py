@@ -374,9 +374,9 @@ class _BaseMatches(MutableSequence):
         ret = _BaseMatches._base()
 
         for i in range(*match.span):
-            ret.extend(self.starting(i))
-            if i != match.span[0]:
-                ret.extend(self.ending(i))
+            for at_match in self.at_index(i):
+                if at_match not in ret:
+                    ret.append(at_match)
 
         ret.remove(match)
 
