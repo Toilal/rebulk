@@ -16,25 +16,9 @@ install_requires = ['six', 'regex']
 if python_implementation() == 'PyPy':
     install_requires.remove('regex')  # PyPy doesn't support regex module
 
-tests_require = ['pytest']
+setup_requires=['pytest-runner']
 
-
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = ['--ignore=setup.py', '--doctest-modules']
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-
-    def run(self):
-        import pytest
-        errno = pytest.main(self.pytest_args)
-        exit(errno)
-
+tests_require=['pytest']
 
 exec(open("rebulk/__version__.py").read())  # load version without importing rebulk
 
@@ -62,8 +46,8 @@ args = dict(name='rebulk',
             download_url='https://pypi.python.org/packages/source/r/rebulk/rebulk-%s.tar.gz' % __version__,
             license='MIT',
             packages=find_packages(),
-            cmdclass={"test": PyTest},
             include_package_data=True,
+            setup_requires=setup_requires,
             install_requires=install_requires,
             tests_require=tests_require,
             test_suite='rebulk.test',
