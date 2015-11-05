@@ -16,6 +16,17 @@ class TestMatchClass(object):
 
         assert repr(match1) == '<es:(1, 3)>'
 
+        match2 = Match(0, 4, value="test", private=True, name="abc", tags=['one', 'two'])
+
+        assert repr(match2) == '<test:(0, 4)+private+name=abc+tags=[\'one\', \'two\']>'
+
+    def test_names(self):
+        parent = Match(0, 10, name="test")
+        parent.children.append(Match(0, 10, name="child1", parent=parent))
+        parent.children.append(Match(0, 10, name="child2", parent=parent))
+
+        assert set(parent.names) == set(["child1", "child2"])
+
     def test_equality(self):
         match1 = Match(1, 3, value="es")
         match2 = Match(1, 3, value="es")
@@ -291,6 +302,20 @@ class TestMatchesClass(object):
 
 
 class TestMaches(object):
+    def test_names(self):
+        input_string = "One Two Three"
+
+        matches = Matches()
+
+        matches.extend(StringPattern("One", name="1-str", tags=["One", "str"]).matches(input_string))
+        matches.extend(RePattern("One", name="1-re", tags=["One", "re"]).matches(input_string))
+        matches.extend(StringPattern("Two", name="2-str", tags=["Two", "str"]).matches(input_string))
+        matches.extend(RePattern("Two", name="2-re", tags=["Two", "re"]).matches(input_string))
+        matches.extend(StringPattern("Three", name="3-str", tags=["Three", "str"]).matches(input_string))
+        matches.extend(RePattern("Three", name="3-re", tags=["Three", "re"]).matches(input_string))
+
+        assert set(matches.names) == set(["1-str", "1-re", "2-str", "2-re", "3-str", "3-re"])
+
     def test_filters(self):
         input_string = "One Two Three"
 

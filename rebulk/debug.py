@@ -43,7 +43,7 @@ def defined_at():
             try:
                 if frame.f_globals['__package__'] != __package__:
                     break
-            except KeyError:
+            except KeyError:  # pragma:no cover
                 # If package is missing, consider we are in. Workaround for python 3.3.
                 break
             frame = frame.f_back

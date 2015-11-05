@@ -35,6 +35,7 @@ def test_pattern():
     assert pattern.defined_at.filename.endswith('test_debug.py')
 
     assert str(pattern.defined_at) == 'test_debug.py#L20'
+    assert repr(pattern) == '<StringPattern@test_debug.py#L20:(1, 3)>'
 
 
 def test_match():

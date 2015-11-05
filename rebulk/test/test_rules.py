@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, invalid-name
+import pytest
 from rebulk.test.default_rules_module import RuleRemove0, RuleAppend0, RuleRename0, RuleAppend1, RuleRemove1, \
     RuleRename1, RuleAppend2, RuleAppend3
 
@@ -25,6 +26,15 @@ def test_rule_priority():
     rules.execute_all_rules(matches, {})
     assert len(matches) == 1
     assert matches[0] == Match(3, 4)
+
+
+def test_rules_duplicates():
+    matches = Matches([Match(1, 2)])
+
+    rules = Rules(Rule1, Rule1)
+
+    with pytest.raises(ValueError):
+        rules.execute_all_rules(matches, {})
 
 
 def test_rule_disabled():

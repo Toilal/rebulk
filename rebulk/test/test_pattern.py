@@ -26,6 +26,11 @@ class TestStringPattern(object):
         assert matches[0].span == (28, 34)
         assert matches[0].value == "Celtic"
 
+    def test_repr(self):
+        pattern = StringPattern("Celtic", label="test")
+
+        assert repr(pattern) == '<StringPattern:(\'Celtic\',)>'
+
     def test_ignore_case(self):
         pattern = StringPattern("celtic", label="test", ignore_case=False)
 
