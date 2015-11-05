@@ -49,10 +49,10 @@ class Pattern(object):
         :type every: bool
         :param private: flag this pattern as beeing private.
         :type private: bool
-        :param private_parent: force yielding of parent and flag parent matches as private.
+        :param private_parent: force return of parent and flag parent matches as private.
         :type private_parent: bool
-        :param private_parent: force yielding of children and flag children matches as private.
-        :type private_parent: bool
+        :param private_children: force return of children and flag children matches as private.
+        :type private_children: bool
         :param marker: flag this pattern as beeing a marker.
         :type private: bool
         :param format_all if True, pattern will format every match in the hierarchy (even match not yield).

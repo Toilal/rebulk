@@ -133,7 +133,8 @@ If `regex module`_ is available, it automatically supports repeated captures.
 
 - ``abbreviations``
 
-  Defined as a list of 2-tuple, each tuple is an abbreviation.
+  Defined as a list of 2-tuple, each tuple is an abbreviation. It simply replace ``tuple[0]`` with ``tuple[1]`` in the
+  expression.
 
   >>> Rebulk().regex(r'Custom-separators', abbreviations=[("-", "[\W_]+")])\
   ...         .matches("Custom_separators using-abbreviations")
@@ -188,10 +189,19 @@ All patterns have options that can be given as keyword arguments.
 Some base validator functions are available in ``rebulk.validators`` module. Most of those functions have to be
 configured using ``functools.partial`` to map them to function accepting a single ``match`` argument.
 
-- ``validate_all``
+- ``formatter``
 
-  By default, validator is called for returned ``Match`` objects only. Enable this option to validate them all, parent
-  and children included.
+  Function to convert ``Match`` value given by the pattern. Can also be a ``dict``, to use ``formatter`` with matches
+  named with key.
+
+  .. code-block:: python
+
+      >>> def year_formatter(value):
+      ...     return int(value)
+      >>> matches = Rebulk().regex(r'\d{4}', formatter=year_formatter) \
+      ...                   .matches("In year 1982 ...")
+      >>> isinstance(matches[0].value, int)
+      True
 
 - ``name``
 
@@ -205,6 +215,20 @@ configured using ``functools.partial`` to map them to function accepting a singl
 
   Override value property for generated ``Match`` objects.
 
+- ``validate_all``
+
+  By default, validator is called for returned ``Match`` objects only. Enable this option to validate them all, parent
+  and children included.
+
+- ``format_all``
+
+  By default, formatter is called for returned ``Match`` values only. Enable this option to format them all, parent and
+  children included.
+
+- ``disabled``
+
+  A ``function(context)`` to disable the pattern if returning ``True``.
+
 - ``children``
 
   If ``True``, all children ``Match`` objects will be retrieved instead of a single parent ``Match`` object.
@@ -213,6 +237,14 @@ configured using ``functools.partial`` to map them to function accepting a singl
 
   If ``True``, ``Match`` objects generated from this pattern are available internally only. They will be removed at
   the end of ``Rebulk.matches`` method call.
+
+- ``private_parent``
+
+  Force parent matches to be returned and flag them as private.
+
+- ``private_children``
+
+  Force children matches to be returned and flag them as private.
 
 - ``marker``
 
@@ -265,7 +297,7 @@ Match object has the following properties that can be given to Pattern objects
 
 - ``formatter``
 
-  Function to convert ``Match`` value given by the pattern. Can also be a ``dict``, to use ``formatter`` with pattern
+  Function to convert ``Match`` value given by the pattern. Can also be a ``dict``, to use ``formatter`` with matches
   named with key.
 
   .. code-block:: python
