@@ -3,7 +3,7 @@
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, invalid-name
 import pytest
 from rebulk.test.default_rules_module import RuleRemove0, RuleAppend0, RuleRename0, RuleAppend1, RuleRemove1, \
-    RuleRename1, RuleAppend2, RuleAppend3
+    RuleRename1, RuleAppend2, RuleRename2, RuleAppend3, RuleRename3
 
 from ..rules import Rules
 from ..match import Matches, Match
@@ -118,12 +118,28 @@ def test_default_rules():
     assert len(matches) == 2
     assert len(matches.named('renamed')) == 1
 
+    rules = Rules(RuleRename2)
+
+    matches = Matches([Match(5, 10, name='original')])
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches.named('original')) == 0
+    assert len(matches.named('renamed')) == 1
+
     rules = Rules(RuleAppend3)
 
     matches = Matches([Match(1, 2)])
     rules.execute_all_rules(matches, {})
 
     assert len(matches) == 2
+    assert len(matches.named('renamed')) == 1
+
+    rules = Rules(RuleRename3)
+
+    matches = Matches([Match(5, 10, name='original')])
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches.named('original')) == 0
     assert len(matches.named('renamed')) == 1
 
 

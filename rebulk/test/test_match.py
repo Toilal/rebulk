@@ -464,6 +464,10 @@ class TestMaches(object):
         assert len(chain_before) == 1
         assert chain_before[0].value == 'wordA'
 
+        chain_before = matches.chain_before(Match(b_start, b_start), " ,", predicate=lambda match: match.name == "word")
+        assert len(chain_before) == 1
+        assert chain_before[0].value == 'wordA'
+
         chain_before = matches.chain_before(b_start, " ,", predicate=lambda match: match.name == "digit")
         assert len(chain_before) == 0
 
@@ -475,10 +479,18 @@ class TestMaches(object):
         assert len(chain_after) == 1
         assert chain_after[0].value == 'wordC'
 
+        chain_after = matches.chain_after(Match(b_end, b_end), " ,", predicate=lambda match: match.name == "word")
+        assert len(chain_after) == 1
+        assert chain_after[0].value == 'wordC'
+
         chain_after = matches.chain_after(b_end, " ,", predicate=lambda match: match.name == "digit")
         assert len(chain_after) == 0
 
         chain_after = matches.chain_after(c_end, " ,", predicate=lambda match: match.name == "digit")
+        assert len(chain_after) == 2
+        assert [match.value for match in chain_after] == ["70", "80"]
+
+        chain_after = matches.chain_after(c_end, " ,", end=10000, predicate=lambda match: match.name == "digit")
         assert len(chain_after) == 2
         assert [match.value for match in chain_after] == ["70", "80"]
 

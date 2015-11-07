@@ -106,6 +106,8 @@ class Rule(CustomRule):
     def then(self, matches, when_response, context):
         assert self.consequence
         if is_iterable(self.consequence):
+            if not is_iterable(when_response):
+                when_response = [when_response]
             iterator = iter(when_response)
             for cons in self.consequence:
                 if inspect.isclass(cons):

@@ -41,8 +41,18 @@ class RuleAppend2(Rule):
     def when(self, matches, context):
         return [Match(5, 10)]
 
+class RuleRename2(Rule):
+    consequence = RenameMatch('renamed')
+    def when(self, matches, context):
+        return Match(5, 10, name="original")
+
 class RuleAppend3(Rule):
     consequence = AppendMatch('renamed')
     def when(self, matches, context):
         return [Match(5, 10)]
+
+class RuleRename3(Rule):
+    consequence = [RenameMatch('renamed')]
+    def when(self, matches, context):
+        return Match(5, 10, name="original")
 
