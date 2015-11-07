@@ -29,6 +29,23 @@ def test_rebulk_simple():
     assert matches[2].value == "over"
 
 
+def test_rebulk_composition():
+    rebulk = Rebulk()
+
+    rebulk.string("quick")
+    rebulk.rebulk(Rebulk().regex("f.x"))
+
+    rebulk.rebulk(Rebulk(disabled=lambda context: True).functional(lambda string: None))
+
+    input_string = "The quick brown fox jumps over the lazy dog"
+
+    matches = rebulk.matches(input_string)
+    assert len(matches) == 2
+
+    assert matches[0].value == "quick"
+    assert matches[1].value == "fox"
+
+
 def test_rebulk_context():
     rebulk = Rebulk()
 

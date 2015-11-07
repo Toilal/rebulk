@@ -42,8 +42,22 @@ class Rebulk(object):
         >>> bulk.matches("the lakers are from la")
         [<lakers:(4, 10)>, <la:(20, 22)>]
     """
+    # pylint:disable=protected-access
 
-    def __init__(self, default=True):
+    def __init__(self, disabled=False, default=True):
+        """
+        Creates a new Rebulk object.
+        :param disabled: if True, this pattern is disabled. Can also be a function(context).
+        :type disabled: bool|function
+        :param default: use default processors and post_processors
+        :type default:
+        :return:
+        :rtype:
+        """
+        if not callable(disabled):
+            self.disabled = lambda context: disabled
+        else:
+            self.disabled = disabled
         self._patterns = []
         self._processors = []
         self._post_processors = []
@@ -55,6 +69,7 @@ class Rebulk(object):
         self._regex_defaults = {}
         self._string_defaults = {}
         self._functional_defaults = {}
+        self._rebulks = []
 
     def pattern(self, *pattern):
         """
@@ -190,17 +205,12 @@ class Rebulk(object):
 
     def rebulk(self, *rebulks):
         """
-        Add all configuration from given Rebulk objects.
+        Add a children rebulk object
         :param rebulks:
         :type rebulks: Rebulk
         :return:
         """
-        #pylint: disable=protected-access
-        for rebulk in rebulks:
-            extend_safe(self._patterns, rebulk._patterns)
-            extend_safe(self._processors, rebulk._processors)
-            extend_safe(self._post_processors, rebulk._post_processors)
-            extend_safe(self._rules, rebulk._rules)
+        self._rebulks.extend(rebulks)
         return self
 
     def matches(self, string, context=None):
@@ -217,27 +227,80 @@ class Rebulk(object):
         if context is None:
             context = {}
 
-        self._matches_patterns(string, matches, context)
+        self._matches_patterns(matches, context)
 
-        for func in self._processors:
-            ret = call(func, matches, context)
-            if isinstance(ret, Matches):
-                matches = ret
+        matches = self._execute_processors(matches, context)
 
-        self._rules.execute_all_rules(matches, context)
+        self._execute_rules(matches, context)
 
-        for func in self._post_processors:
-            ret = call(func, matches, context)
-            if isinstance(ret, Matches):
-                matches = ret
+        matches = self._execute_post_processors(matches, context)
 
         return matches
 
-    def _matches_patterns(self, string, matches, context):
+    def _execute_rules(self, matches, context):
+        """
+        Execute rules for this rebulk and children.
+        :param matches:
+        :type matches:
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        if not self.disabled(context):
+            rules = Rules()
+            rules.extend(self._rules)
+            for rebulk in self._rebulks:
+                if not rebulk.disabled(context):
+                    extend_safe(rules, rebulk._rules)
+            rules.execute_all_rules(matches, context)
+
+    def _execute_processors(self, matches, context):
+        """
+        Execute processors for this rebulk and children.
+        :param matches:
+        :type matches:
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        if not self.disabled(context):
+            processors = list(self._processors)
+            for rebulk in self._rebulks:
+                if not rebulk.disabled(context):
+                    extend_safe(processors, rebulk._processors)
+            for func in processors:
+                ret = call(func, matches, context)
+                if isinstance(ret, Matches):
+                    matches = ret
+        return matches
+
+    def _execute_post_processors(self, matches, context):
+        """
+        Execute post processors for this rebulk and children.
+        :param matches:
+        :type matches:
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        if not self.disabled(context):
+            post_processors = []
+            for rebulk in self._rebulks:
+                if not rebulk.disabled(context):
+                    extend_safe(post_processors, rebulk._post_processors)
+            extend_safe(post_processors, self._post_processors)
+            for func in post_processors:
+                ret = call(func, matches, context)
+                if isinstance(ret, Matches):
+                    matches = ret
+        return matches
+
+    def _matches_patterns(self, matches, context):
         """
         Search for all matches with current paterns agains input_string
-        :param string: string to search into
-        :type string: str
         :param matches: matches list
         :type matches: Matches
         :param context: context to use
@@ -245,23 +308,26 @@ class Rebulk(object):
         :return:
         :rtype:
         """
-        for pattern in self._patterns:
-            if not pattern.disabled(context):
-                pattern_matches = pattern.matches(string, context)
-                if pattern_matches:
-                    log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
-                else:
-                    pass
-                    # log(pattern.log_level, "Pattern doesn't match. (%s)" % (pattern,))
-                for match in pattern_matches:
-                    if match.marker:
-                        log(pattern.log_level, "Marker found. (%s)", match)
-                        matches.markers.append(match)
+        if not self.disabled(context):
+            for pattern in self._patterns:
+                if not pattern.disabled(context):
+                    pattern_matches = pattern.matches(matches.input_string, context)
+                    if pattern_matches:
+                        log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
                     else:
-                        log(pattern.log_level, "Match found. (%s)", match)
-                        matches.append(match)
-            else:
-                log(pattern.log_level, "Pattern is disabled. (%s)", pattern)
+                        pass
+                        # log(pattern.log_level, "Pattern doesn't match. (%s)" % (pattern,))
+                    for match in pattern_matches:
+                        if match.marker:
+                            log(pattern.log_level, "Marker found. (%s)", match)
+                            matches.markers.append(match)
+                        else:
+                            log(pattern.log_level, "Match found. (%s)", match)
+                            matches.append(match)
+                else:
+                    log(pattern.log_level, "Pattern is disabled. (%s)", pattern)
+            for rebulk in self._rebulks:
+                rebulk._matches_patterns(matches, context)
 
 
 DEFAULT_PROCESSORS = [conflict_prefer_longer]

@@ -59,7 +59,7 @@ class Pattern(object):
         :type format_all: bool
         :param validate_all if True, pattern will validate every match in the hierarchy (even match not yield).
         :type validate_all: bool
-        :param disabled: if True, this pattern. Can also be a function(context).
+        :param disabled: if True, this pattern is disabled. Can also be a function(context).
         :type disabled: bool|function
         :param log_lvl: Log level associated to this pattern
         :type log_lvl: int
