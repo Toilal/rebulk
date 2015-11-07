@@ -51,6 +51,7 @@ args = dict(name='rebulk',
             install_requires=install_requires,
             tests_require=tests_require,
             test_suite='rebulk.test',
+            zip_safe=True
             )
 
 setup(**args)

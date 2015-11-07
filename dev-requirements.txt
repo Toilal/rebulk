@@ -1,4 +1,5 @@
 pytest>=2.7.3
+zest.releaser[recommended]
 pylint
 tox
 -e .
