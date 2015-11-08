@@ -309,7 +309,11 @@ class Rebulk(object):
         :rtype:
         """
         if not self.disabled(context):
-            for pattern in self._patterns:
+            patterns = list(self._patterns)
+            for rebulk in self._rebulks:
+                if not rebulk.disabled(context):
+                    extend_safe(patterns, rebulk._patterns)
+            for pattern in patterns:
                 if not pattern.disabled(context):
                     pattern_matches = pattern.matches(matches.input_string, context)
                     if pattern_matches:
@@ -326,8 +330,6 @@ class Rebulk(object):
                             matches.append(match)
                 else:
                     log(pattern.log_level, "Pattern is disabled. (%s)", pattern)
-            for rebulk in self._rebulks:
-                rebulk._matches_patterns(matches, context)
 
 
 DEFAULT_PROCESSORS = [conflict_prefer_longer]
