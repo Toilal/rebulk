@@ -237,6 +237,21 @@ class Rebulk(object):
 
         return matches
 
+    def effective_rules(self, context=None):
+        """
+        Get effective rules for this rebulk object and its children.
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        rules = Rules()
+        rules.extend(self._rules)
+        for rebulk in self._rebulks:
+            if not rebulk.disabled(context):
+                extend_safe(rules, rebulk._rules)
+        return rules
+
     def _execute_rules(self, matches, context):
         """
         Execute rules for this rebulk and children.
@@ -248,12 +263,23 @@ class Rebulk(object):
         :rtype:
         """
         if not self.disabled(context):
-            rules = Rules()
-            rules.extend(self._rules)
-            for rebulk in self._rebulks:
-                if not rebulk.disabled(context):
-                    extend_safe(rules, rebulk._rules)
+            rules = self.effective_rules(context)
             rules.execute_all_rules(matches, context)
+
+    def effective_processors(self, context=None):
+        """
+        Get effective processors for this rebulk object and its children.
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        processors = []
+        for rebulk in self._rebulks:
+            if not rebulk.disabled(context):
+                extend_safe(processors, rebulk._processors)
+        extend_safe(processors, self._processors)
+        return processors
 
     def _execute_processors(self, matches, context):
         """
@@ -266,15 +292,27 @@ class Rebulk(object):
         :rtype:
         """
         if not self.disabled(context):
-            processors = list(self._processors)
-            for rebulk in self._rebulks:
-                if not rebulk.disabled(context):
-                    extend_safe(processors, rebulk._processors)
+            processors = self.effective_processors(context)
             for func in processors:
                 ret = call(func, matches, context)
                 if isinstance(ret, Matches):
                     matches = ret
         return matches
+
+    def effective_post_processors(self, context=None):
+        """
+        Get effective post processors for this rebulk object and its children.
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        post_processors = []
+        for rebulk in self._rebulks:
+            if not rebulk.disabled(context):
+                extend_safe(post_processors, rebulk._post_processors)
+        extend_safe(post_processors, self._post_processors)
+        return post_processors
 
     def _execute_post_processors(self, matches, context):
         """
@@ -287,16 +325,26 @@ class Rebulk(object):
         :rtype:
         """
         if not self.disabled(context):
-            post_processors = []
-            for rebulk in self._rebulks:
-                if not rebulk.disabled(context):
-                    extend_safe(post_processors, rebulk._post_processors)
-            extend_safe(post_processors, self._post_processors)
+            post_processors = self.effective_post_processors(context)
             for func in post_processors:
                 ret = call(func, matches, context)
                 if isinstance(ret, Matches):
                     matches = ret
         return matches
+
+    def effective_patterns(self, context=None):
+        """
+        Get effective patterns for this rebulk object and its children.
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        patterns = list(self._patterns)
+        for rebulk in self._rebulks:
+            if not rebulk.disabled(context):
+                extend_safe(patterns, rebulk._patterns)
+        return patterns
 
     def _matches_patterns(self, matches, context):
         """
@@ -309,10 +357,7 @@ class Rebulk(object):
         :rtype:
         """
         if not self.disabled(context):
-            patterns = list(self._patterns)
-            for rebulk in self._rebulks:
-                if not rebulk.disabled(context):
-                    extend_safe(patterns, rebulk._patterns)
+            patterns = self.effective_patterns(context)
             for pattern in patterns:
                 if not pattern.disabled(context):
                     pattern_matches = pattern.matches(matches.input_string, context)

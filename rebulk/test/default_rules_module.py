@@ -38,6 +38,7 @@ class RuleRename1(Rule):
 
 class RuleAppend2(Rule):
     consequence = [AppendMatch('renamed')]
+    properties = {'renamed': []}
     def when(self, matches, context):
         return [Match(5, 10)]
 

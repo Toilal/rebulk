@@ -69,6 +69,7 @@ class CustomRule(Condition, Consequence):
     priority = 0
     name = None
     dependency = None
+    properties = {}
 
     def __init__(self, log_level=None):
         self.defined_at = debug.defined_at()

@@ -29,8 +29,8 @@ class Pattern(object):
     """
 
     def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, every=False,
-                 private_parent=False, private_children=False, private=False, marker=False, format_all=False,
-                 validate_all=False, disabled=False, log_level=None):
+                 private_parent=False, private_children=False, private=False, private_names=None, marker=False,
+                 format_all=False, validate_all=False, disabled=False, log_level=None, properties=None):
         """
         :param name: Name of this pattern
         :type name: str
@@ -53,6 +53,8 @@ class Pattern(object):
         :type private_parent: bool
         :param private_children: force return of children and flag children matches as private.
         :type private_children: bool
+        :param private_names: force return of named matches as private.
+        :type private_names: bool
         :param marker: flag this pattern as beeing a marker.
         :type private: bool
         :param format_all if True, pattern will format every match in the hierarchy (even match not yield).
@@ -63,8 +65,8 @@ class Pattern(object):
         :type disabled: bool|function
         :param log_lvl: Log level associated to this pattern
         :type log_lvl: int
-
         """
+        # pylint:disable=too-many-locals
         self.name = name
         self.tags = ensure_list(tags)
         self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)
@@ -72,6 +74,7 @@ class Pattern(object):
         self.every = every
         self.children = children
         self.private = private
+        self.private_names = private_names if private_names else []
         self.private_parent = private_parent
         self.private_children = private_children
         self.marker = marker
@@ -82,6 +85,7 @@ class Pattern(object):
         else:
             self.disabled = disabled
         self._log_level = log_level
+        self._properties = properties
         self.defined_at = debug.defined_at()
 
     @property
@@ -162,6 +166,7 @@ class Pattern(object):
         :return: matches based on input_string for this pattern
         :rtype: iterator[Match]
         """
+
         ret = []
         for pattern in self.patterns:
             yield_parent = self._yield_parent()
@@ -185,7 +190,21 @@ class Pattern(object):
                     if yield_children or self.private_children:
                         for child in match.children:
                             ret.append(child)
+        self._matches_privatize(ret)
         return ret
+
+    def _matches_privatize(self, matches):
+        """
+        Mark matches included in private_names with private flag.
+        :param matches:
+        :type matches:
+        :return:
+        :rtype:
+        """
+        if self.private_names:
+            for child in matches:
+                if child.name in self.private_names:
+                    child.private = True
 
     @abstractproperty
     def patterns(self):  # pragma: no cover
@@ -194,6 +213,27 @@ class Pattern(object):
 
         :return: A list of base patterns
         :rtype: list
+        """
+        pass
+
+    @property
+    def properties(self):
+        """
+        Properties names and values that can ben retrieved by this pattern.
+        :return:
+        :rtype:
+        """
+        if self._properties:
+            return self._properties
+        return {}
+
+    @abstractproperty
+    def match_options(self):  # pragma: no cover
+        """
+        dict of default options for generated Match objects
+
+        :return: **options to pass to Match constructor
+        :rtype: dict
         """
         pass
 
@@ -233,6 +273,10 @@ class StringPattern(Pattern):
     @property
     def patterns(self):
         return self._patterns
+
+    @property
+    def match_options(self):
+        return self._match_kwargs
 
     def _match(self, pattern, input_string, context=None):
         for index in call(find_all, input_string, pattern, **self._kwargs):
@@ -276,6 +320,10 @@ class RePattern(Pattern):
     def patterns(self):
         return self._patterns
 
+    @property
+    def match_options(self):
+        return self._match_kwargs
+
     def _match(self, pattern, input_string, context=None):
         names = {v: k for k, v in pattern.groupindex.items()}
         for match_object in pattern.finditer(input_string):
@@ -314,6 +362,10 @@ class FunctionalPattern(Pattern):
     @property
     def patterns(self):
         return self._patterns
+
+    @property
+    def match_options(self):
+        return self._match_kwargs
 
     def _match(self, pattern, input_string, context=None):
         ret = call(pattern, input_string, context, **self._kwargs)

@@ -17,7 +17,7 @@ class TestStringPattern(object):
                    "which were the Hebrew letter qoph."
 
     def test_single(self):
-        pattern = StringPattern("Celtic", label="test")
+        pattern = StringPattern("Celtic")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -27,22 +27,28 @@ class TestStringPattern(object):
         assert matches[0].value == "Celtic"
 
     def test_repr(self):
-        pattern = StringPattern("Celtic", label="test")
+        pattern = StringPattern("Celtic")
 
         assert repr(pattern) == '<StringPattern:(\'Celtic\',)>'
 
     def test_ignore_case(self):
-        pattern = StringPattern("celtic", label="test", ignore_case=False)
+        pattern = StringPattern("celtic", ignore_case=False)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 0
 
-        pattern = StringPattern("celtic", label="test", ignore_case=True)
+        pattern = StringPattern("celtic", ignore_case=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
         assert matches[0].value == "Celtic"
 
+    def test_private_names(self):
+        pattern = StringPattern("celtic", name="test", private_names=["test"], ignore_case=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+        assert matches[0].private
 
     def test_no_match(self):
         pattern = StringPattern("Python")
@@ -95,7 +101,7 @@ class TestRePattern(object):
                    "which were the Hebrew letter qoph."
 
     def test_single_compiled(self):
-        pattern = RePattern(re.compile("Celt.?c"), label="test")
+        pattern = RePattern(re.compile("Celt.?c"))
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -105,7 +111,7 @@ class TestRePattern(object):
         assert matches[0].value == "Celtic"
 
     def test_single_string(self):
-        pattern = RePattern("Celt.?c", label="test")
+        pattern = RePattern("Celt.?c")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -115,7 +121,7 @@ class TestRePattern(object):
         assert matches[0].value == "Celtic"
 
     def test_single_kwargs(self):
-        pattern = RePattern({"pattern": "celt.?c", "flags": re.IGNORECASE}, label="test")
+        pattern = RePattern({"pattern": "celt.?c", "flags": re.IGNORECASE})
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -125,7 +131,7 @@ class TestRePattern(object):
         assert matches[0].value == "Celtic"
 
     def test_single_vargs(self):
-        pattern = RePattern(("celt.?c", re.IGNORECASE), label="test")
+        pattern = RePattern(("celt.?c", re.IGNORECASE))
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -135,7 +141,7 @@ class TestRePattern(object):
         assert matches[0].value == "Celtic"
 
     def test_no_match(self):
-        pattern = RePattern("abc.?def", label="test")
+        pattern = RePattern("abc.?def")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 0
@@ -173,7 +179,7 @@ class TestRePattern(object):
         assert matches[2].value == "Hebrew"
 
     def test_unnamed_groups(self):
-        pattern = RePattern(r"(Celt.?c)\s+(\w+)", label="test")
+        pattern = RePattern(r"(Celt.?c)\s+(\w+)")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -205,7 +211,7 @@ class TestRePattern(object):
         assert group2.parent == parent
 
     def test_named_groups(self):
-        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test")
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)")
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -236,7 +242,7 @@ class TestRePattern(object):
         assert group2.parent == parent
 
     def test_children(self):
-        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", children=True)
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", children=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 2
@@ -255,7 +261,7 @@ class TestRePattern(object):
         assert group2.value == "violin"
 
     def test_children_parent_private(self):
-        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", children=True, private_parent=True)
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", children=True, private_parent=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 3
@@ -283,7 +289,7 @@ class TestRePattern(object):
         assert group2.value == "violin"
 
     def test_parent_children_private(self):
-        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", private_children=True)
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", private_children=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 3
@@ -311,7 +317,7 @@ class TestRePattern(object):
         assert group2.value == "violin"
 
     def test_every(self):
-        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", label="test", every=True)
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", every=True)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 3
@@ -391,7 +397,7 @@ class TestFunctionalPattern(object):
             if i > -1:
                 return i, i + len("fly"), "fly", "functional"
 
-        pattern = FunctionalPattern(func, label="test")
+        pattern = FunctionalPattern(func)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -407,7 +413,7 @@ class TestFunctionalPattern(object):
             if i > -1:
                 return {"start": i, "end": i + len("fly"), "name": "functional"}
 
-        pattern = FunctionalPattern(func, label="test")
+        pattern = FunctionalPattern(func)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 1
@@ -431,7 +437,7 @@ class TestFunctionalPattern(object):
                 matches.append({"start": i, "end": i + len("Hebrew")})
             return matches
 
-        pattern = FunctionalPattern(func, label="test")
+        pattern = FunctionalPattern(func)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 3
@@ -463,7 +469,7 @@ class TestFunctionalPattern(object):
             if i > -1:
                 yield (i, {"end": i + len("Hebrew")})
 
-        pattern = FunctionalPattern(func, label="test")
+        pattern = FunctionalPattern(func)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 3
@@ -484,7 +490,7 @@ class TestFunctionalPattern(object):
         assert matches[2].value == "Hebrew"
 
     def test_no_match(self):
-        pattern = FunctionalPattern(lambda x: None, label="test")
+        pattern = FunctionalPattern(lambda x: None)
 
         matches = list(pattern.matches(self.input_string))
         assert len(matches) == 0
