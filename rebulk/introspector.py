@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractproperty
 from collections import defaultdict
 
 import six
-from .pattern import StringPattern, RePattern
+from .pattern import StringPattern, RePattern, FunctionalPattern
 from .utils import extend_safe
 
 
@@ -30,7 +30,7 @@ class PatternDescription(Description):
     """
     Description of a pattern.
     """
-    def __init__(self, pattern):
+    def __init__(self, pattern):  # pylint:disable=too-many-branches
         self.pattern = pattern
         self._properties = defaultdict(list)
 
@@ -44,13 +44,16 @@ class PatternDescription(Description):
         elif isinstance(pattern, StringPattern):
             extend_safe(self._properties[pattern.name], pattern.patterns)
         elif isinstance(pattern, RePattern):
-            if pattern.name and not pattern.private_parent and pattern.name not in pattern.private_names:
+            if pattern.name and pattern.name not in pattern.private_names:
                 extend_safe(self._properties[pattern.name], [None])
             if not pattern.private_children:
                 for regex_pattern in pattern.patterns:
                     for group_name, values in regex_pattern.groupindex.items():
                         if group_name not in pattern.private_names:
                             extend_safe(self._properties[group_name], [None])
+        elif isinstance(pattern, FunctionalPattern):
+            if pattern.name and pattern.name not in pattern.private_names:
+                extend_safe(self._properties[pattern.name], [None])
 
 
     @property
