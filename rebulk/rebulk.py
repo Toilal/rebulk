@@ -7,8 +7,8 @@ from .match import Matches
 
 from .pattern import RePattern, StringPattern, FunctionalPattern
 
-from .processors import conflict_prefer_longer, remove_private
-from .loose import call, set_defaults
+from .processors import ConflictSolver, PrivateRemover
+from .loose import set_defaults
 from .utils import extend_safe
 from .rules import Rules
 
@@ -44,13 +44,13 @@ class Rebulk(object):
     """
     # pylint:disable=protected-access
 
-    def __init__(self, disabled=False, default=True):
+    def __init__(self, disabled=False, default_rules=True):
         """
         Creates a new Rebulk object.
         :param disabled: if True, this pattern is disabled. Can also be a function(context).
         :type disabled: bool|function
-        :param default: use default processors and post_processors
-        :type default:
+        :param default_rules: use default rules
+        :type default_rules:
         :return:
         :rtype:
         """
@@ -59,12 +59,9 @@ class Rebulk(object):
         else:
             self.disabled = disabled
         self._patterns = []
-        self._processors = []
-        self._post_processors = []
-        if default:
-            self.processor(*DEFAULT_PROCESSORS)
-            self.post_processor(*DEFAULT_POST_PROCESSORS)
         self._rules = Rules()
+        if default_rules:
+            self.rules(ConflictSolver, PrivateRemover)
         self._defaults = {}
         self._regex_defaults = {}
         self._string_defaults = {}
@@ -169,30 +166,6 @@ class Rebulk(object):
         self.pattern(FunctionalPattern(*pattern, **kwargs))
         return self
 
-    def processor(self, *func):
-        """
-        Add matches processor function.
-
-        Default processors can be found in rebulk.processors module.
-
-        :param func:
-        :type func: list[rebulk.match.Match] = function(list[rebulk.match.Match])
-        """
-        self._processors.extend(func)
-        return self
-
-    def post_processor(self, *func):
-        """
-        Add matches post_processor function.
-
-        Default processors can be found in rebulk.processors module.
-
-        :param func:
-        :type func: list[rebulk.match.Match] = function(list[rebulk.match.Match])
-        """
-        self._post_processors.extend(func)
-        return self
-
     def rules(self, *rules):
         """
         Add rules as a module, class or instance.
@@ -229,11 +202,7 @@ class Rebulk(object):
 
         self._matches_patterns(matches, context)
 
-        matches = self._execute_processors(matches, context)
-
         self._execute_rules(matches, context)
-
-        matches = self._execute_post_processors(matches, context)
 
         return matches
 
@@ -265,72 +234,6 @@ class Rebulk(object):
         if not self.disabled(context):
             rules = self.effective_rules(context)
             rules.execute_all_rules(matches, context)
-
-    def effective_processors(self, context=None):
-        """
-        Get effective processors for this rebulk object and its children.
-        :param context:
-        :type context:
-        :return:
-        :rtype:
-        """
-        processors = []
-        for rebulk in self._rebulks:
-            if not rebulk.disabled(context):
-                extend_safe(processors, rebulk._processors)
-        extend_safe(processors, self._processors)
-        return processors
-
-    def _execute_processors(self, matches, context):
-        """
-        Execute processors for this rebulk and children.
-        :param matches:
-        :type matches:
-        :param context:
-        :type context:
-        :return:
-        :rtype:
-        """
-        if not self.disabled(context):
-            processors = self.effective_processors(context)
-            for func in processors:
-                ret = call(func, matches, context)
-                if isinstance(ret, Matches):
-                    matches = ret
-        return matches
-
-    def effective_post_processors(self, context=None):
-        """
-        Get effective post processors for this rebulk object and its children.
-        :param context:
-        :type context:
-        :return:
-        :rtype:
-        """
-        post_processors = []
-        for rebulk in self._rebulks:
-            if not rebulk.disabled(context):
-                extend_safe(post_processors, rebulk._post_processors)
-        extend_safe(post_processors, self._post_processors)
-        return post_processors
-
-    def _execute_post_processors(self, matches, context):
-        """
-        Execute post processors for this rebulk and children.
-        :param matches:
-        :type matches:
-        :param context:
-        :type context:
-        :return:
-        :rtype:
-        """
-        if not self.disabled(context):
-            post_processors = self.effective_post_processors(context)
-            for func in post_processors:
-                ret = call(func, matches, context)
-                if isinstance(ret, Matches):
-                    matches = ret
-        return matches
 
     def effective_patterns(self, context=None):
         """
@@ -375,7 +278,3 @@ class Rebulk(object):
                             matches.append(match)
                 else:
                     log(pattern.log_level, "Pattern is disabled. (%s)", pattern)
-
-
-DEFAULT_PROCESSORS = [conflict_prefer_longer]
-DEFAULT_POST_PROCESSORS = [remove_private]

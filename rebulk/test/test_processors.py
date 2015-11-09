@@ -3,7 +3,8 @@
 # pylint: disable=no-self-use, pointless-statement, missing-docstring
 
 from ..pattern import StringPattern, RePattern
-from ..processors import conflict_prefer_longer
+from ..processors import ConflictSolver
+from ..rules import execute_rule
 from rebulk.match import Matches
 
 
@@ -13,9 +14,9 @@ def test_conflict_1():
     pattern = StringPattern("ijklmn", "kl", "abcdef", "ab", "ef", "yz")
     matches = Matches(pattern.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
+    execute_rule(ConflictSolver(), matches, None)
 
-    values = [x.value for x in processed_matches]
+    values = [x.value for x in matches]
 
     assert values == ["ijklmn", "abcdef", "yz"]
 
@@ -26,9 +27,9 @@ def test_conflict_2():
     pattern = StringPattern("ijklmn", "jklmnopqrst")
     matches = Matches(pattern.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
+    execute_rule(ConflictSolver(), matches, None)
 
-    values = [x.value for x in processed_matches]
+    values = [x.value for x in matches]
 
     assert values == ["jklmnopqrst"]
 
@@ -39,9 +40,9 @@ def test_conflict_3():
     pattern = StringPattern("ijklmnopqrst", "jklmnopqrst")
     matches = Matches(pattern.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
+    execute_rule(ConflictSolver(), matches, None)
 
-    values = [x.value for x in processed_matches]
+    values = [x.value for x in matches]
 
     assert values == ["ijklmnopqrst"]
 
@@ -52,9 +53,9 @@ def test_conflict_4():
     pattern = StringPattern("123", "456789")
     matches = Matches(pattern.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
+    execute_rule(ConflictSolver(), matches, None)
 
-    values = [x.value for x in processed_matches]
+    values = [x.value for x in matches]
     assert values == ["123", "456789"]
 
 
@@ -64,9 +65,9 @@ def test_conflict_5():
     pattern = StringPattern("123456", "789")
     matches = Matches(pattern.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
+    execute_rule(ConflictSolver(), matches, None)
 
-    values = [x.value for x in processed_matches]
+    values = [x.value for x in matches]
     assert values == ["123456", "789"]
 
 
@@ -79,10 +80,10 @@ def test_prefer_longer_parent():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 2
-    assert processed_matches[0].value == 1
-    assert processed_matches[1].value == 2
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 2
+    assert matches[0].value == 1
+    assert matches[1].value == 2
 
 
 def test_conflict_solver_1():
@@ -94,9 +95,9 @@ def test_conflict_solver_1():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "2345678"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "2345678"
 
 
 def test_conflict_solver_2():
@@ -108,9 +109,9 @@ def test_conflict_solver_2():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "34567"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "34567"
 
 
 def test_conflict_solver_3():
@@ -122,9 +123,9 @@ def test_conflict_solver_3():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "34567"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "34567"
 
 
 def test_conflict_solver_4():
@@ -136,9 +137,10 @@ def test_conflict_solver_4():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "34567"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "34567"
+
 
 def test_conflict_solver_5():
     input_string = "123456789"
@@ -149,9 +151,9 @@ def test_conflict_solver_5():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "2345678"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "2345678"
 
 
 def test_conflict_solver_6():
@@ -163,9 +165,9 @@ def test_conflict_solver_6():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "34567"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "34567"
 
 
 def test_conflict_solver_7():
@@ -177,9 +179,9 @@ def test_conflict_solver_7():
     matches = Matches(re2.matches(input_string))
     matches.extend(re1.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 1
-    assert processed_matches[0].value == "102"
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 1
+    assert matches[0].value == "102"
 
 
 def test_unresolved():
@@ -191,8 +193,8 @@ def test_unresolved():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 2
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 2
 
     re1 = StringPattern("34567")
     re2 = StringPattern("2345678", conflict_solver=lambda match, conflicting: None)
@@ -200,8 +202,8 @@ def test_unresolved():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 2
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 2
 
     re1 = StringPattern("34567", conflict_solver=lambda match, conflicting: None)
     re2 = StringPattern("2345678")
@@ -209,5 +211,5 @@ def test_unresolved():
     matches = Matches(re1.matches(input_string))
     matches.extend(re2.matches(input_string))
 
-    processed_matches = conflict_prefer_longer(matches)
-    assert len(processed_matches) == 2
+    execute_rule(ConflictSolver(), matches, None)
+    assert len(matches) == 2

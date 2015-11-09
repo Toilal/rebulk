@@ -96,6 +96,12 @@ class CustomRule(Condition, Consequence):
             defined = "@" + six.text_type(self.defined_at)
         return "<%s%s>" % (self.name if self.name else self.__class__.__name__, defined)
 
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def __hash__(self):
+        return hash(self.__class__)
+
 
 class Rule(CustomRule):
     """
@@ -254,32 +260,44 @@ class Rules(list):
         """
         ret = []
         for priority, priority_rules in groupby(sorted(self), lambda rule: rule.priority):
-            sorted_rules = toposort_rules(list(priority_rules))
+            sorted_rules = toposort_rules(list(priority_rules))  # Group by dependency graph toposort
             for rules_group in sorted_rules:
-                then_futures = []
+                rules_group = list(sorted(rules_group, key=self.index))  # Sort rules group based on initial ordering.
                 group_log_level = None
                 for rule in rules_group:
                     if group_log_level is None or group_log_level < rule.log_level:
                         group_log_level = rule.log_level
                 log(group_log_level, "%s independent rule(s) at priority %s.", len(rules_group), priority)
                 for rule in rules_group:
-                    if rule.enabled(context):
-                        log(rule.log_level, "Checking rule condition: %s", rule)
-                        when_response = rule.when(matches, context)
-                        if when_response:
-                            log(rule.log_level, "Rule was triggered: %s", when_response)
-                            then_futures.append((rule, matches, when_response, context))
-                    else:
-                        log(rule.log_level, "Rule is disabled: %s", rule)
-                for then_future in then_futures:
-                    rule = then_future[0]
-                    args = then_future[1:]
-                    when_response = then_future[2]
-                    log(rule.log_level, "Running rule consequence: %s %s", rule, when_response)
-                    rule.then(*args)
-                    ret.append((rule, when_response))
+                    when_response = execute_rule(rule, matches, context)
+                    if when_response is not None:
+                        ret.append((rule, when_response))
+
         return ret
 
+
+def execute_rule(rule, matches, context):
+    """
+    Execute the given rule.
+    :param rule:
+    :type rule:
+    :param matches:
+    :type matches:
+    :param context:
+    :type context:
+    :return:
+    :rtype:
+    """
+    if rule.enabled(context):
+        log(rule.log_level, "Checking rule condition: %s", rule)
+        when_response = rule.when(matches, context)
+        if when_response:
+            log(rule.log_level, "Rule was triggered: %s", when_response)
+            log(rule.log_level, "Running rule consequence: %s %s", rule, when_response)
+            rule.then(matches, when_response, context)
+            return when_response
+    else:
+        log(rule.log_level, "Rule is disabled: %s", rule)
 
 def toposort_rules(rules):
     """

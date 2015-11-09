@@ -7,13 +7,16 @@ from .utils import IdentitySet
 
 DEFAULT = '__default__'
 
-from . import debug
+from .rules import Rule, RemoveMatch
 
 from logging import getLogger
 log = getLogger(__name__).log
 
+POST_PROCESS = -2048
+PRE_PROCESS = 2048
 
-def default_conflict_solver(match, conflicting_match):
+
+def _default_conflict_solver(match, conflicting_match):
     """
     Default conflict solver for matches, shorter matches if they conflicts with longer ones
 
@@ -31,62 +34,58 @@ def default_conflict_solver(match, conflicting_match):
     return None
 
 
-def conflict_prefer_longer(matches):
+class ConflictSolver(Rule):
     """
-    Remove shorter matches if they conflicts with longer ones
-
-    :param matches:
-    :type matches: rebulk.match.Matches
-    :param context:
-    :type context:
-    :return:
-    :rtype: list[rebulk.match.Match]
+    Remove conflicting matches.
     """
-    to_remove_matches = IdentitySet()
-    for match in filter(lambda match: not match.private, matches):
-        conflicting_matches = matches.conflicting(match)
+    priority = PRE_PROCESS
 
-        if conflicting_matches:
-            # keep the match only if it's the longest
-            for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
-                reverse = False
-                conflict_solvers = [(default_conflict_solver, False)]
+    consequence = RemoveMatch
 
-                if match.conflict_solver:
-                    conflict_solvers.append((match.conflict_solver, False))
-                if conflicting_match.conflict_solver:
-                    conflict_solvers.append((conflicting_match.conflict_solver, True))
+    @property
+    def default_conflict_solver(self):  # pylint:disable=no-self-use
+        """
+        Default conflict solver to use.
+        """
+        return _default_conflict_solver
 
-                for conflict_solver, reverse in reversed(conflict_solvers):
-                    if reverse:
-                        to_remove = conflict_solver(conflicting_match, match)
-                    else:
-                        to_remove = conflict_solver(match, conflicting_match)
-                    if to_remove == DEFAULT:
-                        continue
-                    if to_remove and to_remove not in to_remove_matches:
-                        to_remove_matches.add(to_remove)
-                    break
+    def when(self, matches, context):
+        to_remove_matches = IdentitySet()
+        for match in filter(lambda match: not match.private, matches):
+            conflicting_matches = matches.conflicting(match)
 
-    for match in to_remove_matches:
-        log(debug.LOG_LEVEL, "Remove conflicting match: %s", match)
-        matches.remove(match)
+            if conflicting_matches:
+                # keep the match only if it's the longest
+                for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
+                    reverse = False
+                    conflict_solvers = [(self.default_conflict_solver, False)]
 
-    return matches
+                    if match.conflict_solver:
+                        conflict_solvers.append((match.conflict_solver, False))
+                    if conflicting_match.conflict_solver:
+                        conflict_solvers.append((conflicting_match.conflict_solver, True))
+
+                    for conflict_solver, reverse in reversed(conflict_solvers):
+                        if reverse:
+                            to_remove = conflict_solver(conflicting_match, match)
+                        else:
+                            to_remove = conflict_solver(match, conflicting_match)
+                        if to_remove == DEFAULT:
+                            continue
+                        if to_remove and to_remove not in to_remove_matches:
+                            to_remove_matches.add(to_remove)
+                        break
+        return to_remove_matches
 
 
-def remove_private(matches):
+class PrivateRemover(Rule):
     """
-    Removes private matches.
-
-    :param matches:
-    :type matches:
-    :return:
-    :rtype:
+    Removes private matches rule.
     """
-    for match in list(matches):
-        if match.private:
-            log(debug.LOG_LEVEL, "Remove private match: %s", match)
-            matches.remove(match)
+    priority = POST_PROCESS
 
-    return matches
+    consequence = RemoveMatch
+
+    def when(self, matches, context):
+        return [match for match in matches if match.private]
+

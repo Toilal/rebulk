@@ -136,7 +136,7 @@ def test_rebulk_rebulk():
 def test_rebulk_no_default():
     input_string = "The quick brown fox jumps over the lazy dog"
 
-    matches = Rebulk(default=False).string("quick").string("own").regex("br.{2}n").matches(input_string)
+    matches = Rebulk(default_rules=False).string("quick").string("own").regex("br.{2}n").matches(input_string)
 
     assert len(matches) == 3
 

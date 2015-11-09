@@ -38,7 +38,7 @@ def test_string_properties():
     introspected = introspector.introspect(rebulk, None)
 
     assert len(introspected.patterns) == 2
-    assert len(introspected.rules) == 0
+    assert len(introspected.rules) == 2
 
     first_properties = introspected.patterns[0].properties
     assert len(first_properties) == 1
@@ -62,7 +62,7 @@ def test_pattern_value():
     introspected = introspector.introspect(rebulk, None)
 
     assert len(introspected.patterns) == 3
-    assert len(introspected.rules) == 0
+    assert len(introspected.rules) == 2
 
     first_properties = introspected.patterns[0].properties
     assert len(first_properties) == 1
@@ -88,9 +88,9 @@ def test_rule_properties():
 
     introspected = introspector.introspect(rebulk, None)
 
-    assert len(introspected.rules) == 1
+    assert len(introspected.rules) == 3
     assert len(introspected.patterns) == 0
 
-    rule_properties = introspected.rules[0].properties
+    rule_properties = introspected.rules[-1].properties
     assert len(rule_properties) == 1
     rule_properties['renamed'] == []

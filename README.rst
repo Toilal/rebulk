@@ -20,7 +20,7 @@ ReBulk
 ReBulk is a python library that performs advanced searches in strings that would be hard to implement using
 `re module`_ or `String methods`_ only.
 
-It includes some features like ``Patterns``, ``Match``, ``Processor`` and ``Rule`` that allows developers to build a
+It includes some features like ``Patterns``, ``Match``, ``Rule`` that allows developers to build a
 custom and complex string matcher using a readable and extendable API.
 
 This project is hosted on GitHub: `<https://github.com/Toilal/rebulk>`_
@@ -317,7 +317,7 @@ Match object has the following properties that can be given to Pattern objects
 - ``conflict_solver``
 
   A ``function(match, conflicting_match)`` used to solve conflict. Returned object will be removed from matches by
-  ``conflict_prefer_longer`` processor. If ``__default__`` string is returned, it will fallback to default behavior
+  ``ConflictSolver`` default rule. If ``__default__`` string is returned, it will fallback to default behavior
   keeping longer match.
 
 
@@ -415,31 +415,7 @@ Markers
 If you have defined some patterns with ``markers`` property, then ``Matches.markers`` points to a special ``Matches``
 sequence that contains only ``markers`` matches. This sequence supports all methods from ``Matches``.
 
-Markers matches are not intended to be used in final result, but can be used to implement custom ``Processor`` or
-``Rule``.
-
-Processors
-----------
-Processors are functions that can be registered to ``Rebulk`` object with ``processor`` method.
-
-All registered processors will be executed sequentially to modify the default sequence of ``Match`` returned by
-patterns, at the beginning of the ``Rebulk.matches`` process.
-
-Rebulk embeds some processors in ``processors`` module.
-
-``conflict_prefer_longer`` (enabled by default) is used to keep only longer matches when several matches shares the
-same characters.
-
-Default processors can be disabled when creating ``Rebulk`` object with ``default`` argument set to ``False``.
-
-.. code-block:: python
-
-    >>> bulk = Rebulk(default=False).string('la', 'lakers')
-    >>> bulk.matches("the lakers are from la")
-    [<la:(4, 6)>, <la:(20, 22)>, <lakers:(4, 10)>]
-
-You can also register processors with ``post_processor`` method. They will be executed at the very end of the
-``Rebulk.matches`` process, after Rules execution.
+Markers matches are not intended to be used in final result, but can be used to implement a ``Rule``.
 
 Rules
 -----
