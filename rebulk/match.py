@@ -663,7 +663,7 @@ class Match(object):
         """
         if not is_iterable(crops) or len(crops) == 2 and isinstance(crops[0], int):
             crops = [crops]
-        initial = copy.copy(self)
+        initial = copy.deepcopy(self)
         ret = [initial]
         for crop in crops:
             if hasattr(crop, 'span'):
@@ -676,7 +676,7 @@ class Match(object):
                     ret.remove(current)
                 elif start >= current.start and end <= current.end:
                     # crop is included in self, split current ...
-                    right = copy.copy(current)
+                    right = copy.deepcopy(current)
                     current.end = start
                     if len(current) <= 0:
                         ret.remove(current)
@@ -697,14 +697,14 @@ class Match(object):
         :return: list of new Match objects
         :rtype: list
         """
-        split_match = copy.copy(self)
+        split_match = copy.deepcopy(self)
         current_match = split_match
         ret = []
 
         for i in range(0, len(self.raw)):
             if self.raw[i] in seps:
                 if not split_match:
-                    split_match = copy.copy(current_match)
+                    split_match = copy.deepcopy(current_match)
                     current_match.end = self.start + i
 
             else:
