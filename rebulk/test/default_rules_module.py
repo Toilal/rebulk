@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, invalid-name
 from ..match import Match
-from ..rules import Rule, RemoveMatch, AppendMatch, RenameMatch
+from ..rules import Rule, RemoveMatch, AppendMatch, RenameMatch, AppendTags, RemoveTags
 
 
 class RuleRemove0(Rule):
@@ -57,4 +57,24 @@ class RuleRename3(Rule):
     consequence = [RenameMatch('renamed')]
     def when(self, matches, context):
         return Match(5, 10, name="original")
+
+class RuleAppendTags0(Rule):
+    consequence = AppendTags(['new-tag'])
+    def when(self, matches, context):
+        return matches.named('tags', 0)
+
+class RuleRemoveTags0(Rule):
+    consequence = RemoveTags(['new-tag'])
+    def when(self, matches, context):
+        return matches.named('tags', 0)
+
+class RuleAppendTags1(Rule):
+    consequence = AppendTags(['new-tag'])
+    def when(self, matches, context):
+        return matches.named('tags')
+
+class RuleRemoveTags1(Rule):
+    consequence = RemoveTags(['new-tag'])
+    def when(self, matches, context):
+        return matches.named('tags')
 

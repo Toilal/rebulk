@@ -193,6 +193,52 @@ class RenameMatch(Consequence):  # pylint: disable=abstract-method
             self.append.then(matches, removed, context)
 
 
+class AppendTags(Consequence):  # pylint: disable=abstract-method
+    """
+    Add tags to returned matches
+    """
+    def __init__(self, tags):
+        self.tags = tags
+        self.remove = RemoveMatch()
+        self.append = AppendMatch()
+
+    def then(self, matches, when_response, context):
+        removed = self.remove.then(matches, when_response, context)
+        if is_iterable(removed):
+            removed = list(removed)
+            for match in removed:
+                match.tags.extend(self.tags)
+        elif removed:
+            removed.tags.extend(self.tags)  # pylint: disable=no-member
+        if removed:
+            self.append.then(matches, removed, context)
+
+
+class RemoveTags(Consequence):  # pylint: disable=abstract-method
+    """
+    Remove tags from returned matches
+    """
+    def __init__(self, tags):
+        self.tags = tags
+        self.remove = RemoveMatch()
+        self.append = AppendMatch()
+
+    def then(self, matches, when_response, context):
+        removed = self.remove.then(matches, when_response, context)
+        if is_iterable(removed):
+            removed = list(removed)
+            for match in removed:
+                for tag in self.tags:
+                    if tag in match.tags:
+                        match.tags.remove(tag)
+        elif removed:
+            for tag in self.tags:
+                if tag in removed.tags:  # pylint: disable=no-member
+                    removed.tags.remove(tag)  # pylint: disable=no-member
+        if removed:
+            self.append.then(matches, removed, context)
+
+
 class Rules(list):
     """
     list of rules ready to execute.
