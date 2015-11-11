@@ -154,21 +154,29 @@ def test_rebulk_tags_names():
     def func(input_string):
         i = input_string.find("over")
         if i > -1:
-            return i, i + len("over")
+            return i, i + len("over"), {'tags': ['custom']}
 
     rebulk.functional(func, name="fn")
+
+    def func2(input_string):
+        i = input_string.find("lazy")
+        if i > -1:
+            return {'start': i, 'end': i + len("lazy"), 'tags': ['custom']}
+
+    rebulk.functional(func2, name="fn")
 
     input_string = "The quick brown fox jumps over the lazy dog"
 
     matches = rebulk.matches(input_string)
-    assert len(matches) == 3
+    assert len(matches) == 4
 
     assert len(matches.named("str")) == 1
-    assert len(matches.named("fn")) == 1
+    assert len(matches.named("fn")) == 2
     assert len(matches.named("false")) == 0
     assert len(matches.tagged("false")) == 0
     assert len(matches.tagged("first")) == 1
     assert len(matches.tagged("other")) == 2
+    assert len(matches.tagged("custom")) == 2
 
 
 def test_rebulk_rules_1():

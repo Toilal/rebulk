@@ -17,7 +17,7 @@ class Description(object):
     Abstract class for a description.
     """
     @abstractproperty
-    def properties(self):
+    def properties(self):  # pragma: no cover
         """
         Properties of described object.
         :return: all properties that described object can generate grouped by name.
@@ -34,8 +34,6 @@ class PatternDescription(Description):
         self.pattern = pattern
         self._properties = defaultdict(list)
 
-        if pattern.marker or pattern.private:
-            return
         if pattern.properties:
             for key, values in pattern.properties.items():
                 extend_safe(self._properties[key], values)
@@ -95,7 +93,7 @@ class Introspection(Description):
     """
     def __init__(self, rebulk, context=None):
         self.patterns = [PatternDescription(pattern) for pattern in rebulk.effective_patterns(context)
-                         if not pattern.private]
+                         if not pattern.private and not pattern.marker]
         self.rules = [RuleDescription(rule) for rule in rebulk.effective_rules(context)]
 
     @property
