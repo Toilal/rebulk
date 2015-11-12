@@ -13,6 +13,7 @@
 # Modifications:
 #   - merged Pull request #2 for CyclicDependency error
 #   - import reduce as original name
+#   - support python 2.6 dict comprehension
 
 # pylint: skip-file
 from functools import reduce
@@ -20,7 +21,7 @@ from functools import reduce
 
 class CyclicDependency(ValueError):
     def __init__(self, cyclic):
-        s = 'Cyclic dependencies exist among these items: {}'.format(', '.join(repr(x) for x in cyclic.items()))
+        s = 'Cyclic dependencies exist among these items: {0}'.format(', '.join(repr(x) for x in cyclic.items()))
         super(CyclicDependency, self).__init__(s)
         self.cyclic = cyclic
 
@@ -51,15 +52,15 @@ def toposort(data):
     # Find all items that don't depend on anything.
     extra_items_in_deps = reduce(set.union, data.values()) - set(data.keys())
     # Add empty dependences where needed.
-    data.update({item: set() for item in extra_items_in_deps})
+    data.update(dict((item, set()) for item in extra_items_in_deps))
     while True:
         ordered = set(item for item, dep in data.items() if len(dep) == 0)
         if not ordered:
             break
         yield ordered
-        data = {item: (dep - ordered)
+        data = dict((item, (dep - ordered))
                 for item, dep in data.items()
-                if item not in ordered}
+                if item not in ordered)
     if len(data) != 0:
         raise CyclicDependency(data)
 

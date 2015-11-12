@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-
 from platform import python_implementation
 
+import sys
 import os
 
 
@@ -13,6 +12,9 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 
 install_requires = ['six', 'regex']
+if sys.version_info < (2, 7):
+    install_requires.extend(['ordereddict'])
+
 if python_implementation() == 'PyPy':
     install_requires.remove('regex')  # PyPy doesn't support regex module
 
@@ -32,6 +34,7 @@ args = dict(name='rebulk',
                          'Operating System :: OS Independent',
                          'Intended Audience :: Developers',
                          'Programming Language :: Python :: 2',
+                         'Programming Language :: Python :: 2.6',
                          'Programming Language :: Python :: 2.7',
                          'Programming Language :: Python :: 3',
                          'Programming Language :: Python :: 3.3',

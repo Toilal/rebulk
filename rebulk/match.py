@@ -3,7 +3,11 @@
 """
 Classes and functions related to matches
 """
-from collections import defaultdict, MutableSequence, OrderedDict
+from collections import defaultdict, MutableSequence
+try:
+    from collections import OrderedDict
+except ImportError:  # pragma: no-cover
+    from ordereddict import OrderedDict  # pylint:disable=import-error
 import copy
 import six
 

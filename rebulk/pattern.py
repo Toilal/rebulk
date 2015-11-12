@@ -325,7 +325,7 @@ class RePattern(Pattern):
         return self._match_kwargs
 
     def _match(self, pattern, input_string, context=None):
-        names = {v: k for k, v in pattern.groupindex.items()}
+        names = dict((v, k) for k, v in pattern.groupindex.items())
         for match_object in pattern.finditer(input_string):
             start = match_object.start()
             end = match_object.end()

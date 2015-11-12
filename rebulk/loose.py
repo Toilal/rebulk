@@ -102,7 +102,7 @@ def argspec_args(argspec, constructor, *args, **kwargs):
     if argspec.keywords:
         call_kwarg = kwargs
     else:
-        call_kwarg = {k: kwargs[k] for k in kwargs if k in argspec.args}
+        call_kwarg = dict((k, kwargs[k]) for k in kwargs if k in argspec.args)  # Python 2.6 dict comprehension
     if argspec.varargs:
         call_args = args
     else:
