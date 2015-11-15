@@ -6,7 +6,7 @@ Classes and functions related to matches
 from collections import defaultdict, MutableSequence
 try:
     from collections import OrderedDict
-except ImportError:  # pragma: no-cover
+except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict  # pylint:disable=import-error
 import copy
 import six
@@ -23,6 +23,7 @@ class MatchesDict(OrderedDict):
     def __init__(self):
         super(MatchesDict, self).__init__()
         self.matches = defaultdict(list)
+        self.values_list = defaultdict(list)
 
 
 class _BaseMatches(MutableSequence):
@@ -430,11 +431,14 @@ class _BaseMatches(MutableSequence):
         """
         return self._tag_dict.keys()
 
-    def to_dict(self, details=False):
+    def to_dict(self, details=False, implicit=False):
         """
         Converts matches to a dict object.
         :param details if True, values will be complete Match object, else it will be only string Match.value property
         :type details: bool
+        :param implicit if True, multiple values will be set as a list in the dict. Else, only the first value
+        will be kept.
+        :type implicit: bool
         :return:
         :rtype: dict
         """
@@ -442,15 +446,18 @@ class _BaseMatches(MutableSequence):
         for match in sorted(self):
             value = match if details else match.value
             ret.matches[match.name].append(match)
+            if value not in ret.values_list[match.name]:
+                ret.values_list[match.name].append(value)
             if match.name in ret.keys():
-                if not isinstance(ret[match.name], list):
-                    if ret[match.name] == value:
-                        continue
-                    ret[match.name] = [ret[match.name]]
-                else:
-                    if value in ret[match.name]:
-                        continue
-                ret[match.name].append(value)
+                if implicit:
+                    if not isinstance(ret[match.name], list):
+                        if ret[match.name] == value:
+                            continue
+                        ret[match.name] = [ret[match.name]]
+                    else:
+                        if value in ret[match.name]:
+                            continue
+                    ret[match.name].append(value)
             else:
                 ret[match.name] = value
         return ret

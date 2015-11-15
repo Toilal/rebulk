@@ -424,9 +424,10 @@ class TestMaches(object):
                            "2": "Two",
                            "3": "Three",
                            "3bis": "Three",
-                           "words": ["One", "Two", "Three"]}
+                           "words": "One"}
+        assert kvalues.values_list["words"] == ["One", "Two", "Three"]
 
-        kvalues = matches.to_dict(details=True)
+        kvalues = matches.to_dict(details=True, implicit=True)
         assert kvalues["1"].value == "One"
 
         assert len(kvalues["2"]) == 2
@@ -441,6 +442,22 @@ class TestMaches(object):
         assert kvalues["words"][1].value == "Two"
         assert kvalues["words"][2].value == "Two"
         assert kvalues["words"][3].value == "Three"
+
+        kvalues = matches.to_dict(details=True)
+        assert kvalues["1"].value == "One"
+
+        assert len(kvalues.values_list["2"]) == 2
+        assert kvalues.values_list["2"][0].value == "Two"
+        assert kvalues.values_list["2"][1].value == "Two"
+
+        assert kvalues["3"].value == "Three"
+        assert kvalues["3bis"].value == "Three"
+
+        assert len(kvalues.values_list["words"]) == 4
+        assert kvalues.values_list["words"][0].value == "One"
+        assert kvalues.values_list["words"][1].value == "Two"
+        assert kvalues.values_list["words"][2].value == "Two"
+        assert kvalues.values_list["words"][3].value == "Three"
 
     def test_chains(self):
         input_string = "wordX 10 20 30 40 wordA, wordB, wordC 70 80 wordX"

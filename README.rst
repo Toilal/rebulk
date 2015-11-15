@@ -397,13 +397,18 @@ It has the following additional methods and properties on it.
 
   Retrieves a sequence of all ``Match.tags`` properties.
 
-- ``to_dict()``
+- ``to_dict(details=False, implicit=False)``
 
-  Convert to a standard dict, with ``Match.name`` as key and ``Match.value`` as value.
-  If several distinct values are found for the same name, value will be a list.
+  Convert to an ordered dict, with ``Match.name`` as key and ``Match.value`` as value.
 
-  It's a subclass of dict, that contains an additional ``matches`` property which is a dict with  ``Match.name`` as key
+  It's a subclass of `OrderedDict`_, that contains a ``matches`` property which is a dict with  ``Match.name`` as key
   and list of ``Match`` objects as value.
+
+  If ``implicit`` is ``True`` and distinct values are found for the same name, value will be converted as list.
+  If ``False``, first value only will be kept and values lists can be retrieved with ``values_list`` which is a dict
+  with ``Match.name`` as key and list of ``Match.value`` as value.
+
+  If ``details`` is True, ``Match.value`` objects are replaced with complete ``Match`` object.
 
 - ``markers``
 
@@ -473,4 +478,5 @@ For all rules with the same ``priority`` value, ``when`` is called before, and `
 .. _str.find: https://docs.python.org/3/library/stdtypes.html#str.find
 .. _re.finditer: https://docs.python.org/3/library/re.html#re.finditer
 .. _re.compile: https://docs.python.org/3/library/re.html#re.compile
+.. _OrderedDict: https://docs.python.org/2/library/collections.html#collections.OrderedDict
 
