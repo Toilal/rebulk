@@ -29,7 +29,7 @@ args = dict(name='rebulk',
             description='Rebulk - Define simple search patterns in bulk to perform advanced matching on any string.',
             long_description=README,
             # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-            classifiers=['Development Status :: 3 - Alpha',
+            classifiers=['Development Status :: 5 - Production/Stable',
                          'License :: OSI Approved :: MIT License',
                          'Operating System :: OS Independent',
                          'Intended Audience :: Developers',
