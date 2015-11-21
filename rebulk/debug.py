@@ -13,12 +13,13 @@ Default log level of generated rebulk logs.
 """
 
 import inspect
+import logging
 import os
 from collections import namedtuple
 
 
 DEBUG = False
-LOG_LEVEL = 0
+LOG_LEVEL = logging.DEBUG
 
 
 class Frame(namedtuple('Frame', ['lineno', 'package', 'name', 'filename'])):
