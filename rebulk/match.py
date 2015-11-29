@@ -4,11 +4,11 @@
 Classes and functions related to matches
 """
 from collections import defaultdict, MutableSequence
+import copy
 try:
-    from collections import OrderedDict
+    from collections import OrderedDict  # pylint:disable=ungrouped-imports
 except ImportError:  # pragma: no cover
     from ordereddict import OrderedDict  # pylint:disable=import-error
-import copy
 import six
 
 from .loose import ensure_list, filter_index

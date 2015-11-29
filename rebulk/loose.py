@@ -63,7 +63,7 @@ def function_args(callable_, *args, **kwargs):
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    argspec = inspect.getargspec(callable_)
+    argspec = inspect.getargspec(callable_)  # pylint:disable=deprecated-method
     return argspec_args(argspec, False, *args, **kwargs)
 
 
@@ -80,7 +80,7 @@ def constructor_args(class_, *args, **kwargs):
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    argspec = inspect.getargspec(_constructor(class_))
+    argspec = inspect.getargspec(_constructor(class_))  # pylint:disable=deprecated-method
     return argspec_args(argspec, True, *args, **kwargs)
 
 

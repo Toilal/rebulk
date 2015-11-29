@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, invalid-name
 
+from functools import partial
 
 from rebulk.pattern import StringPattern
 
 from ..validators import chars_before, chars_after, chars_surround, validators
-
-from functools import partial
 
 chars = ' _.'
 left = partial(chars_before, chars)

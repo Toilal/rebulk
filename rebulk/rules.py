@@ -6,16 +6,16 @@ Abstract rule class definition and rule engine implementation
 from abc import ABCMeta, abstractmethod
 import inspect
 from itertools import groupby
+from logging import getLogger
 
 import six
 from .utils import is_iterable
 
 from .toposort import toposort
 
-from logging import getLogger
-log = getLogger(__name__).log
-
 from . import debug
+
+log = getLogger(__name__).log
 
 
 @six.add_metaclass(ABCMeta)
@@ -116,7 +116,7 @@ class Rule(CustomRule):
             if not is_iterable(when_response):
                 when_response = [when_response]
             iterator = iter(when_response)
-            for cons in self.consequence:
+            for cons in self.consequence:  #pylint: disable=not-an-iterable
                 if inspect.isclass(cons):
                     cons = cons()
                 cons.then(matches, next(iterator), context)

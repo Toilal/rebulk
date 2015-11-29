@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=no-self-use, pointless-statement, missing-docstring
+# pylint: disable=no-self-use, pointless-statement, missing-docstring, no-member
 
-from .. import Rebulk, Rule
+from ..rebulk import Rebulk
+from ..rules import Rule
 import rebulk.test.rebulk_rules_module as rm
 
 

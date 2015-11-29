@@ -4,7 +4,7 @@
 Introspector tests
 """
 # pylint: disable=no-self-use,pointless-statement,missing-docstring,protected-access,invalid-name
-from .. import Rebulk
+from ..rebulk import Rebulk
 from .. import introspector
 from .default_rules_module import RuleAppend2, RuleAppend3
 

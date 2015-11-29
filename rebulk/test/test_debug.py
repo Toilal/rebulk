@@ -3,7 +3,7 @@
 # pylint: disable=no-self-use, pointless-statement, missing-docstring, protected-access, invalid-name
 
 from ..pattern import StringPattern
-from .. import Rebulk
+from ..rebulk import Rebulk
 from ..match import Match
 from .. import debug
 from .default_rules_module import RuleRemove0

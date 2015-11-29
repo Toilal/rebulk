@@ -3,14 +3,15 @@
 """
 Processor functions
 """
-from .utils import IdentitySet
+from logging import getLogger
 
-DEFAULT = '__default__'
+from .utils import IdentitySet
 
 from .rules import Rule, RemoveMatch
 
-from logging import getLogger
 log = getLogger(__name__).log
+
+DEFAULT = '__default__'
 
 POST_PROCESS = -2048
 PRE_PROCESS = 2048

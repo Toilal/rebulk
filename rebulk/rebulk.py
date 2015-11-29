@@ -3,6 +3,8 @@
 """
 Entry point functions and classes for Rebulk
 """
+from logging import getLogger
+
 from .match import Matches
 
 from .pattern import RePattern, StringPattern, FunctionalPattern
@@ -12,7 +14,6 @@ from .loose import set_defaults
 from .utils import extend_safe
 from .rules import Rules
 
-from logging import getLogger
 log = getLogger(__name__).log
 
 
@@ -44,7 +45,7 @@ class Rebulk(object):
     """
     # pylint:disable=protected-access
 
-    def __init__(self, disabled=False, default_rules=True):
+    def __init__(self, disabled=lambda context: False, default_rules=True):
         """
         Creates a new Rebulk object.
         :param disabled: if True, this pattern is disabled. Can also be a function(context).

@@ -3,7 +3,7 @@
 """
 Abstract pattern class definition along with various implementations (regexp, string, functional)
 """
-# pylint: disable=super-init-not-called
+# pylint: disable=super-init-not-called,wrong-import-position
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 REGEX_AVAILABLE = None
@@ -11,7 +11,7 @@ try:
     import regex as re
     REGEX_AVAILABLE = True
 except ImportError:  # pragma: no cover
-    import re
+    import re  #pylint:disable=wrong-import-order
     REGEX_AVAILABLE = False
 
 import six
@@ -30,7 +30,7 @@ class Pattern(object):
 
     def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, every=False,
                  private_parent=False, private_children=False, private=False, private_names=None, marker=False,
-                 format_all=False, validate_all=False, disabled=False, log_level=None, properties=None):
+                 format_all=False, validate_all=False, disabled=lambda context: False, log_level=None, properties=None):
         """
         :param name: Name of this pattern
         :type name: str
