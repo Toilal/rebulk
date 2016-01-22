@@ -20,6 +20,8 @@ if python_implementation() == 'PyPy':
 
 setup_requires=['pytest-runner']
 
+dev_require=['pytest>=2.7.3', 'pytest-capturelog', 'zest.releaser[recommended]', 'pylint', 'tox']
+
 tests_require=['pytest']
 
 exec(open("rebulk/__version__.py").read())  # load version without importing rebulk
@@ -54,7 +56,11 @@ args = dict(name='rebulk',
             install_requires=install_requires,
             tests_require=tests_require,
             test_suite='rebulk.test',
-            zip_safe=True
+            zip_safe=True,
+            extras_require={
+                'test': tests_require,
+                'dev': dev_require
+            }
             )
 
 setup(**args)
