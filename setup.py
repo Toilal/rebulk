@@ -6,10 +6,11 @@ from platform import python_implementation
 
 import sys
 import os
+import io
+import re
 
-
-here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.rst')).read()
+with io.open('README.rst', 'r', encoding='utf-8') as f:
+    readme = f.read()
 
 install_requires = ['six', 'regex']
 if sys.version_info < (2, 7):
@@ -24,12 +25,13 @@ dev_require=['pytest>=2.7.3', 'pytest-capturelog', 'zest.releaser[recommended]',
 
 tests_require=['pytest']
 
-exec(open("rebulk/__version__.py").read())  # load version without importing rebulk
+with io.open('rebulk/__version__.py', 'r') as f:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]$', f.read(), re.MULTILINE).group(1)
 
 args = dict(name='rebulk',
-            version=__version__,
+            version=version,
             description='Rebulk - Define simple search patterns in bulk to perform advanced matching on any string.',
-            long_description=README,
+            long_description=readme,
             # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
             classifiers=['Development Status :: 5 - Production/Stable',
                          'License :: OSI Approved :: MIT License',
@@ -48,7 +50,7 @@ args = dict(name='rebulk',
             author='Rémi Alvergnat',
             author_email='toilal.dev@gmail.com',
             url='https://github.com/Toilal/rebulk/',
-            download_url='https://pypi.python.org/packages/source/r/rebulk/rebulk-%s.tar.gz' % __version__,
+            download_url='https://pypi.python.org/packages/source/r/rebulk/rebulk-%s.tar.gz' % version,
             license='MIT',
             packages=find_packages(),
             include_package_data=True,
