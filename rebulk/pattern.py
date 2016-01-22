@@ -6,16 +6,9 @@ Abstract pattern class definition along with various implementations (regexp, st
 # pylint: disable=super-init-not-called,wrong-import-position
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-REGEX_AVAILABLE = None
-try:
-    import regex as re
-    REGEX_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    import re  #pylint:disable=wrong-import-order
-    REGEX_AVAILABLE = False
-
 import six
 
+from .remodule import re, REGEX_AVAILABLE
 from .match import Match
 from .utils import find_all, is_iterable
 from .loose import call, ensure_list, ensure_dict
