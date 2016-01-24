@@ -188,7 +188,9 @@ def set_defaults(defaults, kwargs):
     :rtype:
     """
     for key, value in defaults.items():
-        if key not in kwargs:
+        if key not in kwargs and value is not None:
             kwargs[key] = value
         elif isinstance(value, list) and isinstance(kwargs[key], list):
             kwargs[key] = list(value) + kwargs[key]
+        elif key in kwargs and value is None:
+            kwargs[key] = None

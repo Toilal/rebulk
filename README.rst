@@ -162,6 +162,20 @@ You can also return a dict of keywords arguments for ``Match`` object.
 You can define several patterns with a single ``functional`` method call, and function used can return multiple
 matches.
 
+Chain Patterns
+--------------
+Chain Patterns are ordered composition of string, functional and regex patterns. Repeater can be set to define
+repetition on chain part.
+
+.. code-block:: python
+
+    >>> r = Rebulk().chain(children=True, formatter={'episode': int, 'version': int}, flags=re.IGNORECASE)\
+    ...             .regex(r'e(?P<episode>\d{1,4})').repeater(1)\
+    ...             .regex(r'v(?P<version>\d+)').repeater('?')\
+    ...             .regex(r'[ex-](?P<episode>\d{1,4})').repeater('*')\
+    ...             .close() # .repeater(1) could be omitted as it's the default behavior
+    >>> r.matches("This is E14v2-15-16-17").to_dict(implicit=True)  # converts matches to dict and keep multiple values
+    MatchesDict([('episode', [14, 15, 16, 17]), ('version', 2)])
 
 Patterns parameters
 -------------------

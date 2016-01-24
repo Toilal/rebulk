@@ -8,6 +8,7 @@ from logging import getLogger
 from .match import Matches
 
 from .pattern import RePattern, StringPattern, FunctionalPattern
+from .chain import Chain
 
 from .processors import ConflictSolver, PrivateRemover
 from .loose import set_defaults
@@ -112,10 +113,23 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
+        self.pattern(self.build_re(*pattern, **kwargs))
+        return self
+
+    def build_re(self, *pattern, **kwargs):
+        """
+        Builds a new regular expression pattern
+
+        :param pattern:
+        :type pattern:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
         set_defaults(self._regex_defaults, kwargs)
         set_defaults(self._defaults, kwargs)
-        self.pattern(RePattern(*pattern, **kwargs))
-        return self
+        return RePattern(*pattern, **kwargs)
 
     def string_defaults(self, **kwargs):
         """
@@ -137,10 +151,23 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
+        self.pattern(self.build_string(*pattern, **kwargs))
+        return self
+
+    def build_string(self, *pattern, **kwargs):
+        """
+        Builds a new string pattern
+
+        :param pattern:
+        :type pattern:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
         set_defaults(self._string_defaults, kwargs)
         set_defaults(self._defaults, kwargs)
-        self.pattern(StringPattern(*pattern, **kwargs))
-        return self
+        return StringPattern(*pattern, **kwargs)
 
     def functional_defaults(self, **kwargs):
         """
@@ -162,10 +189,52 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
+        self.pattern(self.build_functional(*pattern, **kwargs))
+        return self
+
+    def build_functional(self, *pattern, **kwargs):
+        """
+        Builds a new functional pattern
+
+        :param pattern:
+        :type pattern:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
         set_defaults(self._functional_defaults, kwargs)
         set_defaults(self._defaults, kwargs)
-        self.pattern(FunctionalPattern(*pattern, **kwargs))
-        return self
+        return FunctionalPattern(*pattern, **kwargs)
+
+    def chain(self, **kwargs):
+        """
+        Add patterns chain, using configuration of this rebulk
+
+        :param pattern:
+        :type pattern:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
+        chain = self.build_chain(**kwargs)
+        self._patterns.append(chain)
+        return chain
+
+    def build_chain(self, **kwargs):
+        """
+        Builds a new patterns chain
+
+        :param pattern:
+        :type pattern:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
+        set_defaults(self._defaults, kwargs)
+        return Chain(self, **kwargs)
 
     def rules(self, *rules):
         """

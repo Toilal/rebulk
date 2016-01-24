@@ -261,7 +261,7 @@ class StringPattern(Pattern):
         call(super(StringPattern, self).__init__, **kwargs)
         self._patterns = patterns
         self._kwargs = kwargs
-        self._match_kwargs = _filter_match_kwargs(kwargs)
+        self._match_kwargs = filter_match_kwargs(kwargs)
 
     @property
     def patterns(self):
@@ -291,8 +291,8 @@ class RePattern(Pattern):
             raise NotImplementedError("repeated_capture is available only with regex module.")
         self.abbreviations = kwargs.get('abbreviations', [])
         self._kwargs = kwargs
-        self._match_kwargs = _filter_match_kwargs(kwargs)
-        self._children_match_kwargs = _filter_match_kwargs(kwargs, children=True)
+        self._match_kwargs = filter_match_kwargs(kwargs)
+        self._children_match_kwargs = filter_match_kwargs(kwargs, children=True)
         self._patterns = []
         for pattern in patterns:
             if isinstance(pattern, six.string_types):
@@ -334,9 +334,10 @@ class RePattern(Pattern):
                             main_match.children.append(child_match)
                     else:
                         start, end = match_object.span(i)
-                        child_match = call(Match, start, end, name=name, parent=main_match, pattern=self,
-                                           input_string=input_string, **self._children_match_kwargs)
-                        main_match.children.append(child_match)
+                        if start > -1 and end > -1:
+                            child_match = call(Match, start, end, name=name, parent=main_match, pattern=self,
+                                               input_string=input_string, **self._children_match_kwargs)
+                            main_match.children.append(child_match)
 
             yield main_match
 
@@ -350,7 +351,7 @@ class FunctionalPattern(Pattern):
         call(super(FunctionalPattern, self).__init__, **kwargs)
         self._patterns = patterns
         self._kwargs = kwargs
-        self._match_kwargs = _filter_match_kwargs(kwargs)
+        self._match_kwargs = filter_match_kwargs(kwargs)
 
     @property
     def patterns(self):
@@ -386,7 +387,7 @@ class FunctionalPattern(Pattern):
                     yield call(Match, *args, pattern=self, input_string=input_string, **kwargs)
 
 
-def _filter_match_kwargs(kwargs, children=False):
+def filter_match_kwargs(kwargs, children=False):
     """
     Filters out kwargs for Match construction
 
