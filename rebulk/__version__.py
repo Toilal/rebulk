@@ -4,4 +4,4 @@
 Version module
 """
 # pragma: no cover
-__version__ = '0.6.6.dev0'
+__version__ = '0.7.0'
