@@ -54,7 +54,7 @@ class ConflictSolver(Rule):
         to_remove_matches = IdentitySet()
 
         public_matches = [match for match in matches if not match.private]
-        public_matches.sort(key=lambda m: len(m))
+        public_matches.sort(key=len)
 
         for match in public_matches:
             conflicting_matches = matches.conflicting(match)
@@ -63,7 +63,7 @@ class ConflictSolver(Rule):
                 # keep the match only if it's the longest
                 conflicting_matches = [conflicting_match for conflicting_match in conflicting_matches if
                                        not conflicting_match.private]
-                conflicting_matches.sort(key=lambda m: len(m))
+                conflicting_matches.sort(key=len)
 
                 for conflicting_match in conflicting_matches:
                     conflict_solvers = [(self.default_conflict_solver, False)]
