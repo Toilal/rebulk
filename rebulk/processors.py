@@ -52,12 +52,20 @@ class ConflictSolver(Rule):
 
     def when(self, matches, context):
         to_remove_matches = IdentitySet()
-        for match in filter(lambda match: not match.private, matches):
+
+        public_matches = [match for match in matches if not match.private]
+        public_matches.sort(key=lambda m: len(m))
+
+        for match in public_matches:
             conflicting_matches = matches.conflicting(match)
 
             if conflicting_matches:
                 # keep the match only if it's the longest
-                for conflicting_match in filter(lambda match: not match.private, conflicting_matches):
+                conflicting_matches = [conflicting_match for conflicting_match in conflicting_matches if
+                                       not conflicting_match.private]
+                conflicting_matches.sort(key=lambda m: len(m))
+
+                for conflicting_match in conflicting_matches:
                     conflict_solvers = [(self.default_conflict_solver, False)]
 
                     if match.conflict_solver:
@@ -96,4 +104,3 @@ class PrivateRemover(Rule):
 
     def when(self, matches, context):
         return [match for match in matches if match.private]
-
