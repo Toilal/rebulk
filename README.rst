@@ -129,7 +129,7 @@ If `regex module`_ is available, it automatically supports repeated captures.
     >>> matches = Rebulk().regex(r'(\d+)(?:-(\d+))+', repeated_captures=False) \
     ...                   .matches("01-02-03-04")
     >>> matches[0].children
-    [<01:(0, 2)>, <04:(9, 11)>]
+    [<01:(0, 2)+initiator=01-02-03-04>, <04:(9, 11)+initiator=01-02-03-04>]
 
 - ``abbreviations``
 
@@ -305,7 +305,7 @@ is generated with ``every``, ``private_parent`` and ``private_children`` paramet
     ...         .regex(r"One, (?P<one>\w+), Two, (?P<two>\w+), Three, (?P<three>\w+)", children=True) \
     ...         .matches("Zero, 0, One, 1, Two, 2, Three, 3, Four, 4")
     >>> matches
-    [<1:(14, 15)+name=one>, <2:(22, 23)+name=two>, <3:(32, 33)+name=three>]
+    [<1:(14, 15)+name=one+initiator=One, 1, Two, 2, Three, 3>, <2:(22, 23)+name=two+initiator=One, 1, Two, 2, Three, 3>, <3:(32, 33)+name=three+initiator=One, 1, Two, 2, Three, 3>]
 
 Match object has the following properties that can be given to Pattern objects
 
