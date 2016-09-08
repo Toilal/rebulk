@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
-from platform import python_implementation
-
-import sys
-import os
 import io
 import re
+import sys
+from setuptools import setup, find_packages
 
 with io.open('README.rst', 'r', encoding='utf-8') as f:
     readme = f.read()
@@ -18,11 +15,11 @@ if sys.version_info < (2, 7):
 
 native_requires = ['regex']
 
-setup_requires=['pytest-runner']
+setup_requires = ['pytest-runner']
 
-dev_require=['pytest>=2.7.3', 'pytest-capturelog', 'zest.releaser[recommended]', 'pylint', 'tox']
+dev_require = ['pytest>=2.7.3', 'pytest-capturelog', 'zest.releaser[recommended]', 'pylint', 'tox']
 
-tests_require=['pytest']
+tests_require = ['pytest']
 
 with io.open('rebulk/__version__.py', 'r') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]$', f.read(), re.MULTILINE).group(1)
