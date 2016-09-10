@@ -130,7 +130,8 @@ def test_matches():
 def test_matches_2():
     rebulk = Rebulk() \
         .regex_defaults(flags=re.IGNORECASE) \
-        .chain(children=True, formatter={'episode': int, 'version': int}) \
+        .chain(children=True, formatter={'episode': int}) \
+        .defaults(formatter={'version': int}) \
         .regex(r'e(?P<episode>\d{1,4})') \
         .regex(r'v(?P<version>\d+)').repeater('?') \
         .regex(r'[ex-](?P<episode>\d{1,4})').repeater('*') \
