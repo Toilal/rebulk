@@ -7,7 +7,7 @@ Chain patterns and handle repetiting capture group
 import itertools
 
 from .loose import call, set_defaults
-from .match import Match
+from .match import Match, Matches
 from .pattern import Pattern, filter_match_kwargs
 from .remodule import re
 
@@ -203,7 +203,7 @@ class Chain(Pattern):
         :rtype:
         """
         ret = super(Chain, self)._match_parent(match, yield_parent)
-        original_children = list(match.children)
+        original_children = Matches(match.children)
         original_end = match.end
         while not ret and match.children:
             last_pattern = match.children[-1].pattern
