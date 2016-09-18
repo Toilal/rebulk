@@ -13,7 +13,7 @@ from . import debug
 from .loose import call, ensure_list, ensure_dict
 from .match import Match
 from .remodule import re, REGEX_AVAILABLE
-from .utils import find_all, is_iterable
+from .utils import find_all, is_iterable, get_first_defined
 
 
 @six.add_metaclass(ABCMeta)
@@ -133,16 +133,18 @@ class Pattern(object):
         if len(match) < 0 or match.value == "":
             return False
 
-        pattern_value = self.values.get(match.name, self.values.get('__parent__', self._default_value))
+        pattern_value = get_first_defined(self.values, [match.name, '__parent__', None],
+                                          self._default_value)
         if pattern_value:
             match.value = pattern_value
 
         if yield_parent or self.format_all:
-            match.formatter = self.formatters.get(match.name,
-                                                  self.formatters.get('__parent__', self._default_formatter))
+            match.formatter = get_first_defined(self.formatters, [match.name, '__parent__', None],
+                                                self._default_formatter)
         if yield_parent or self.validate_all:
-            validator = self.validators.get(match.name, self.validators.get('__parent__', self._default_validator))
-            if not validator(match):
+            validator = get_first_defined(self.validators, [match.name, '__parent__', None],
+                                          self._default_validator)
+            if validator and not validator(match):
                 return False
         return True
 
@@ -159,20 +161,23 @@ class Pattern(object):
         if len(child) < 0 or child.value == "":
             return False
 
-        pattern_value = self.values.get(child.name, self.values.get('__children__', self._default_value))
+        pattern_value = get_first_defined(self.values, [child.name, '__children__', None],
+                                          self._default_value)
         if pattern_value:
             child.value = pattern_value
 
         if yield_children or self.format_all:
-            child.formatter = self.formatters.get(child.name,
-                                                  self.formatters.get('__children__', self._default_formatter))
+            child.formatter = get_first_defined(self.formatters, [child.name, '__children__', None],
+                                                self._default_formatter)
+
         if yield_children or self.validate_all:
-            validator = self.validators.get(child.name, self.validators.get('__children__', self._default_validator))
-            if not validator(child):
+            validator = get_first_defined(self.validators, [child.name, '__children__', None],
+                                          self._default_validator)
+            if validator and not validator(child):
                 return False
         return True
 
-    def matches(self, input_string, context=None):
+    def matches(self, input_string, context=None, with_raw_matches=False):
         """
         Computes all matches for a given input
 
@@ -180,16 +185,22 @@ class Pattern(object):
         :type input_string: str
         :param context: the context
         :type context: dict
+        :param with_raw_matches: should return details
+        :type with_raw_matches: dict
         :return: matches based on input_string for this pattern
         :rtype: iterator[Match]
         """
+        # pylint: disable=too-many-branches
 
-        ret = []
+        matches = []
+        raw_matches = []
         for pattern in self.patterns:
             yield_parent = self._yield_parent()
             match_index = -1
             for match in self._match(pattern, input_string, context):
                 match_index += 1
+                match.match_index = match_index
+                raw_matches.append(match)
                 yield_children = self._yield_children(match)
                 if not self._match_parent(match, yield_parent):
                     continue
@@ -205,15 +216,16 @@ class Pattern(object):
                         for child in match.children:
                             child.private = True
                     if yield_parent or self.private_parent:
-                        match.match_index = match_index
-                        ret.append(match)
+                        matches.append(match)
                     if yield_children or self.private_children:
                         for child in match.children:
                             child.match_index = match_index
-                            ret.append(child)
-        self._matches_privatize(ret)
-        self._matches_ignore(ret)
-        return ret
+                            matches.append(child)
+        self._matches_privatize(matches)
+        self._matches_ignore(matches)
+        if with_raw_matches:
+            return matches, raw_matches
+        return matches
 
     def _matches_privatize(self, matches):
         """
