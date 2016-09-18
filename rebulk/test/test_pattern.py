@@ -50,6 +50,12 @@ class TestStringPattern(object):
         assert len(matches) == 1
         assert matches[0].private
 
+    def test_ignore_names(self):
+        pattern = StringPattern("celtic", name="test", ignore_names=["test"], ignore_case=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 0
+
     def test_no_match(self):
         pattern = StringPattern("Python")
 
@@ -343,6 +349,23 @@ class TestRePattern(object):
         assert group2.span == (35, 41)
         assert group2.name == "param2"
         assert group2.value == "violin"
+
+    def test_private_names(self):
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", private_names=["param2"], children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 2
+        assert matches[0].name == "param1"
+        assert not matches[0].private
+        assert matches[1].name == "param2"
+        assert matches[1].private
+
+    def test_ignore_names(self):
+        pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", ignore_names=["param2"], children=True)
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+        assert matches[0].name == "param1"
 
     def test_matches_kwargs(self):
         pattern = RePattern("He.rew", name="test", value="HE")

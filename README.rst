@@ -261,6 +261,14 @@ configured using ``functools.partial`` to map them to function accepting a singl
 
   Force children matches to be returned and flag them as private.
 
+- ``private_names``
+
+  Matches names that will be declared as private
+
+- ``ignore_names``
+
+  Matches names that will be ignored from the pattern output, after validation.
+
 - ``marker``
 
   If ``true``, ``Match`` objects generated from this pattern will be markers matches instead of standard matches.

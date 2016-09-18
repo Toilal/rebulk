@@ -23,8 +23,9 @@ class Pattern(object):
     """
 
     def __init__(self, name=None, tags=None, formatter=None, value=None, validator=None, children=False, every=False,
-                 private_parent=False, private_children=False, private=False, private_names=None, marker=False,
-                 format_all=False, validate_all=False, disabled=lambda context: False, log_level=None, properties=None):
+                 private_parent=False, private_children=False, private=False, private_names=None, ignore_names=None,
+                 marker=False, format_all=False, validate_all=False, disabled=lambda context: False, log_level=None,
+                 properties=None):
         """
         :param name: Name of this pattern
         :type name: str
@@ -53,6 +54,8 @@ class Pattern(object):
         :type private_children: bool
         :param private_names: force return of named matches as private.
         :type private_names: bool
+        :param ignore_names: drop some named matches after validation.
+        :type ignore_names: bool
         :param marker: flag this pattern as beeing a marker.
         :type private: bool
         :param format_all if True, pattern will format every match in the hierarchy (even match not yield).
@@ -74,6 +77,7 @@ class Pattern(object):
         self.children = children
         self.private = private
         self.private_names = private_names if private_names else []
+        self.ignore_names = ignore_names if ignore_names else []
         self.private_parent = private_parent
         self.private_children = private_children
         self.marker = marker
@@ -208,6 +212,7 @@ class Pattern(object):
                             child.match_index = match_index
                             ret.append(child)
         self._matches_privatize(ret)
+        self._matches_ignore(ret)
         return ret
 
     def _matches_privatize(self, matches):
@@ -219,9 +224,22 @@ class Pattern(object):
         :rtype:
         """
         if self.private_names:
-            for child in matches:
-                if child.name in self.private_names:
-                    child.private = True
+            for match in matches:
+                if match.name in self.private_names:
+                    match.private = True
+
+    def _matches_ignore(self, matches):
+        """
+        Ignore matches included in ignore_names.
+        :param matches:
+        :type matches:
+        :return:
+        :rtype:
+        """
+        if self.ignore_names:
+            for match in list(matches):
+                if match.name in self.ignore_names:
+                    matches.remove(match)
 
     @abstractproperty
     def patterns(self):  # pragma: no cover
