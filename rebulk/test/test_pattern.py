@@ -545,6 +545,75 @@ class TestFunctionalPattern(object):
         assert matches[0].value == "PLAY"
 
 
+class TestValue(object):
+    """
+    Tests for value option
+    """
+
+    input_string = "This string contains 1849 a number"
+
+    def test_str_value(self):
+        pattern = StringPattern("1849", name="dummy", value="test")
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+        assert isinstance(matches[0], Match)
+        assert matches[0].pattern == pattern
+        assert matches[0].span == (21, 25)
+        assert matches[0].value == "test"
+
+    def test_dict_child_value(self):
+        pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
+                            formatter={'intParam': lambda x: int(x) * 2,
+                                       'strParam': lambda x: "really " + x},
+                            format_all=True,
+                            value={'intParam': 'INT_PARAM_VALUE'})
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+        parent = matches[0]
+        assert len(parent.children) == 2
+
+        group1, group2 = parent.children
+
+        assert isinstance(group1, Match)
+        assert group1.pattern == pattern
+        assert group1.span == (12, 20)
+        assert group1.value == "really contains"
+
+        assert isinstance(group2, Match)
+        assert group2.pattern == pattern
+        assert group2.span == (21, 25)
+        assert group2.value == 'INT_PARAM_VALUE'
+
+    def test_dict_default_value(self):
+        pattern = RePattern(r"(?P<strParam>cont.?ins)\s+(?P<intParam>\d+)",
+                            formatter={'intParam': lambda x: int(x) * 2,
+                                       'strParam': lambda x: "really " + x},
+                            format_all=True,
+                            value={'__children__': 'CHILD', 'strParam': 'STR_VALUE', '__parent__': 'PARENT'})
+
+        matches = list(pattern.matches(self.input_string))
+        assert len(matches) == 1
+
+        parent = matches[0]
+        assert parent.value == "PARENT"
+        assert len(parent.children) == 2
+
+        group1, group2 = parent.children
+
+        assert isinstance(group1, Match)
+        assert group1.pattern == pattern
+        assert group1.span == (12, 20)
+        assert group1.value == "STR_VALUE"
+
+        assert isinstance(group2, Match)
+        assert group2.pattern == pattern
+        assert group2.span == (21, 25)
+        assert group2.value == "CHILD"
+
+
 class TestFormatter(object):
     """
     Tests for formatter option

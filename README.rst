@@ -227,7 +227,8 @@ configured using ``functools.partial`` to map them to function accepting a singl
 
 - ``value``
 
-  Override value property for generated ``Match`` objects.
+  Override value property for generated ``Match`` objects. Can also be a ``dict``, to use ``value`` with pattern
+  named with key.
 
 - ``validate_all``
 

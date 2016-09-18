@@ -22,7 +22,7 @@ class Pattern(object):
     Definition of a particular pattern to search for.
     """
 
-    def __init__(self, name=None, tags=None, formatter=None, validator=None, children=False, every=False,
+    def __init__(self, name=None, tags=None, formatter=None, value=None, validator=None, children=False, every=False,
                  private_parent=False, private_children=False, private=False, private_names=None, marker=False,
                  format_all=False, validate_all=False, disabled=lambda context: False, log_level=None, properties=None):
         """
@@ -34,6 +34,10 @@ class Pattern(object):
         and func a function(input_string) that returns the formatted string. A single formatter function can also be
         passed as a shortcut for {None: formatter}. The returned formatted string with be set in Match.value property.
         :type formatter: dict[str, func] || func
+        :param value: dict (name, value) of value to use with this pattern. name is the match name to support,
+        and value an object for the match value. A single object value can also be
+        passed as a shortcut for {None: value}. The value with be set in Match.value property.
+        :type value: dict[str, object] || object
         :param validator: dict (name, func) of validator to use with this pattern. name is the match name to support,
         and func a function(match) that returns the a boolean. A single validator function can also be
         passed as a shortcut for {None: validator}. If return value is False, match will be ignored.
@@ -64,6 +68,7 @@ class Pattern(object):
         self.name = name
         self.tags = ensure_list(tags)
         self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)
+        self.values, self._default_value = ensure_dict(value, None)
         self.validators, self._default_validator = ensure_dict(validator, lambda match: True)
         self.every = every
         self.children = children
@@ -93,7 +98,7 @@ class Pattern(object):
 
     def _yield_children(self, match):
         """
-        Does this mat
+        Does this match has children
         :param match:
         :type match:
         :return:
@@ -124,6 +129,10 @@ class Pattern(object):
         if len(match) < 0 or match.value == "":
             return False
 
+        pattern_value = self.values.get(match.name, self.values.get('__parent__', self._default_value))
+        if pattern_value:
+            match.value = pattern_value
+
         if yield_parent or self.format_all:
             match.formatter = self.formatters.get(match.name,
                                                   self.formatters.get('__parent__', self._default_formatter))
@@ -145,6 +154,10 @@ class Pattern(object):
         """
         if len(child) < 0 or child.value == "":
             return False
+
+        pattern_value = self.values.get(child.name, self.values.get('__children__', self._default_value))
+        if pattern_value:
+            child.value = pattern_value
 
         if yield_children or self.format_all:
             child.formatter = self.formatters.get(child.name,
@@ -418,7 +431,7 @@ def filter_match_kwargs(kwargs, children=False):
     :rtype: dict
     """
     kwargs = kwargs.copy()
-    for key in ('pattern', 'start', 'end', 'parent', 'formatter'):
+    for key in ('pattern', 'start', 'end', 'parent', 'formatter', 'value'):
         if key in kwargs:
             del kwargs[key]
     if children:
