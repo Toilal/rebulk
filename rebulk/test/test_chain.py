@@ -307,13 +307,11 @@ def test_matches_7():
     seps_surround = partial(chars_surround, ' .-/')
     rebulk = Rebulk()
     rebulk.regex_defaults(flags=re.IGNORECASE)
-    rebulk.defaults(validate_all=True,
-                    children=True, private_parent=True,
-                    validator={'__parent__': seps_surround})
+    rebulk.defaults(children=True, private_parent=True)
 
     rebulk.chain(). \
-        regex(r'S(?P<season>\d+)'). \
-        regex(r'[ -](?P<season>\d+)').repeater('*')
+        regex(r'S(?P<season>\d+)', validate_all=True, validator={'__parent__': seps_surround}). \
+        regex(r'[ -](?P<season>\d+)', validator=seps_surround).repeater('*')
 
     matches = rebulk.matches("Some S01")
     assert len(matches) == 1
@@ -338,3 +336,73 @@ def test_matches_7():
     assert len(matches) == 2
     matches[0].value = 4
     matches[1].value = 5
+
+
+def test_chain_breaker():
+    def chain_breaker(matches):
+        if len(matches) > 1:
+            if matches[-1].value - matches[-2].value > 10:
+                return True
+        return False
+
+    seps_surround = partial(chars_surround, ' .-/')
+    rebulk = Rebulk()
+    rebulk.regex_defaults(flags=re.IGNORECASE)
+    rebulk.defaults(children=True, private_parent=True, formatter={'season': int})
+
+    rebulk.chain(chain_breaker=chain_breaker). \
+        regex(r'S(?P<season>\d+)', validate_all=True, validator={'__parent__': seps_surround}). \
+        regex(r'[ -](?P<season>\d+)', validator=seps_surround).repeater('*')
+
+    matches = rebulk.matches("Some S01-02-03-50-51")
+    assert len(matches) == 3
+    matches[0].value = 1
+    matches[1].value = 2
+    matches[2].value = 3
+
+
+def test_chain_breaker_defaults():
+    def chain_breaker(matches):
+        if len(matches) > 1:
+            if matches[-1].value - matches[-2].value > 10:
+                return True
+        return False
+
+    seps_surround = partial(chars_surround, ' .-/')
+    rebulk = Rebulk()
+    rebulk.regex_defaults(flags=re.IGNORECASE)
+    rebulk.defaults(chain_breaker=chain_breaker, children=True, private_parent=True, formatter={'season': int})
+
+    rebulk.chain(). \
+        regex(r'S(?P<season>\d+)', validate_all=True, validator={'__parent__': seps_surround}). \
+        regex(r'[ -](?P<season>\d+)', validator=seps_surround).repeater('*')
+
+    matches = rebulk.matches("Some S01-02-03-50-51")
+    assert len(matches) == 3
+    matches[0].value = 1
+    matches[1].value = 2
+    matches[2].value = 3
+
+
+def test_chain_breaker_defaults2():
+    def chain_breaker(matches):
+        if len(matches) > 1:
+            if matches[-1].value - matches[-2].value > 10:
+                return True
+        return False
+
+    seps_surround = partial(chars_surround, ' .-/')
+    rebulk = Rebulk()
+    rebulk.regex_defaults(flags=re.IGNORECASE)
+    rebulk.chain_defaults(chain_breaker=chain_breaker)
+    rebulk.defaults(children=True, private_parent=True, formatter={'season': int})
+
+    rebulk.chain(). \
+        regex(r'S(?P<season>\d+)', validate_all=True, validator={'__parent__': seps_surround}). \
+        regex(r'[ -](?P<season>\d+)', validator=seps_surround).repeater('*')
+
+    matches = rebulk.matches("Some S01-02-03-50-51")
+    assert len(matches) == 3
+    matches[0].value = 1
+    matches[1].value = 2
+    matches[2].value = 3
