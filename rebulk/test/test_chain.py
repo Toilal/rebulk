@@ -301,3 +301,40 @@ def test_matches_6():
 
     matches = rebulk.matches("Some Series E01E02E03E04E05E06")  # No validator on parent, so it should give 4 episodes.
     assert len(matches) == 4
+
+
+def test_matches_7():
+    seps_surround = partial(chars_surround, ' .-/')
+    rebulk = Rebulk()
+    rebulk.regex_defaults(flags=re.IGNORECASE)
+    rebulk.defaults(validate_all=True,
+                    children=True, private_parent=True,
+                    validator={'__parent__': seps_surround})
+
+    rebulk.chain(). \
+        regex(r'S(?P<season>\d+)'). \
+        regex(r'[ -](?P<season>\d+)').repeater('*')
+
+    matches = rebulk.matches("Some S01")
+    assert len(matches) == 1
+    matches[0].value = 1
+
+    matches = rebulk.matches("Some S01-02")
+    assert len(matches) == 2
+    matches[0].value = 1
+    matches[1].value = 2
+
+    matches = rebulk.matches("programs4/Some S01-02")
+    assert len(matches) == 2
+    matches[0].value = 1
+    matches[1].value = 2
+
+    matches = rebulk.matches("programs4/SomeS01middle.S02-03.andS04here")
+    assert len(matches) == 2
+    matches[0].value = 2
+    matches[1].value = 3
+
+    matches = rebulk.matches("Some 02.and.S04-05.here")
+    assert len(matches) == 2
+    matches[0].value = 4
+    matches[1].value = 5

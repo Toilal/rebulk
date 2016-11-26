@@ -165,6 +165,7 @@ class Chain(Pattern):
         chain_input_string = input_string
         offset = 0
         while offset < len(input_string):
+            chain_found = False
             current_chain_matches = []
             valid_chain = True
             is_chain_start = True
@@ -174,6 +175,7 @@ class Chain(Pattern):
                                                                                          chain_input_string,
                                                                                          context)
                     if raw_chain_part_matches:
+                        chain_found = True
                         Chain._fix_matches_offset(raw_chain_part_matches, input_string, offset)
                         offset = raw_chain_part_matches[-1].raw_end
                         chain_input_string = input_string[offset:]
@@ -185,9 +187,9 @@ class Chain(Pattern):
                         offset = current_chain_matches[0].raw_end
                     break
                 is_chain_start = False
-            if not current_chain_matches:
+            if not chain_found:
                 break
-            if valid_chain:
+            if current_chain_matches and valid_chain:
                 match = self._build_chain_match(current_chain_matches, input_string)
                 chain_matches.append(match)
 
