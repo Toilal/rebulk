@@ -25,7 +25,7 @@ class Pattern(object):
     def __init__(self, name=None, tags=None, formatter=None, value=None, validator=None, children=False, every=False,
                  private_parent=False, private_children=False, private=False, private_names=None, ignore_names=None,
                  marker=False, format_all=False, validate_all=False, disabled=lambda context: False, log_level=None,
-                 properties=None):
+                 properties=None, post_processor=None):
         """
         :param name: Name of this pattern
         :type name: str
@@ -66,6 +66,8 @@ class Pattern(object):
         :type disabled: bool|function
         :param log_lvl: Log level associated to this pattern
         :type log_lvl: int
+        :param post_process: Post processing function
+        :type post_processor: func
         """
         # pylint:disable=too-many-locals
         self.name = name
@@ -90,6 +92,10 @@ class Pattern(object):
         self._log_level = log_level
         self._properties = properties
         self.defined_at = debug.defined_at()
+        if not callable(post_processor):
+            self.post_processor = None
+        else:
+            self.post_processor = post_processor
 
     @property
     def log_level(self):
@@ -221,10 +227,23 @@ class Pattern(object):
                         for child in match.children:
                             child.match_index = match_index
                             matches.append(child)
+        matches = self._matches_post_process(matches)
         self._matches_privatize(matches)
         self._matches_ignore(matches)
         if with_raw_matches:
             return matches, raw_matches
+        return matches
+
+    def _matches_post_process(self, matches):
+        """
+        Post process matches with user defined function
+        :param matches:
+        :type matches:
+        :return:
+        :rtype:
+        """
+        if self.post_processor:
+            return call(self.post_processor, matches, self)
         return matches
 
     def _matches_privatize(self, matches):
