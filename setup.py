@@ -19,9 +19,6 @@ setup_requires = ['pytest-runner']
 
 dev_require = ['pytest>=2.7.3', 'pytest-capturelog', 'zest.releaser[recommended]', 'pylint', 'tox']
 
-# Workaround for https://github.com/zestsoftware/zest.releaser/issues/183
-dev_require += ['twine<1.7']
-
 tests_require = ['pytest']
 
 with io.open('rebulk/__version__.py', 'r') as f:
