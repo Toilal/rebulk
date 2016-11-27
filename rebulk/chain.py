@@ -184,10 +184,15 @@ class Chain(Pattern):
                     Chain._fix_matches_offset(raw_chain_part_matches, input_string, offset)
 
                     if raw_chain_part_matches:
-                        grouped_matches_dict = {match_index: list(match) for match_index, match in
-                                                itertools.groupby(chain_part_matches, lambda m: m.match_index)}
-                        grouped_raw_matches_dict = {match_index: list(raw_match) for match_index, raw_match in
-                                                    itertools.groupby(raw_chain_part_matches, lambda m: m.match_index)}
+                        grouped_matches_dict = dict()
+                        for match_index, match in itertools.groupby(chain_part_matches,
+                                                                    lambda m: m.match_index):
+                            grouped_matches_dict[match_index] = list(match)
+
+                        grouped_raw_matches_dict = dict()
+                        for match_index, raw_match in itertools.groupby(raw_chain_part_matches,
+                                                                        lambda m: m.match_index):
+                            grouped_raw_matches_dict[match_index] = list(raw_match)
 
                         for match_index, grouped_raw_matches in grouped_raw_matches_dict.items():
                             chain_found = True
