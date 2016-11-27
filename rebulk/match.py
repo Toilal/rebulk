@@ -600,6 +600,7 @@ class Match(object):
 
     def __init__(self, start, end, value=None, name=None, tags=None, marker=None, parent=None, private=None,
                  pattern=None, input_string=None, formatter=None, conflict_solver=None, **kwargs):
+        _ = kwargs
         self.start = start
         self.end = end
         self.name = name

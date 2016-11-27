@@ -70,6 +70,7 @@ class Pattern(object):
         :type post_processor: func
         """
         # pylint:disable=too-many-locals
+        _ = kwargs
         self.name = name
         self.tags = ensure_list(tags)
         self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)
