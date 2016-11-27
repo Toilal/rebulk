@@ -69,8 +69,7 @@ class Pattern(object):
         :param post_process: Post processing function
         :type post_processor: func
         """
-        # pylint:disable=too-many-locals
-        _ = kwargs
+        # pylint:disable=too-many-locals,unused-argument
         self.name = name
         self.tags = ensure_list(tags)
         self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)

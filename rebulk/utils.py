@@ -41,7 +41,7 @@ def find_all(string, sub, start=None, end=None, ignore_case=False, **kwargs):
     :return: all indices in the input string
     :rtype: __generator[str]
     """
-    _ = kwargs
+    #pylint: disable=unused-argument
     if ignore_case:
         sub = sub.lower()
         string = string.lower()
