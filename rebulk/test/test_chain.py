@@ -340,8 +340,9 @@ def test_matches_7():
 
 def test_chain_breaker():
     def chain_breaker(matches):
-        if len(matches) > 1:
-            if matches[-1].value - matches[-2].value > 10:
+        seasons = matches.named('season')
+        if len(seasons) > 1:
+            if seasons[-1].value - seasons[-2].value > 10:
                 return True
         return False
 
@@ -363,8 +364,9 @@ def test_chain_breaker():
 
 def test_chain_breaker_defaults():
     def chain_breaker(matches):
-        if len(matches) > 1:
-            if matches[-1].value - matches[-2].value > 10:
+        seasons = matches.named('season')
+        if len(seasons) > 1:
+            if seasons[-1].value - seasons[-2].value > 10:
                 return True
         return False
 
@@ -386,8 +388,9 @@ def test_chain_breaker_defaults():
 
 def test_chain_breaker_defaults2():
     def chain_breaker(matches):
-        if len(matches) > 1:
-            if matches[-1].value - matches[-2].value > 10:
+        seasons = matches.named('season')
+        if len(seasons) > 1:
+            if seasons[-1].value - seasons[-2].value > 10:
                 return True
         return False
 
