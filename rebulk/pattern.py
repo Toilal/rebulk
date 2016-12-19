@@ -340,6 +340,9 @@ class StringPattern(Pattern):
         self._kwargs = kwargs
         self._match_kwargs = filter_match_kwargs(kwargs)
 
+    def to_ahocorasick_pattern(self):
+        return _AhocorasickPatternWrapper(self, **self._kwargs)
+
     @property
     def patterns(self):
         return self._patterns
@@ -351,6 +354,29 @@ class StringPattern(Pattern):
     def _match(self, pattern, input_string, context=None):
         for index in find_all(input_string, pattern, **self._kwargs):
             yield Match(index, index + len(pattern), pattern=self, input_string=input_string, **self._match_kwargs)
+
+
+class _AhocorasickPatternWrapper(Pattern):
+    def __init__(self, base_pattern, **kwargs):
+        super(_AhocorasickPatternWrapper, self).__init__(**kwargs)
+        self.base_pattern = base_pattern
+
+    @property
+    def patterns(self):
+        return self.base_pattern.patterns
+
+    @property
+    def match_options(self):
+        return self.base_pattern.match_options
+
+    def set_search_results(self, results):
+        self.results = results
+
+    def _match(self, pattern, input_string, context=None):
+        if pattern in self.results:
+            for index in self.results[pattern]:
+                yield Match(index, index + len(pattern), pattern=self.base_pattern, input_string=input_string,
+                            **self.base_pattern._match_kwargs)
 
 
 class RePattern(Pattern):

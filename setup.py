@@ -9,11 +9,9 @@ from setuptools import setup, find_packages
 with io.open('README.rst', 'r', encoding='utf-8') as f:
     readme = f.read()
 
-install_requires = ['six']
+install_requires = ['six', 'pyahocorasick']
 if sys.version_info < (2, 7):
     install_requires.extend(['ordereddict'])
-
-native_requires = ['regex']
 
 setup_requires = ['pytest-runner']
 
@@ -57,8 +55,7 @@ args = dict(name='rebulk',
             zip_safe=True,
             extras_require={
                 'test': tests_require,
-                'dev': dev_require,
-                'native': native_requires
+                'dev': dev_require
             }
             )
 

@@ -15,6 +15,8 @@ from .loose import set_defaults
 from .utils import extend_safe
 from .rules import Rules
 
+import ahocorasick
+
 log = getLogger(__name__).log
 
 
@@ -344,6 +346,7 @@ class Rebulk(object):
         """
         if not self.disabled(context):
             patterns = self.effective_patterns(context)
+            patterns = self._search_ahocorasick(patterns, matches.input_string)
             for pattern in patterns:
                 if not pattern.disabled(context):
                     pattern_matches = pattern.matches(matches.input_string, context)
@@ -361,3 +364,58 @@ class Rebulk(object):
                             matches.append(match)
                 else:
                     log(pattern.log_level, "Pattern is disabled. (%s)", pattern)
+
+    def _search_ahocorasick(self, patterns, input_string):
+        case_sensitives = []
+        case_insensitives = []
+        results = {}
+
+        ahocorasick_indices = []
+
+        for i in range(len(patterns)):
+            pattern = patterns[i]
+
+            if hasattr(pattern, 'to_ahocorasick_pattern'):
+                patterns[i] = pattern.to_ahocorasick_pattern()
+                ahocorasick_indices.append(i)
+                if patterns[i].match_options.get('ignore_case'):
+                    case_insensitives.extend(pattern.patterns)
+                else:
+                    case_sensitives.extend(pattern.patterns)
+
+        if case_sensitives:
+            automaton = ahocorasick.Automaton()
+
+            for idx, key in enumerate(case_sensitives):
+                automaton.add_word(key, (idx, key))
+
+            automaton.make_automaton()
+
+            for end_index, (insert_order, original_value) in automaton.iter(input_string):
+                start_index = end_index - len(original_value) + 1
+                if original_value not in results:
+                    results[original_value] = []
+                results[original_value].append(start_index)
+
+        if case_insensitives:
+            automaton = ahocorasick.Automaton()
+
+            original_values = {}
+            for idx, key in enumerate(case_insensitives):
+                original_values[key.lower()] = key
+                key = key.lower()
+                automaton.add_word(key, (idx, key))
+
+            automaton.make_automaton()
+
+            for end_index, (insert_order, original_value) in automaton.iter(input_string.lower()):
+                original_value = original_values[original_value]
+                start_index = end_index - len(original_value) + 1
+                if original_value not in results:
+                    results[original_value] = []
+                results[original_value].append(start_index)
+
+        for i in ahocorasick_indices:
+            patterns[i].set_search_results(results)
+
+        return patterns
