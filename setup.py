@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 with io.open('README.rst', 'r', encoding='utf-8') as f:
     readme = f.read()
 
-install_requires = ['six']
+install_requires = ['six', 'ordered-set']
 if sys.version_info < (2, 7):
     install_requires.extend(['ordereddict'])
 

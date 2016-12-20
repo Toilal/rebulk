@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 import inspect
 from itertools import groupby
 from logging import getLogger
+from ordered_set import OrderedSet
 
 import six
 from .utils import is_iterable
@@ -239,9 +240,9 @@ class RemoveTags(Consequence):  # pylint: disable=abstract-method
             self.append.then(matches, removed, context)
 
 
-class Rules(list):
+class Rules(OrderedSet):
     """
-    list of rules ready to execute.
+    Set of rules ready to execute.
     """
 
     def __init__(self, *rules):
@@ -263,7 +264,7 @@ class Rules(list):
             elif inspect.isclass(rule):
                 self.load_class(rule)
             else:
-                self.append(rule)
+                self.add(rule)
 
     def load_module(self, module):
         """
@@ -290,7 +291,7 @@ class Rules(list):
         :return:
         :rtype:
         """
-        self.append(class_())
+        self.add(class_())
 
     def execute_all_rules(self, matches, context):
         """

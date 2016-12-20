@@ -5,6 +5,8 @@ Entry point functions and classes for Rebulk
 """
 from logging import getLogger
 
+from ordered_set import OrderedSet
+
 from .match import Matches
 
 from .pattern import RePattern, StringPattern, FunctionalPattern
@@ -12,7 +14,6 @@ from .chain import Chain
 
 from .processors import ConflictSolver, PrivateRemover
 from .loose import set_defaults
-from .utils import extend_safe
 from .rules import Rules
 
 log = getLogger(__name__).log
@@ -60,7 +61,7 @@ class Rebulk(object):
             self.disabled = lambda context: disabled
         else:
             self.disabled = disabled
-        self._patterns = []
+        self._patterns = OrderedSet()
         self._rules = Rules()
         if default_rules:
             self.rules(ConflictSolver, PrivateRemover)
@@ -69,7 +70,7 @@ class Rebulk(object):
         self._string_defaults = {}
         self._functional_defaults = {}
         self._chain_defaults = {}
-        self._rebulks = []
+        self._rebulks = OrderedSet()
 
     def pattern(self, *pattern):
         """
@@ -80,7 +81,7 @@ class Rebulk(object):
         :return: self
         :rtype: Rebulk
         """
-        self._patterns.extend(pattern)
+        self._patterns.update(pattern)
         return self
 
     def defaults(self, **kwargs):
@@ -231,7 +232,7 @@ class Rebulk(object):
         :rtype:
         """
         chain = self.build_chain(**kwargs)
-        self._patterns.append(chain)
+        self._patterns.add(chain)
         return chain
 
     def build_chain(self, **kwargs):
@@ -266,7 +267,7 @@ class Rebulk(object):
         :type rebulks: Rebulk
         :return:
         """
-        self._rebulks.extend(rebulks)
+        self._rebulks.update(rebulks)
         return self
 
     def matches(self, string, context=None):
@@ -298,10 +299,10 @@ class Rebulk(object):
         :rtype:
         """
         rules = Rules()
-        rules.extend(self._rules)
+        rules.update(self._rules)
         for rebulk in self._rebulks:
             if not rebulk.disabled(context):
-                extend_safe(rules, rebulk._rules)
+                rules.update(rebulk._rules)
         return rules
 
     def _execute_rules(self, matches, context):
@@ -326,10 +327,10 @@ class Rebulk(object):
         :return:
         :rtype:
         """
-        patterns = list(self._patterns)
+        patterns = OrderedSet(self._patterns)
         for rebulk in self._rebulks:
             if not rebulk.disabled(context):
-                extend_safe(patterns, rebulk._patterns)
+                patterns.update(rebulk._patterns)
         return patterns
 
     def _matches_patterns(self, matches, context):
@@ -349,9 +350,6 @@ class Rebulk(object):
                     pattern_matches = pattern.matches(matches.input_string, context)
                     if pattern_matches:
                         log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
-                    else:
-                        pass
-                        # log(pattern.log_level, "Pattern doesn't match. (%s)" % (pattern,))
                     for match in pattern_matches:
                         if match.marker:
                             log(pattern.log_level, "Marker found. (%s)", match)
