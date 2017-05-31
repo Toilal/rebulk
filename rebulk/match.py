@@ -493,14 +493,17 @@ class _BaseMatches(MutableSequence):
         """
         return self._tag_dict.keys()
 
-    def to_dict(self, details=False, implicit=False):
+    def to_dict(self, details=False, first_value=False, enforce_list=False):
         """
         Converts matches to a dict object.
         :param details if True, values will be complete Match object, else it will be only string Match.value property
         :type details: bool
-        :param implicit if True, multiple values will be set as a list in the dict. Else, only the first value
-        will be kept.
-        :type implicit: bool
+        :param first_value if True, only the first value will be kept. Else, multiple values will be set as a list in
+        the dict.
+        :type first_value: bool
+        :param enforce_list: if True, value is wrapped in a list even when a single value is found. Else, list values
+        are available under `values_list` property of the returned dict object.
+        :type enforce_list: bool
         :return:
         :rtype: dict
         """
@@ -508,10 +511,10 @@ class _BaseMatches(MutableSequence):
         for match in sorted(self):
             value = match if details else match.value
             ret.matches[match.name].append(match)
-            if value not in ret.values_list[match.name]:
+            if not enforce_list and value not in ret.values_list[match.name]:
                 ret.values_list[match.name].append(value)
             if match.name in ret.keys():
-                if implicit:
+                if not first_value:
                     if not isinstance(ret[match.name], list):
                         if ret[match.name] == value:
                             continue
@@ -521,7 +524,10 @@ class _BaseMatches(MutableSequence):
                             continue
                     ret[match.name].append(value)
             else:
-                ret[match.name] = value
+                if enforce_list and not isinstance(value, list):
+                    ret[match.name] = [value]
+                else:
+                    ret[match.name] = value
         return ret
 
     if six.PY2:  # pragma: no cover
