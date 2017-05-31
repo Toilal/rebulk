@@ -38,7 +38,7 @@ class _BaseMatches(MutableSequence):
     _base_remove = _base.remove
     _base_extend = _base.extend
 
-    def __init__(self, matches=None, input_string=None):
+    def __init__(self, matches=None, input_string=None):  # pylint: disable=super-init-not-called
         self.input_string = input_string
         self._max_end = 0
         self._delegate = []
@@ -561,9 +561,9 @@ class _BaseMatches(MutableSequence):
     def __repr__(self):
         return self._delegate.__repr__()
 
-    def insert(self, index, match):
-        self._delegate.insert(index, match)
-        self._add_match(match)
+    def insert(self, index, value):
+        self._delegate.insert(index, value)
+        self._add_match(value)
 
 
 class Matches(_BaseMatches):
@@ -671,12 +671,11 @@ class Match(object):
         """
         if not self.children:
             return set([self.name])
-        else:
-            ret = set()
-            for child in self.children:
-                for name in child.names:
-                    ret.add(name)
-            return ret
+        ret = set()
+        for child in self.children:
+            for name in child.names:
+                ret.add(name)
+        return ret
 
     @property
     def raw_start(self):
@@ -768,10 +767,10 @@ class Match(object):
                     # crop is included in self, split current ...
                     right = copy.deepcopy(current)
                     current.end = start
-                    if len(current) <= 0:
+                    if not current:
                         ret.remove(current)
                     right.start = end
-                    if len(right) > 0:
+                    if right:
                         ret.append(right)
                 elif end <= current.end and end > current.start:
                     current.start = end
