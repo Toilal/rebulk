@@ -174,7 +174,7 @@ repetition on chain part.
     ...             .regex(r'v(?P<version>\d+)').repeater('?')\
     ...             .regex(r'[ex-](?P<episode>\d{1,4})').repeater('*')\
     ...             .close() # .repeater(1) could be omitted as it's the default behavior
-    >>> r.matches("This is E14v2-15-16-17").to_dict(implicit=True)  # converts matches to dict and keep multiple values
+    >>> r.matches("This is E14v2-15-16-17").to_dict()  # converts matches to dict
     MatchesDict([('episode', [14, 15, 16, 17]), ('version', 2)])
 
 Patterns parameters
@@ -424,16 +424,18 @@ It has the following additional methods and properties on it.
 
   Retrieves a sequence of all ``Match.tags`` properties.
 
-- ``to_dict(details=False, implicit=False)``
+- ``to_dict(details=False, first_value=False, enforce_list=False)``
 
   Convert to an ordered dict, with ``Match.name`` as key and ``Match.value`` as value.
 
   It's a subclass of `OrderedDict`_, that contains a ``matches`` property which is a dict with  ``Match.name`` as key
   and list of ``Match`` objects as value.
 
-  If ``implicit`` is ``True`` and distinct values are found for the same name, value will be converted as list.
+  If ``first_value`` is ``True`` and distinct values are found for the same name, value will be wrapped to a list.
   If ``False``, first value only will be kept and values lists can be retrieved with ``values_list`` which is a dict
   with ``Match.name`` as key and list of ``Match.value`` as value.
+
+  if ``enforce_list`` is ``True``, all values will be wrapped to a list, even if a single value is found.
 
   If ``details`` is True, ``Match.value`` objects are replaced with complete ``Match`` object.
 
