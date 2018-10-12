@@ -3,21 +3,18 @@
 
 import io
 import re
-import sys
 from setuptools import setup, find_packages
 
 with io.open('README.rst', 'r', encoding='utf-8') as f:
     readme = f.read()
 
 install_requires = ['six']
-if sys.version_info < (2, 7):
-    install_requires.extend(['ordereddict'])
 
 native_requires = ['regex']
 
 setup_requires = ['pytest-runner']
 
-dev_require = ['pytest>=2.7.3', 'pytest-capturelog', 'zest.releaser[recommended]', 'pylint', 'tox']
+dev_require = ['pytest', 'zest.releaser[recommended]', 'pylint', 'tox']
 
 tests_require = ['pytest']
 
@@ -34,12 +31,12 @@ args = dict(name='rebulk',
                          'Operating System :: OS Independent',
                          'Intended Audience :: Developers',
                          'Programming Language :: Python :: 2',
-                         'Programming Language :: Python :: 2.6',
                          'Programming Language :: Python :: 2.7',
                          'Programming Language :: Python :: 3',
-                         'Programming Language :: Python :: 3.3',
                          'Programming Language :: Python :: 3.4',
                          'Programming Language :: Python :: 3.5',
+                         'Programming Language :: Python :: 3.6',
+                         'Programming Language :: Python :: 3.7',
                          'Topic :: Software Development :: Libraries :: Python Modules'
                          ],
             keywords='re regexp regular expression search pattern string match',

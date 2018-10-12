@@ -96,7 +96,7 @@ You can define several patterns with a single ``regex`` method call.
 
 .. code-block:: python
 
-    >>> Rebulk().regex(r'Wint\wr', 'com\w{3}').matches("Winter is coming...")
+    >>> Rebulk().regex(r'Wint\wr', r'com\w{3}').matches("Winter is coming...")
     [<Winter:(0, 6)>, <coming:(10, 16)>]
 
 All keyword arguments from `re.compile`_ are supported.
@@ -136,7 +136,7 @@ If `regex module`_ is available, it automatically supports repeated captures.
   Defined as a list of 2-tuple, each tuple is an abbreviation. It simply replace ``tuple[0]`` with ``tuple[1]`` in the
   expression.
 
-  >>> Rebulk().regex(r'Custom-separators', abbreviations=[("-", "[\W_]+")])\
+  >>> Rebulk().regex(r'Custom-separators', abbreviations=[("-", r"[\W_]+")])\
   ...         .matches("Custom_separators using-abbreviations")
   [<Custom_separators:(0, 17)>]
 

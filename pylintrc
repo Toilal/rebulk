@@ -68,7 +68,8 @@ disable=basestring-builtin,range-builtin-not-iterating,unichr-builtin,buffer-bui
     map-builtin-not-iterating,old-ne-operator,long-builtin,intern-builtin,zip-builtin-not-iterating,reduce-builtin,
     unicode-builtin,old-division,xrange-builtin,old-octal-literal,coerce-method,
     too-few-public-methods,too-many-arguments,too-many-instance-attributes,bad-builtin,too-many-ancestors,
-    too-few-format-args,fixme,duplicate-code,deprecated-lambda,cyclic-import,
+    too-few-format-args,fixme,duplicate-code,deprecated-lambda,cyclic-import,useless-object-inheritance,
+    inconsistent-return-statements,
     I
 
 [REPORTS]
