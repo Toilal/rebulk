@@ -69,7 +69,7 @@ disable=basestring-builtin,range-builtin-not-iterating,unichr-builtin,buffer-bui
     unicode-builtin,old-division,xrange-builtin,old-octal-literal,coerce-method,
     too-few-public-methods,too-many-arguments,too-many-instance-attributes,bad-builtin,too-many-ancestors,
     too-few-format-args,fixme,duplicate-code,deprecated-lambda,cyclic-import,useless-object-inheritance,
-    inconsistent-return-statements,
+    inconsistent-return-statements,unnecessary-pass,
     I
 
 [REPORTS]
