@@ -6,7 +6,8 @@ Chain patterns and handle repetiting capture group
 # pylint: disable=super-init-not-called
 import itertools
 
-from .loose import call, set_defaults
+from .builder import Builder
+from .loose import call
 from .match import Match, Matches
 from .pattern import Pattern, filter_match_kwargs
 from .remodule import re
@@ -19,150 +20,46 @@ class _InvalidChainException(Exception):
     pass
 
 
-class Chain(Pattern):
+class Chain(Pattern, Builder):
     """
     Definition of a pattern chain to search for.
     """
 
-    def __init__(self, rebulk, chain_breaker=None, **kwargs):
-        call(super(Chain, self).__init__, **kwargs)
+    def __init__(self, parent, chain_breaker=None, **kwargs):
+        Builder.__init__(self)
+        call(Pattern.__init__, self, **kwargs)
         self._kwargs = kwargs
         self._match_kwargs = filter_match_kwargs(kwargs)
-        self._defaults = {}
-        self._regex_defaults = {}
-        self._string_defaults = {}
-        self._functional_defaults = {}
         if callable(chain_breaker):
             self.chain_breaker = chain_breaker
         else:
             self.chain_breaker = None
-        self.rebulk = rebulk
+        self.parent = parent
         self.parts = []
 
-    def defaults(self, **kwargs):
+    def pattern(self, *pattern):
         """
-        Define default keyword arguments for all patterns
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
-        """
-        self._defaults = kwargs
-        return self
-
-    def regex_defaults(self, **kwargs):
-        """
-        Define default keyword arguments for functional patterns.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
-        """
-        self._regex_defaults = kwargs
-        return self
-
-    def string_defaults(self, **kwargs):
-        """
-        Define default keyword arguments for string patterns.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
-        """
-        self._string_defaults = kwargs
-        return self
-
-    def functional_defaults(self, **kwargs):
-        """
-        Define default keyword arguments for functional patterns.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
-        """
-        self._functional_defaults = kwargs
-        return self
-
-    def chain(self):
-        """
-        Add patterns chain, using configuration from this chain
-
-        :return:
-        :rtype:
-        """
-        # pylint: disable=protected-access
-        chain = self.rebulk.chain(**self._kwargs)
-        chain._defaults = dict(self._defaults)
-        chain._regex_defaults = dict(self._regex_defaults)
-        chain._functional_defaults = dict(self._functional_defaults)
-        chain._string_defaults = dict(self._string_defaults)
-        return chain
-
-    def regex(self, *pattern, **kwargs):
-        """
-        Add re pattern
 
         :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
         :return:
-        :rtype:
         """
-        set_defaults(self._kwargs, kwargs)
-        set_defaults(self._regex_defaults, kwargs)
-        set_defaults(self._defaults, kwargs)
-        pattern = self.rebulk.build_re(*pattern, **kwargs)
-        part = ChainPart(self, pattern)
-        self.parts.append(part)
-        return part
-
-    def functional(self, *pattern, **kwargs):
-        """
-        Add functional pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
-        """
-        set_defaults(self._kwargs, kwargs)
-        set_defaults(self._functional_defaults, kwargs)
-        set_defaults(self._defaults, kwargs)
-        pattern = self.rebulk.build_functional(*pattern, **kwargs)
-        part = ChainPart(self, pattern)
-        self.parts.append(part)
-        return part
-
-    def string(self, *pattern, **kwargs):
-        """
-        Add string pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
-        """
-        set_defaults(self._kwargs, kwargs)
-        set_defaults(self._functional_defaults, kwargs)
-        set_defaults(self._defaults, kwargs)
-        pattern = self.rebulk.build_string(*pattern, **kwargs)
-        part = ChainPart(self, pattern)
+        if not pattern:
+            raise ValueError("One pattern should be given to the chain")
+        if len(pattern) > 1:
+            raise ValueError("Only one pattern can be given to the chain")
+        part = ChainPart(self, pattern[0])
         self.parts.append(part)
         return part
 
     def close(self):
         """
-        Close chain builder to continue registering other pattern
-
-        :return:
-        :rtype:
+        Deeply close the chain
+        :return: Rebulk instance
         """
-        return self.rebulk
+        parent = self.parent
+        while isinstance(parent, Chain):
+            parent = parent.parent
+        return parent
 
     def _match(self, pattern, input_string, context=None):
         # pylint: disable=too-many-locals,too-many-nested-blocks

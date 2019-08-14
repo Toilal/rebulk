@@ -169,7 +169,9 @@ repetition on chain part.
 
 .. code-block:: python
 
-    >>> r = Rebulk().chain(children=True, formatter={'episode': int, 'version': int}, flags=re.IGNORECASE)\
+    >>> r = Rebulk().regex_defaults(flags=re.IGNORECASE)\
+    ...             .defaults(children=True, formatter={'episode': int, 'version': int})\
+    ...             .chain()\
     ...             .regex(r'e(?P<episode>\d{1,4})').repeater(1)\
     ...             .regex(r'v(?P<version>\d+)').repeater('?')\
     ...             .regex(r'[ex-](?P<episode>\d{1,4})').repeater('*')\
