@@ -208,6 +208,8 @@ class Pattern(object):
                 match.match_index = match_index
                 raw_matches.append(match)
                 yield_children = self._yield_children(match)
+                for child in match.children:
+                    child.match_index = match_index
                 if not self._match_parent(match, yield_parent):
                     continue
                 validated = True
@@ -225,7 +227,6 @@ class Pattern(object):
                         matches.append(match)
                     if yield_children or self.private_children:
                         for child in match.children:
-                            child.match_index = match_index
                             matches.append(child)
         matches = self._matches_post_process(matches)
         self._matches_privatize(matches)
