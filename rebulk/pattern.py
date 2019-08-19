@@ -9,6 +9,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
+from rebulk.formatters import default_formatter
+from rebulk.validators import allways_true
 from . import debug
 from .loose import call, ensure_list, ensure_dict
 from .match import Match
@@ -72,9 +74,9 @@ class Pattern(object):
         # pylint:disable=too-many-locals,unused-argument
         self.name = name
         self.tags = ensure_list(tags)
-        self.formatters, self._default_formatter = ensure_dict(formatter, lambda x: x)
+        self.formatters, self._default_formatter = ensure_dict(formatter, default_formatter)
         self.values, self._default_value = ensure_dict(value, None)
-        self.validators, self._default_validator = ensure_dict(validator, lambda match: True)
+        self.validators, self._default_validator = ensure_dict(validator, allways_true)
         self.every = every
         self.children = children
         self.private = private
@@ -144,7 +146,7 @@ class Pattern(object):
         if pattern_value:
             match.value = pattern_value
 
-        if yield_parent or self.format_all:
+        if (yield_parent or self.format_all) and not match.formatter:
             match.formatter = get_first_defined(self.formatters, [match.name, '__parent__', None],
                                                 self._default_formatter)
         if yield_parent or self.validate_all:
@@ -172,7 +174,7 @@ class Pattern(object):
         if pattern_value:
             child.value = pattern_value
 
-        if yield_children or self.format_all:
+        if (yield_children or self.format_all) and not child.formatter:
             child.formatter = get_first_defined(self.formatters, [child.name, '__children__', None],
                                                 self._default_formatter)
 
