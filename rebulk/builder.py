@@ -4,6 +4,7 @@
 Base builder class for Rebulk
 """
 from abc import ABCMeta, abstractmethod
+from copy import deepcopy
 from logging import getLogger
 
 from six import add_metaclass
@@ -27,6 +28,14 @@ class Builder(object):
         self._functional_defaults = {}
         self._chain_defaults = {}
 
+    def reset(self):
+        """
+        Reset all defaults.
+
+        :return:
+        """
+        self.__init__()
+
     def defaults(self, **kwargs):
         """
         Define default keyword arguments for all patterns
@@ -35,7 +44,7 @@ class Builder(object):
         :return:
         :rtype:
         """
-        self._defaults = kwargs
+        set_defaults(kwargs, self._defaults, override=True)
         return self
 
     def regex_defaults(self, **kwargs):
@@ -46,7 +55,7 @@ class Builder(object):
         :return:
         :rtype:
         """
-        self._regex_defaults = kwargs
+        set_defaults(kwargs, self._regex_defaults, override=True)
         return self
 
     def string_defaults(self, **kwargs):
@@ -57,7 +66,7 @@ class Builder(object):
         :return:
         :rtype:
         """
-        self._string_defaults = kwargs
+        set_defaults(kwargs, self._string_defaults, override=True)
         return self
 
     def functional_defaults(self, **kwargs):
@@ -68,7 +77,7 @@ class Builder(object):
         :return:
         :rtype:
         """
-        self._functional_defaults = kwargs
+        set_defaults(kwargs, self._functional_defaults, override=True)
         return self
 
     def chain_defaults(self, **kwargs):
@@ -79,7 +88,7 @@ class Builder(object):
         :return:
         :rtype:
         """
-        self._chain_defaults = kwargs
+        set_defaults(kwargs, self._chain_defaults, override=True)
         return self
 
     def build_re(self, *pattern, **kwargs):
@@ -142,11 +151,11 @@ class Builder(object):
         set_defaults(self._chain_defaults, kwargs)
         set_defaults(self._defaults, kwargs)
         chain = Chain(self, **kwargs)
-        chain._defaults = dict(self._defaults)  # pylint: disable=protected-access
-        chain._regex_defaults = dict(self._regex_defaults)  # pylint: disable=protected-access
-        chain._functional_defaults = dict(self._functional_defaults)  # pylint: disable=protected-access
-        chain._string_defaults = dict(self._string_defaults)  # pylint: disable=protected-access
-        chain._chain_defaults = dict(self._chain_defaults)  # pylint: disable=protected-access
+        chain._defaults = deepcopy(self._defaults)  # pylint: disable=protected-access
+        chain._regex_defaults = deepcopy(self._regex_defaults)  # pylint: disable=protected-access
+        chain._functional_defaults = deepcopy(self._functional_defaults)  # pylint: disable=protected-access
+        chain._string_defaults = deepcopy(self._string_defaults)  # pylint: disable=protected-access
+        chain._chain_defaults = deepcopy(self._chain_defaults)  # pylint: disable=protected-access
         return chain
 
     @abstractmethod

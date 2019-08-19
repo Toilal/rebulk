@@ -290,11 +290,11 @@ def test_matches_4():
 
     rebulk = Rebulk()
     rebulk.regex_defaults(flags=re.IGNORECASE)
-    rebulk.defaults(private_names=['episodeSeparator', 'seasonSeparator'],
-                    validate_all=True,
-                    children=True, private_parent=True)
+    rebulk.defaults(validate_all=True, children=True)
+    rebulk.defaults(private_names=['episodeSeparator', 'seasonSeparator'], private_parent=True)
 
     rebulk.chain(validator={'__parent__': seps_surround}, formatter={'episode': int, 'version': int}) \
+        .defaults(formatter={'episode': int, 'version': int}) \
         .regex(r'e(?P<episode>\d{1,4})') \
         .regex(r'v(?P<version>\d+)').repeater('?') \
         .regex(r'(?P<episodeSeparator>e|x|-)(?P<episode>\d{1,4})').repeater('*')
