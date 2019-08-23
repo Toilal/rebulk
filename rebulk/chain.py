@@ -77,19 +77,14 @@ class Chain(Pattern, Builder):
                                                                                          chain_input_string,
                                                                                          context)
 
+                    Chain._validate_chain_part_matches(raw_chain_part_matches, chain_part)
+
                     Chain._fix_matches_offset(chain_part_matches, input_string, offset)
                     Chain._fix_matches_offset(raw_chain_part_matches, input_string, offset)
 
                     if raw_chain_part_matches:
-                        grouped_matches_dict = dict()
-                        for match_index, match in itertools.groupby(chain_part_matches,
-                                                                    lambda m: m.match_index):
-                            grouped_matches_dict[match_index] = list(match)
-
-                        grouped_raw_matches_dict = dict()
-                        for match_index, raw_match in itertools.groupby(raw_chain_part_matches,
-                                                                        lambda m: m.match_index):
-                            grouped_raw_matches_dict[match_index] = list(raw_match)
+                        grouped_matches_dict = self._group_by_match_index(chain_part_matches)
+                        grouped_raw_matches_dict = self._group_by_match_index(raw_chain_part_matches)
 
                         for match_index, grouped_raw_matches in grouped_raw_matches_dict.items():
                             chain_found = True
@@ -114,17 +109,18 @@ class Chain(Pattern, Builder):
 
         return chain_matches
 
-    def _match_parent(self, match, yield_parent):
+    def _handle_match(self, match, yield_, *custom_keys):
         """
         Handle a parent match
         :param match:
         :type match:
-        :param yield_parent:
-        :type yield_parent:
+        :param yield_:
+        :type yield_:
         :return:
         :rtype:
         """
-        ret = super(Chain, self)._match_parent(match, yield_parent)
+        # pylint: disable=too-many-locals
+        ret = super(Chain, self)._handle_match(match, yield_, *custom_keys)
         original_children = Matches(match.children)
         original_end = match.end
         while not ret and match.children:
@@ -140,7 +136,7 @@ class Chain(Pattern, Builder):
                 for last_match in last_matches:
                     match.children.remove(last_match)
                 match.end = match.children[-1].end if match.children else match.start
-                ret = super(Chain, self)._match_parent(match, yield_parent)
+                ret = super(Chain, self)._handle_match(match, yield_, *custom_keys)
                 if ret:
                     return True
         match.children = original_children
@@ -179,6 +175,13 @@ class Chain(Pattern, Builder):
                 Chain._fix_matches_offset(chain_part_match.children, input_string, offset)
 
     @staticmethod
+    def _group_by_match_index(matches):
+        grouped_matches_dict = dict()
+        for match_index, match in itertools.groupby(matches, lambda m: m.match_index):
+            grouped_matches_dict[match_index] = list(match)
+        return grouped_matches_dict
+
+    @staticmethod
     def _match_chain_part(is_chain_start, chain_part, chain_input_string, context):
         chain_part_matches, raw_chain_part_matches = chain_part.pattern.matches(chain_input_string, context,
                                                                                 with_raw_matches=True)
@@ -186,8 +189,6 @@ class Chain(Pattern, Builder):
                                                                 chain_input_string)
         raw_chain_part_matches = Chain._truncate_chain_part_matches(is_chain_start, raw_chain_part_matches, chain_part,
                                                                     chain_input_string)
-
-        Chain._validate_chain_part_matches(raw_chain_part_matches, chain_part)
         return chain_part_matches, raw_chain_part_matches
 
     @staticmethod

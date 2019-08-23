@@ -9,13 +9,13 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from .formatters import default_formatter
-from .validators import allways_true
 from . import debug
+from .formatters import default_formatter
 from .loose import call, ensure_list, ensure_dict
 from .match import Match
 from .remodule import re, REGEX_AVAILABLE
 from .utils import find_all, is_iterable, get_first_defined
+from .validators import allways_true
 
 
 @six.add_metaclass(ABCMeta)
@@ -108,19 +108,21 @@ class Pattern(object):
         """
         return self._log_level if self._log_level is not None else debug.LOG_LEVEL
 
-    def _yield_children(self, match):
+    @property
+    def _should_include_children(self):
         """
-        Does this match has children
+        Check if children matches from this pattern should be included in matches results.
         :param match:
         :type match:
         :return:
         :rtype:
         """
-        return match.children and (self.children or self.every)
+        return self.children or self.every
 
-    def _yield_parent(self):
+    @property
+    def _should_include_parent(self):
         """
-        Does this mat
+        Check is a match from this pattern should be included in matches results.
         :param match:
         :type match:
         :return:
@@ -128,60 +130,39 @@ class Pattern(object):
         """
         return not self.children or self.every
 
-    def _match_parent(self, match, yield_parent):
+    def _handle_match(self, match, yield_, *custom_keys):
         """
-        Handle a parent match
+        Sanitize value, set formatter and validates the given child match.
+
         :param match:
         :type match:
-        :param yield_parent:
-        :type yield_parent:
-        :return:
+        :param yield_:
+        :type yield_:
+        :return: True if match is valid, False otherwise.
         :rtype:
         """
         if not match or match.value == "":
             return False
 
-        pattern_value = get_first_defined(self.values, [match.name, '__parent__', None],
-                                          self._default_value)
+        keys = []
+        if match.name:
+            keys.append(match.name)
+            if match.name in self.private_names:
+                match.private = True
+        if custom_keys:
+            keys.extend(custom_keys)
+        keys.append(None)
+
+        pattern_value = get_first_defined(self.values, keys, self._default_value)
         if pattern_value:
             match.value = pattern_value
 
-        if (yield_parent or self.format_all) and not match.formatter:
-            match.formatter = get_first_defined(self.formatters, [match.name, '__parent__', None],
-                                                self._default_formatter)
-        if yield_parent or self.validate_all:
-            validator = get_first_defined(self.validators, [match.name, '__parent__', None],
-                                          self._default_validator)
+        if (yield_ or self.format_all) and not match.formatter:
+            match.formatter = get_first_defined(self.formatters, keys, self._default_formatter)
+
+        if yield_ or self.validate_all:
+            validator = get_first_defined(self.validators, keys, self._default_validator)
             if validator and not validator(match):
-                return False
-        return True
-
-    def _match_child(self, child, yield_children):
-        """
-        Handle a children match
-        :param child:
-        :type child:
-        :param yield_children:
-        :type yield_children:
-        :return:
-        :rtype:
-        """
-        if not child or child.value == "":
-            return False
-
-        pattern_value = get_first_defined(self.values, [child.name, '__children__', None],
-                                          self._default_value)
-        if pattern_value:
-            child.value = pattern_value
-
-        if (yield_children or self.format_all) and not child.formatter:
-            child.formatter = get_first_defined(self.formatters, [child.name, '__children__', None],
-                                                self._default_formatter)
-
-        if yield_children or self.validate_all:
-            validator = get_first_defined(self.validators, [child.name, '__children__', None],
-                                          self._default_validator)
-            if validator and not validator(child):
                 return False
         return True
 
@@ -202,42 +183,57 @@ class Pattern(object):
 
         matches = []
         raw_matches = []
+
         for pattern in self.patterns:
-            yield_parent = self._yield_parent()
             match_index = -1
             for match in self._match(pattern, input_string, context):
                 match_index += 1
+
                 match.match_index = match_index
+                for child in match.children:
+                    child.match_index = match.match_index
+
                 raw_matches.append(match)
-                yield_children = self._yield_children(match)
-                for child in match.children:
-                    child.match_index = match_index
-                if not self._match_parent(match, yield_parent):
-                    continue
-                validated = True
-                for child in match.children:
-                    if not self._match_child(child, yield_children):
-                        validated = False
-                        break
-                if validated:
-                    if self.private_parent:
-                        match.private = True
-                    if self.private_children:
-                        for child in match.children:
-                            child.private = True
-                    if yield_parent or self.private_parent:
-                        matches.append(match)
-                    if yield_children or self.private_children:
-                        for child in match.children:
-                            matches.append(child)
-        matches = self._matches_post_process(matches)
-        self._matches_privatize(matches)
-        self._matches_ignore(matches)
+
+                for match_item in self._process_matches(match):
+                    matches.append(match_item)
+
+        matches = self._post_process_matches(matches)
+
         if with_raw_matches:
             return matches, raw_matches
         return matches
 
-    def _matches_post_process(self, matches):
+    def _process_matches(self, match):
+        """
+        Process and generate all matches for the given unprocessed match.
+        :param match:
+        :return: Process and dispatched matches.
+        """
+        include_parent = self._should_include_parent
+        include_children = self._should_include_children
+
+        if not self._handle_match(match, include_parent, '__parent__'):
+            return
+
+        for child in match.children:
+            if not self._handle_match(child, include_children, '__children__'):
+                return
+
+        if self.private_parent:
+            match.private = True
+        if self.private_children:
+            for child in match.children:
+                child.private = True
+
+        if (include_parent or self.private_parent) and match.name not in self.ignore_names:
+            yield match
+        if include_children or self.private_children:
+            children = [x for x in match.children if x.name not in self.ignore_names]
+            for child in children:
+                yield child
+
+    def _post_process_matches(self, matches):
         """
         Post process matches with user defined function
         :param matches:
@@ -248,32 +244,6 @@ class Pattern(object):
         if self.post_processor:
             return self.post_processor(matches, self)
         return matches
-
-    def _matches_privatize(self, matches):
-        """
-        Mark matches included in private_names with private flag.
-        :param matches:
-        :type matches:
-        :return:
-        :rtype:
-        """
-        if self.private_names:
-            for match in matches:
-                if match.name in self.private_names:
-                    match.private = True
-
-    def _matches_ignore(self, matches):
-        """
-        Ignore matches included in ignore_names.
-        :param matches:
-        :type matches:
-        :return:
-        :rtype:
-        """
-        if self.ignore_names:
-            for match in list(matches):
-                if match.name in self.ignore_names:
-                    matches.remove(match)
 
     @abstractproperty
     def patterns(self):  # pragma: no cover
@@ -309,7 +279,7 @@ class Pattern(object):
     @abstractmethod
     def _match(self, pattern, input_string, context=None):  # pragma: no cover
         """
-        Computes all matches for a given pattern and input
+        Computes all unprocess matches for a given pattern and input.
 
         :param pattern: the pattern to use
         :param input_string: the string to parse
