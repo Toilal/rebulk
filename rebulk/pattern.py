@@ -19,7 +19,14 @@ from .validators import allways_true
 
 
 @six.add_metaclass(ABCMeta)
-class Pattern(object):
+class BasePattern(object):
+    @abstractmethod
+    def matches(self, input_string, context=None, with_raw_matches=False):
+        pass
+
+
+@six.add_metaclass(ABCMeta)
+class Pattern(BasePattern):
     """
     Definition of a particular pattern to search for.
     """
@@ -108,6 +115,44 @@ class Pattern(object):
         """
         return self._log_level if self._log_level is not None else debug.LOG_LEVEL
 
+    def matches(self, input_string, context=None, with_raw_matches=False):
+        """
+        Computes all matches for a given input
+
+        :param input_string: the string to parse
+        :type input_string: str
+        :param context: the context
+        :type context: dict
+        :param with_raw_matches: should return details
+        :type with_raw_matches: dict
+        :return: matches based on input_string for this pattern
+        :rtype: iterator[Match]
+        """
+        # pylint: disable=too-many-branches
+
+        matches = []
+        raw_matches = []
+
+        for pattern in self.patterns:
+            match_index = -1
+            for match in self._match(pattern, input_string, context):
+                match_index += 1
+
+                match.match_index = match_index
+                for child in match.children:
+                    child.match_index = match.match_index
+
+                raw_matches.append(match)
+
+                for match_item in self._process_matches(match):
+                    matches.append(match_item)
+
+        matches = self._post_process_matches(matches)
+
+        if with_raw_matches:
+            return matches, raw_matches
+        return matches
+
     @property
     def _should_include_children(self):
         """
@@ -165,44 +210,6 @@ class Pattern(object):
             if validator and not validator(match):
                 return False
         return True
-
-    def matches(self, input_string, context=None, with_raw_matches=False):
-        """
-        Computes all matches for a given input
-
-        :param input_string: the string to parse
-        :type input_string: str
-        :param context: the context
-        :type context: dict
-        :param with_raw_matches: should return details
-        :type with_raw_matches: dict
-        :return: matches based on input_string for this pattern
-        :rtype: iterator[Match]
-        """
-        # pylint: disable=too-many-branches
-
-        matches = []
-        raw_matches = []
-
-        for pattern in self.patterns:
-            match_index = -1
-            for match in self._match(pattern, input_string, context):
-                match_index += 1
-
-                match.match_index = match_index
-                for child in match.children:
-                    child.match_index = match.match_index
-
-                raw_matches.append(match)
-
-                for match_item in self._process_matches(match):
-                    matches.append(match_item)
-
-        matches = self._post_process_matches(matches)
-
-        if with_raw_matches:
-            return matches, raw_matches
-        return matches
 
     def _process_matches(self, match):
         """
