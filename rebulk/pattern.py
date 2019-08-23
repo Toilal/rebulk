@@ -9,8 +9,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from rebulk.formatters import default_formatter
-from rebulk.validators import allways_true
+from .formatters import default_formatter
+from .validators import allways_true
 from . import debug
 from .loose import call, ensure_list, ensure_dict
 from .match import Match
