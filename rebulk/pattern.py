@@ -202,7 +202,7 @@ class Pattern(BasePattern):
         if pattern_value:
             match.value = pattern_value
 
-        if (yield_ or self.format_all) and not match.formatter:
+        if yield_ or self.format_all:
             match.formatter = get_first_defined(self.formatters, keys, self._default_formatter)
 
         if yield_ or self.validate_all:
