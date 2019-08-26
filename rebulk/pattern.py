@@ -20,8 +20,23 @@ from .validators import allways_true
 
 @six.add_metaclass(ABCMeta)
 class BasePattern(object):
+    """
+    Base class for Pattern like objects
+    """
     @abstractmethod
     def matches(self, input_string, context=None, with_raw_matches=False):
+        """
+        Computes all matches for a given input
+
+        :param input_string: the string to parse
+        :type input_string: str
+        :param context: the context
+        :type context: dict
+        :param with_raw_matches: should return details
+        :type with_raw_matches: dict
+        :return: matches based on input_string for this pattern
+        :rtype: iterator[Match]
+        """
         pass
 
 
