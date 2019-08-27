@@ -112,18 +112,20 @@ class Chain(Pattern, Builder):
                         current_chain_matches.extend(grouped_matches)
         return chain_found, chain_input_string, offset
 
-    def _handle_match(self, match, yield_, *custom_keys):
+    def _process_match(self, match, match_index, child=False):
         """
-        Handle a parent match
+        Handle a match
         :param match:
         :type match:
+        :param match_index:
+        :type match_index:
         :param yield_:
         :type yield_:
         :return:
         :rtype:
         """
         # pylint: disable=too-many-locals
-        ret = super(Chain, self)._handle_match(match, yield_, *custom_keys)
+        ret = super(Chain, self)._process_match(match, match_index, child=child)
         original_children = Matches(match.children)
         original_end = match.end
         while not ret and match.children:
@@ -139,7 +141,7 @@ class Chain(Pattern, Builder):
                 for last_match in last_matches:
                     match.children.remove(last_match)
                 match.end = match.children[-1].end if match.children else match.start
-                ret = super(Chain, self)._handle_match(match, yield_, *custom_keys)
+                ret = super(Chain, self)._process_match(match, match_index, child=child)
                 if ret:
                     return True
         match.children = original_children

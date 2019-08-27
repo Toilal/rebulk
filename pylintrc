@@ -244,7 +244,7 @@ docstring-min-length=-1
 [ELIF]
 
 # Maximum number of nested blocks for function / method body
-max-nested-blocks=5
+max-nested-blocks=6
 
 
 [SPELLING]
@@ -313,7 +313,7 @@ notes=FIXME,XXX,TODO
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=6
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
@@ -344,7 +344,7 @@ min-public-methods=2
 max-public-methods=20
 
 # Maximum number of boolean expressions in a if statement
-max-bool-expr=5
+max-bool-expr=6
 
 
 [IMPORTS]
