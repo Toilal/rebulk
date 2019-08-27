@@ -130,8 +130,8 @@ class Chain(Pattern, Builder):
         original_end = match.end
         while not ret and match.children:
             last_pattern = match.children[-1].pattern
-            last_pattern_children = [child for child in match.children if child.pattern == last_pattern]
-            last_pattern_groups_iter = itertools.groupby(last_pattern_children, lambda child: child.match_index)
+            last_pattern_children = [child_ for child_ in match.children if child_.pattern == last_pattern]
+            last_pattern_groups_iter = itertools.groupby(last_pattern_children, lambda child_: child_.match_index)
             last_pattern_groups = {}
             for index, matches in last_pattern_groups_iter:
                 last_pattern_groups[index] = list(matches)
