@@ -50,7 +50,7 @@ class Pattern(BasePattern):
     def __init__(self, name=None, tags=None, formatter=None, value=None, validator=None, children=False, every=False,
                  private_parent=False, private_children=False, private=False, private_names=None, ignore_names=None,
                  marker=False, format_all=False, validate_all=False, disabled=lambda context: False, log_level=None,
-                 properties=None, post_processor=None, **kwargs):
+                 properties=None, post_processor=None, pre_match_processor=None, post_match_processor=None, **kwargs):
         """
         :param name: Name of this pattern
         :type name: str
@@ -91,8 +91,12 @@ class Pattern(BasePattern):
         :type disabled: bool|function
         :param log_lvl: Log level associated to this pattern
         :type log_lvl: int
-        :param post_process: Post processing function
+        :param post_processor: Post processing function
         :type post_processor: func
+        :param pre_match_processor: Pre match processing function
+        :type pre_match_processor: func
+        :param post_match_processor: Post match processing function
+        :type post_match_processor: func
         """
         # pylint:disable=too-many-locals,unused-argument
         self.name = name
@@ -121,6 +125,14 @@ class Pattern(BasePattern):
             self.post_processor = None
         else:
             self.post_processor = post_processor
+        if not callable(pre_match_processor):
+            self.pre_match_processor = None
+        else:
+            self.pre_match_processor = pre_match_processor
+        if not callable(post_match_processor):
+            self.post_match_processor = None
+        else:
+            self.post_match_processor = post_match_processor
 
     @property
     def log_level(self):
@@ -272,6 +284,14 @@ class Pattern(BasePattern):
         self._process_match_formatter(match, child)
         return self._process_match_validator(match, child)
 
+    @staticmethod
+    def _process_match_processor(match, processor):
+        if processor:
+            ret = processor(match)
+            if ret is not None:
+                return ret
+        return match
+
     def _process_matches(self, match, match_index):
         """
         Process and generate all matches for the given unprocessed match.
@@ -279,12 +299,20 @@ class Pattern(BasePattern):
         :param match_index:
         :return: Process and dispatched matches.
         """
+        match = self._process_match_processor(match, self.pre_match_processor)
+        if not match:
+            return
+
         if not self._process_match(match, match_index):
             return
 
         for child in match.children:
             if not self._process_match(child, match_index, child=True):
                 return
+
+        match = self._process_match_processor(match, self.post_match_processor)
+        if not match:
+            return
 
         if (self._should_include_parent or self.private_parent) and match.name not in self.ignore_names:
             yield match
