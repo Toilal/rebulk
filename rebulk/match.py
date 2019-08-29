@@ -815,6 +815,15 @@ class Match(object):
 
         return filter_index(ret, predicate, index)
 
+    def tagged(self, *tags):
+        """
+        Check if this match has at least one of the provided tags
+
+        :param tags:
+        :return: True if at least one tag is defined, False otherwise.
+        """
+        return any(tag in self.tags for tag in tags)
+
     def __len__(self):
         return self.end - self.start
 
