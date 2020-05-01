@@ -13,9 +13,14 @@ matrix:
     - python: 3.8-dev
       dist: xenial
       sudo: true
+env:
+  matrix:
+    - PYTHON_REGEX=false
+    - PYTHON_REGEX=true
 install:
   - pip install pip --upgrade
   - pip install -e .[dev,test]
+  - if [[ "$PYTHON_REGEX" == "true" ]]; then pip install regex; fi;
   - pip install coveralls
 script:
   - coverage run --source=rebulk setup.py test
