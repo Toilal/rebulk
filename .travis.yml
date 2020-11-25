@@ -4,6 +4,9 @@ python:
   - 3.5
   - 3.6
   - pypy
+arch:
+    - amd64
+    - ppc64le
 matrix:
   include:
     - python: 3.7
@@ -12,6 +15,17 @@ matrix:
     - python: 3.8-dev
       dist: xenial
       sudo: true
+    - arch: ppc64le
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - arch: ppc64le
+      python: 3.8-dev
+      dist: xenial
+      sudo: true
+  exclude: # Disable pypy version for power support
+    - arch: ppc64le
+      python: pypy
 env:
   matrix:
     - PYTHON_REGEX=false
