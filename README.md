@@ -1,6 +1,5 @@
----
-title: ReBulk
----
+ReBulk
+======
 
 [![Latest Version](http://img.shields.io/pypi/v/rebulk.svg)](https://pypi.python.org/pypi/rebulk)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)](https://pypi.python.org/pypi/rebulk)
