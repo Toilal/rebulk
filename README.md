@@ -89,8 +89,8 @@ Regular Expression patterns are based on a compiled regular expression.
 method is used to find matches.
 
 If [regex module](https://pypi.python.org/pypi/regex) is available, it
-will be used by rebulk instead of default [re
-module](https://docs.python.org/3/library/re.html).
+can be used by rebulk instead of default [re
+module](https://docs.python.org/3/library/re.html). Enable it with `REBULK_REGEX_ENABLED=1` environment variable.
 
 ```python
 >>> Rebulk().regex(r'l\w').matches("lolita")

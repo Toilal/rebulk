@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ 3.5, 3.6, 3.7, 3.8, 3.9, pypy-3.6, pypy-3.7 ]
-        python-regex: [ True, False ]
+        regex: [ "1", "0" ]
 
     steps:
       - name: Setup python ${{ matrix.python-version }}
@@ -35,12 +35,14 @@ jobs:
       - name: Install regex
         run: |
           pip install regex
-        if: ${{ matrix.python-regex }}
+        if: ${{ matrix.regex }}
 
       - run: pylint rebulk
         if: matrix.python-version != '3.9'
 
       - run: coverage run --source=rebulk setup.py test
+        env:
+          REBULK_REGEX_ENABLED: ${{ matrix.regex }}
 
       - run: python setup.py build
 

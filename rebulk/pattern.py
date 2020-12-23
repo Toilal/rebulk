@@ -11,7 +11,7 @@ from . import debug
 from .formatters import default_formatter
 from .loose import call, ensure_list, ensure_dict
 from .match import Match
-from .remodule import re, REGEX_AVAILABLE
+from .remodule import re, REGEX_ENABLED
 from .utils import find_all, is_iterable, get_first_defined
 from .validators import allways_true
 
@@ -419,10 +419,10 @@ class RePattern(Pattern):
 
     def __init__(self, *patterns, **kwargs):
         super().__init__(**kwargs)
-        self.repeated_captures = REGEX_AVAILABLE
+        self.repeated_captures = REGEX_ENABLED
         if 'repeated_captures' in kwargs:
             self.repeated_captures = kwargs.get('repeated_captures')
-        if self.repeated_captures and not REGEX_AVAILABLE:  # pragma: no cover
+        if self.repeated_captures and not REGEX_ENABLED:  # pragma: no cover
             raise NotImplementedError("repeated_capture is available only with regex module.")
         self.abbreviations = kwargs.get('abbreviations', [])
         self._kwargs = kwargs
