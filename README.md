@@ -5,6 +5,8 @@ ReBulk
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)](https://pypi.python.org/pypi/rebulk)
 [![Build Status](https://img.shields.io/github/workflow/status/Toilal/rebulk/ci)](https://github.com/Toilal/rebulk/actions?query=workflow%3Aci)
 [![Coveralls](http://img.shields.io/coveralls/Toilal/rebulk.svg)](https://coveralls.io/r/Toilal/rebulk?branch=master)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/relekang/python-semantic-release)
+
 
 ReBulk is a python library that performs advanced searches in strings
 that would be hard to implement using [re
