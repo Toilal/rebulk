@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=no-self-use, pointless-statement, missing-docstring, unbalanced-tuple-unpacking, len-as-condition
+# pylint: disable=no-self-use, pointless-statement, missing-docstring, unbalanced-tuple-unpacking, len-as-condition, no-member
 
 import re
 import pytest
