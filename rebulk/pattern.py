@@ -7,8 +7,6 @@ Abstract pattern class definition along with various implementations (regexp, st
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-import six
-
 from . import debug
 from .formatters import default_formatter
 from .loose import call, ensure_list, ensure_dict
@@ -18,8 +16,7 @@ from .utils import find_all, is_iterable, get_first_defined
 from .validators import allways_true
 
 
-@six.add_metaclass(ABCMeta)
-class BasePattern(object):
+class BasePattern(metaclass=ABCMeta):
     """
     Base class for Pattern like objects
     """
@@ -41,8 +38,7 @@ class BasePattern(object):
         pass
 
 
-@six.add_metaclass(ABCMeta)
-class Pattern(BasePattern):
+class Pattern(BasePattern, metaclass=ABCMeta):
     """
     Definition of a particular pattern to search for.
     """
@@ -396,7 +392,7 @@ class StringPattern(Pattern):
     """
 
     def __init__(self, *patterns, **kwargs):
-        super(StringPattern, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._patterns = patterns
         self._kwargs = kwargs
         self._match_kwargs = filter_match_kwargs(kwargs)
@@ -422,7 +418,7 @@ class RePattern(Pattern):
     """
 
     def __init__(self, *patterns, **kwargs):
-        super(RePattern, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.repeated_captures = REGEX_AVAILABLE
         if 'repeated_captures' in kwargs:
             self.repeated_captures = kwargs.get('repeated_captures')
@@ -434,7 +430,7 @@ class RePattern(Pattern):
         self._children_match_kwargs = filter_match_kwargs(kwargs, children=True)
         self._patterns = []
         for pattern in patterns:
-            if isinstance(pattern, six.string_types):
+            if isinstance(pattern, str):
                 if self.abbreviations and pattern:
                     for key, replacement in self.abbreviations:
                         pattern = pattern.replace(key, replacement)
@@ -494,7 +490,7 @@ class FunctionalPattern(Pattern):
     """
 
     def __init__(self, *patterns, **kwargs):
-        super(FunctionalPattern, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._patterns = patterns
         self._kwargs = kwargs
         self._match_kwargs = filter_match_kwargs(kwargs)
