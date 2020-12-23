@@ -35,7 +35,7 @@ jobs:
       - name: Install regex
         run: |
           pip install regex
-        if: ${{ matrix.regex }}
+        if: ${{ matrix.regex == '1' }}
 
       - run: pylint rebulk
         if: matrix.python-version != '3.9'
