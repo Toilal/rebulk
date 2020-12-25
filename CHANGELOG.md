@@ -3,6 +3,14 @@ Changelog
 
 <!--next-version-placeholder-->
 
+## v3.0.1 (2020-12-25)
+### Fix
+* **package:** Fix broken package `No such file or directory: 'CHANGELOG.md'` ([#24](https://github.com/Toilal/rebulk/issues/24)) ([`33895ff`](https://github.com/Toilal/rebulk/commit/33895ff358ff5051768fb98d4e840691e7af9bdf))
+
+### Documentation
+* **readme:** Add semantic release badge ([`78baca0`](https://github.com/Toilal/rebulk/commit/78baca0c529083d7f583ffec58aeb23734d67ce5))
+* **readme:** Fix title ([`d5d4db5`](https://github.com/Toilal/rebulk/commit/d5d4db5cd7f6e2cb1308acd26bfb98838815fad4))
+
 ## v3.0.0 (2020-12-23)
 ### Feature
 * **regex:** Replace REGEX_DISABLED environment variable with REBULK_REGEX_ENABLED ([`d5a8cad`](https://github.com/Toilal/rebulk/commit/d5a8cad6281533ee549a46ca70e1a25e5777eda3))
