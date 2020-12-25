@@ -1,6 +1,7 @@
 include *.py
 include *.txt
 include *.ini
+include *.md
 include .coveragerc
 include LICENSE
 include pylintrc
