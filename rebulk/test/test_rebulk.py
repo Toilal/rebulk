@@ -120,6 +120,44 @@ def test_rebulk_defaults():
     assert matches[2].tags == ["0"]
 
 
+def test_rebulk_defaults_overrides():
+    input_string = "The quick brown fox jumps over the lazy dog"
+
+    def func(input_string):
+        i = input_string.find("fox")
+        if i > -1:
+            return i, i + len("fox")
+
+    matches = Rebulk() \
+        .string_defaults(name="string", tags=["a", "b"]) \
+        .regex_defaults(name="regex", tags=["d"]) \
+        .functional_defaults(name="functional") \
+        .string("quick", tags=["c"], overrides=["tags"]) \
+        .functional(func) \
+        .regex("br.{2}n") \
+        .matches(input_string)
+    assert matches[0].name == "string"
+    assert matches[0].tags == ["c"]
+    assert matches[1].name == "functional"
+    assert matches[2].name == "regex"
+    assert matches[2].tags == ["d"]
+
+    matches = Rebulk() \
+        .defaults(name="default", tags=["0"]) \
+        .string_defaults(name="string", tags=["a", "b"]) \
+        .functional_defaults(name="functional", tags=["1"]) \
+        .string("quick", tags=["c"]) \
+        .functional(func) \
+        .regex("br.{2}n") \
+        .matches(input_string)
+    assert matches[0].name == "string"
+    assert matches[0].tags == ["0", "a", "b", "c"]
+    assert matches[1].name == "functional"
+    assert matches[1].tags == ["0", "1"]
+    assert matches[2].name == "default"
+    assert matches[2].tags == ["0"]
+
+
 def test_rebulk_rebulk():
     input_string = "The quick brown fox jumps over the lazy dog"
 
