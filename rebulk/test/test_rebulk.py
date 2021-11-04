@@ -289,7 +289,7 @@ class TestMarkers(object):
             def when(self, matches, context):
                 word_match = matches.named("word", 0)
                 marker = matches.markers.at_match(word_match,
-                                                  lambda marker: marker.name == "mark1" or marker.name == "mark2")
+                                                  lambda marker: marker.name in ["mark1", "mark2"])
                 if len(marker) < 2:
                     return word_match
 
@@ -362,26 +362,26 @@ class TestMarkers(object):
 
 class TestUnicode(object):
     def test_rebulk_simple(self):
-        input_string = u"敏捷的棕色狐狸跳過懶狗"
+        input_string = "敏捷的棕色狐狸跳過懶狗"
 
         rebulk = Rebulk()
 
-        rebulk.string(u"敏")
-        rebulk.regex(u"捷")
+        rebulk.string("敏")
+        rebulk.regex("捷")
 
         def func(input_string):
-            i = input_string.find(u"的")
+            i = input_string.find("的")
             if i > -1:
-                return i, i + len(u"的")
+                return i, i + len("的")
 
         rebulk.functional(func)
 
         matches = rebulk.matches(input_string)
         assert len(matches) == 3
 
-        assert matches[0].value == u"敏"
-        assert matches[1].value == u"捷"
-        assert matches[2].value == u"的"
+        assert matches[0].value == "敏"
+        assert matches[1].value == "捷"
+        assert matches[2].value == "的"
 
 
 class TestImmutable(object):

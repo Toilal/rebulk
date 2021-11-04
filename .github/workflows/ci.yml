@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.5, 3.6, 3.7, 3.8, 3.9, pypy-3.6, pypy-3.7 ]
+        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.6", "pypy-3.7" ]
         regex: [ "1", "0" ]
 
     steps:
@@ -38,7 +38,6 @@ jobs:
         if: ${{ matrix.regex == '1' }}
 
       - run: pylint rebulk
-        if: matrix.python-version != '3.9'
 
       - run: coverage run --source=rebulk setup.py test
         env:
@@ -69,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.8 ]
+        python-version: [ 3.9 ]
 
     steps:
       - name: Setup python ${{ matrix.python-version }}
@@ -100,8 +99,7 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
       - name: Merge master to develop
-        # uses: robotology/gh-action-nightly-merge@v1.3.1  # Wait PR merge https://github.com/robotology/gh-action-nightly-merge/pull/5
-        uses: Toilal/gh-action-nightly-merge@master
+        uses: robotology/gh-action-nightly-merge@v1.3.2
         with:
           stable_branch: 'master'
           development_branch: 'develop'
