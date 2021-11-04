@@ -3,6 +3,11 @@ Changelog
 
 <!--next-version-placeholder-->
 
+## v3.1.0 (2021-11-04)
+### Feature
+* **defaults:** Add overrides support ([#25](https://github.com/Toilal/rebulk/issues/25)) ([`f79e5ea`](https://github.com/Toilal/rebulk/commit/f79e5eab0806787ff19a4c668bf9f88413b67288))
+* **python:** Add python 3.10 support, drop python 3.5 support ([`a5e6eb7`](https://github.com/Toilal/rebulk/commit/a5e6eb7bba979ee51e1c6c1e186bd224c989dfdc))
+
 ## v3.0.1 (2020-12-25)
 ### Fix
 * **package:** Fix broken package `No such file or directory: 'CHANGELOG.md'` ([#24](https://github.com/Toilal/rebulk/issues/24)) ([`33895ff`](https://github.com/Toilal/rebulk/commit/33895ff358ff5051768fb98d4e840691e7af9bdf))
