@@ -3,6 +3,13 @@ Changelog
 
 <!--next-version-placeholder-->
 
+## v3.2.0 (2023-02-18)
+### Feature
+* **dependencies:** Add python 3.11 support and drop python 3.6 support ([`e4cb0d8`](https://github.com/Toilal/rebulk/commit/e4cb0d854cd8ea80da9abe46d2b3405a873e2020))
+
+### Fix
+* Remove pytest-runner from setup_requires ([`4483d17`](https://github.com/Toilal/rebulk/commit/4483d1777f6a61d20ed83da760663aec67e22042))
+
 ## v3.1.0 (2021-11-04)
 ### Feature
 * **defaults:** Add overrides support ([#25](https://github.com/Toilal/rebulk/issues/25)) ([`f79e5ea`](https://github.com/Toilal/rebulk/commit/f79e5eab0806787ff19a4c668bf9f88413b67288))
