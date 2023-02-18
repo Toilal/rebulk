@@ -10,17 +10,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.6", "pypy-3.7" ]
+        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.8", "pypy-3.9" ]
         regex: [ "1", "0" ]
 
     steps:
       - name: Setup python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Git User config
         run: |
@@ -54,10 +54,10 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v2
+      - uses: wagoid/commitlint-github-action@v5
 
   release:
     if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
@@ -68,16 +68,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.9 ]
+        python-version: [ 3.11 ]
 
     steps:
       - name: Setup python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -99,7 +99,7 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
       - name: Merge master to develop
-        uses: robotology/gh-action-nightly-merge@v1.3.2
+        uses: robotology/gh-action-nightly-merge@v1.4.0
         with:
           stable_branch: 'master'
           development_branch: 'develop'

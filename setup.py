@@ -3,6 +3,7 @@
 
 import io
 import re
+
 from setuptools import setup, find_packages
 
 with io.open('CHANGELOG.md', encoding='utf-8') as f:
@@ -35,11 +36,11 @@ args = dict(name='rebulk',
                          'Operating System :: OS Independent',
                          'Intended Audience :: Developers',
                          'Programming Language :: Python :: 3',
-                         'Programming Language :: Python :: 3.6',
                          'Programming Language :: Python :: 3.7',
                          'Programming Language :: Python :: 3.8',
                          'Programming Language :: Python :: 3.9',
                          'Programming Language :: Python :: 3.10',
+                         'Programming Language :: Python :: 3.11',
                          'Topic :: Software Development :: Libraries :: Python Modules'
                          ],
             keywords='re regexp regular expression search pattern string match',
