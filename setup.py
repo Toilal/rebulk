@@ -16,8 +16,6 @@ install_requires = []
 
 native_requires = ['regex']
 
-setup_requires = ['pytest-runner']
-
 dev_require = ['pytest', 'pylint', 'tox']
 
 tests_require = ['pytest', 'pylint']
@@ -51,7 +49,6 @@ args = dict(name='rebulk',
             license='MIT',
             packages=find_packages(),
             include_package_data=True,
-            setup_requires=setup_requires,
             install_requires=install_requires,
             tests_require=tests_require,
             test_suite='rebulk.test',

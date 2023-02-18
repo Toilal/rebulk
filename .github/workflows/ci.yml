@@ -39,7 +39,7 @@ jobs:
 
       - run: pylint rebulk
 
-      - run: coverage run --source=rebulk setup.py test
+      - run: coverage run -m pytest
         env:
           REBULK_REGEX_ENABLED: ${{ matrix.regex }}
 
