@@ -12,7 +12,7 @@ with io.open('CHANGELOG.md', encoding='utf-8') as f:
 with io.open('README.md', 'r', encoding='utf-8') as f:
     readme = f.read()
 
-install_requires = []
+install_requires = ['setuptools;python_version>="3.12"']
 
 native_requires = ['regex']
 

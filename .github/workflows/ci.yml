@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.8", "pypy-3.9" ]
+        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.8", "pypy-3.9", "pypy-3.10" ]
         regex: [ "1", "0" ]
 
     steps:
@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Git User config
         run: |
@@ -54,7 +54,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v5
@@ -68,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.11 ]
+        python-version: [ 3.12 ]
 
     steps:
       - name: Setup python ${{ matrix.python-version }}
@@ -77,7 +77,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -93,7 +93,7 @@ jobs:
         run: pip install python-semantic-release
 
       - name: Publish release
-        run: semantic-release -v DEBUG publish
+        run: semantic-release publish -v DEBUG
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
