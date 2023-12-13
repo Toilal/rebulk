@@ -93,7 +93,7 @@ jobs:
         run: pip install python-semantic-release
 
       - name: Publish release
-        run: semantic-release publish -v DEBUG
+        run: semantic-release publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
