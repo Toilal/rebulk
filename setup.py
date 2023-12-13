@@ -39,6 +39,7 @@ args = dict(name='rebulk',
                          'Programming Language :: Python :: 3.9',
                          'Programming Language :: Python :: 3.10',
                          'Programming Language :: Python :: 3.11',
+                         'Programming Language :: Python :: 3.12',
                          'Topic :: Software Development :: Libraries :: Python Modules'
                          ],
             keywords='re regexp regular expression search pattern string match',
