@@ -1,0 +1,8 @@
+[tool.semantic_release]
+version_variables = ["rebulk/__version__.py:__version__"]
+commit_subject = "chore(release): release v{version}"
+commit_author = "github-actions <actions@github.com>"
+upload_to_pypi_glob_patterns = "*.tar.gz,*.whl"
+
+[tool.pytest.ini_options]
+addopts = "--ignore=setup.py --ignore=build --doctest-modules --doctest-glob='README.rst'"
