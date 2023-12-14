@@ -16,7 +16,7 @@ install_requires = ['setuptools;python_version>="3.12"']
 
 native_requires = ['regex']
 
-dev_require = ['pytest', 'pylint', 'tox']
+dev_require = ['pytest', 'pylint', 'tox', 'python-semantic-release', 'twine']
 
 tests_require = ['pytest', 'pylint']
 

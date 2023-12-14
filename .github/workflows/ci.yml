@@ -89,14 +89,23 @@ jobs:
       - name: Install Dependencies
         run: pip install -e .[dev,test]
 
-      - name: Install python-semantic-release
-        run: pip install python-semantic-release
+      - name: Install python-semantic-release and twine
+        run: pip install python-semantic-release twine
+
+      - name: Bump version
+        run: semantic-release version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to pypi
+        run: twine upload --username "__token__" --password "${PYPI_TOKEN}" dist/*
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
       - name: Publish release
         run: semantic-release publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
       - name: Merge master to develop
         uses: robotology/gh-action-nightly-merge@v1.4.0
