@@ -95,9 +95,11 @@ def extend_safe(target, source):
     :param source:
     :type source: list
     """
+    target_set = set(target)
     for elt in source:
-        if elt not in target:
+        if elt not in target_set:
             target.append(elt)
+            target_set.add(elt)
 
 
 class _Ref:
