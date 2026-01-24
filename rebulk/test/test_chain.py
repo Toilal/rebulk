@@ -7,6 +7,8 @@ from functools import partial
 from rebulk.pattern import FunctionalPattern, StringPattern, RePattern
 from ..rebulk import Rebulk
 from ..validators import chars_surround
+from ..chain import Chain
+from ..match import Match
 
 
 def test_chain_close():
@@ -459,3 +461,44 @@ def test_chain_breaker_defaults2():
     matches[0].value = 1
     matches[1].value = 2
     matches[2].value = 3
+
+
+def test_group_by_match_index_with_unsorted_data():
+    """
+    The groupby function requires pre-sorted data, so _group_by_match_index
+    must sort matches by match_index before grouping.
+    """
+    
+    # Create mock matches with unsorted match_index values
+    match1 = Match(0, 5, value='a', name='test')
+    match1.match_index = 2
+    
+    match2 = Match(6, 10, value='b', name='test')
+    match2.match_index = 0
+    
+    match3 = Match(11, 15, value='c', name='test')
+    match3.match_index = 1
+    
+    match4 = Match(16, 20, value='d', name='test')
+    match4.match_index = 2
+    
+    # Create unsorted matches list
+    unsorted_matches = [match1, match2, match3, match4]
+    
+    # Call _group_by_match_index with unsorted data
+    grouped = Chain._group_by_match_index(unsorted_matches)
+    
+    # Verify grouping is correct despite unsorted input
+    assert 0 in grouped
+    assert 1 in grouped
+    assert 2 in grouped
+    
+    assert len(grouped[0]) == 1
+    assert grouped[0][0] == match2
+    
+    assert len(grouped[1]) == 1
+    assert grouped[1][0] == match3
+    
+    assert len(grouped[2]) == 2
+    assert grouped[2][0] == match1
+    assert grouped[2][1] == match4

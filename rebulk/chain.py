@@ -185,7 +185,7 @@ class Chain(Pattern, Builder):
     @staticmethod
     def _group_by_match_index(matches):
         grouped_matches_dict = {}
-        for match_index, match in itertools.groupby(matches, lambda m: m.match_index):
+        for match_index, match in itertools.groupby(sorted(matches, key=lambda m: m.match_index), lambda m: m.match_index):
             grouped_matches_dict[match_index] = list(match)
         return grouped_matches_dict
 
