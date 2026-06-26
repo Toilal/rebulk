@@ -570,6 +570,18 @@ keys are simply omitted):
 
 ```
 
+`to` also accepts a primitive type (returns the first value) or a `list[...]`
+type (returns the values of all matches):
+
+```python
+>>> Rebulk().regex(r'\d{4}', key=year).matches("born 1984").to(int)
+1984
+>>> digit = Key("digit", int)
+>>> Rebulk().regex(r'\d', key=digit).matches("1 2 3").to(list[int])
+[1, 2, 3]
+
+```
+
 Markers
 =======
 

@@ -10,7 +10,7 @@ import dataclasses
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, TypeVar, get_origin, get_type_hints, is_typeddict, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, get_type_hints, is_typeddict, overload
 
 from .debug import defined_at
 from .key import Key
@@ -756,25 +756,37 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
     def to(self, model: type[M]) -> M:
         """
-        Build a typed ``dataclass`` or ``TypedDict`` instance from named matches.
+        Project named matches onto a typed model.
 
-        Each field is populated from matches sharing its name: a ``list[...]``
-        field collects all values (in match order), any other field takes the
-        first value. A field with no matching value is left to its default
-        (dataclass) or simply omitted (``TypedDict``); a required dataclass
-        field with no value and no default raises. The result is typed end to
-        end via ``def to(self, model: type[M]) -> M``.
+        ``model`` may be:
 
+        * a ``dataclass`` or ``TypedDict`` — each field is filled from matches
+          sharing its name: a ``list[...]`` field collects all values (in match
+          order), any other field takes the first value. A field with no value
+          is left to its default (dataclass, or raises if required) or omitted
+          (``TypedDict``).
+        * a ``list[...]`` type — returns the values of all matches.
+        * any other type (e.g. ``int``, ``str``, ``float``) — returns the value
+          of the first match, and raises ``LookupError`` if there is none.
+
+        The result is typed end to end via ``def to(self, model: type[M]) -> M``.
         Values are used as produced by each pattern's formatter (see ``key=`` /
         ``formatter=``); ``to`` does not coerce them.
         """
-        hints = get_type_hints(model)
+        if get_origin(model) is list:
+            return cast("M", [match.value for match in self])
         if dataclasses.is_dataclass(model):
+            hints = get_type_hints(model)
             field_names: Iterable[str] = [data_field.name for data_field in dataclasses.fields(model)]
         elif is_typeddict(model):
+            hints = get_type_hints(model)
             field_names = hints
+        elif isinstance(model, type):
+            if not self._delegate:
+                raise LookupError(f"no match available to build a {model.__name__}")
+            return cast("M", self[0].value)
         else:
-            raise TypeError(f"{model!r} is not a dataclass or TypedDict")
+            raise TypeError(f"{model!r} is not a dataclass, TypedDict, primitive or list type")
         kwargs: dict[str, Any] = {}
         for name in field_names:
             values = [match.value for match in self._name_dict[name]]
