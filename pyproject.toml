@@ -64,7 +64,12 @@ name = "cz_conventional_commits"
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 version_variables = ["rebulk/__version__.py:__version__"]
-build_command = "uv build"
+# `uv lock` re-stamps the bumped version into uv.lock (which pins rebulk's own
+# version); `assets` then includes it in the release commit so the lockfile never
+# drifts behind the released version (a stale lock dirties the tree and broke the
+# automated main->develop back-merge).
+build_command = "uv lock && uv build"
+assets = ["uv.lock"]
 commit_message = "chore(release): release v{version}"
 commit_author = "github-actions <actions@github.com>"
 
