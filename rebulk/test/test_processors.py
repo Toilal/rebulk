@@ -93,7 +93,7 @@ def test_conflict_solver_1() -> None:
 
     re1 = StringPattern(
         "2345678",
-        conflict_solver=lambda match, conflicting: "__default__",  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: "__default__",
     )
     re2 = StringPattern("34567")
 
@@ -110,11 +110,11 @@ def test_conflict_solver_2() -> None:
 
     re1 = StringPattern(
         "2345678",
-        conflict_solver=lambda match, conflicting: "__default__",  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: "__default__",
     )
     re2 = StringPattern(
         "34567",
-        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: conflicting,
     )
 
     matches = Matches(cast("list[Match]", re1.matches(input_string)))
@@ -130,7 +130,7 @@ def test_conflict_solver_3() -> None:
 
     re1 = StringPattern(
         "2345678",
-        conflict_solver=lambda match, conflicting: match,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: match,
     )
     re2 = StringPattern("34567")
 
@@ -148,7 +148,7 @@ def test_conflict_solver_4() -> None:
     re1 = StringPattern("2345678")
     re2 = StringPattern(
         "34567",
-        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: conflicting,
     )
 
     matches = Matches(cast("list[Match]", re1.matches(input_string)))
@@ -164,7 +164,7 @@ def test_conflict_solver_5() -> None:
 
     re1 = StringPattern(
         "2345678",
-        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: conflicting,
     )
     re2 = StringPattern("34567")
 
@@ -182,7 +182,7 @@ def test_conflict_solver_6() -> None:
     re1 = StringPattern("2345678")
     re2 = StringPattern(
         "34567",
-        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: conflicting,
     )
 
     matches = Matches(cast("list[Match]", re1.matches(input_string)))
@@ -222,7 +222,7 @@ def test_unresolved() -> None:
     re1 = StringPattern("34567")
     re2 = StringPattern(
         "2345678",
-        conflict_solver=lambda match, conflicting: None,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: None,
     )
 
     matches = Matches(cast("list[Match]", re1.matches(input_string)))
@@ -233,7 +233,7 @@ def test_unresolved() -> None:
 
     re1 = StringPattern(
         "34567",
-        conflict_solver=lambda match, conflicting: None,  # noqa: ARG005
+        conflict_solver=lambda match, conflicting: None,
     )
     re2 = StringPattern("2345678")
 

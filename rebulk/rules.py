@@ -9,7 +9,6 @@ import inspect
 from abc import ABCMeta, abstractmethod
 from itertools import groupby
 from logging import getLogger
-from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from . import debug
@@ -18,6 +17,7 @@ from .utils import is_iterable
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from types import ModuleType
 
     from .match import Matches
 
@@ -150,6 +150,7 @@ class RemoveMatch(Consequence):  # pylint: disable=abstract-method
         if when_response in matches:
             matches.remove(when_response)
             return when_response
+        return None
 
 
 class AppendMatch(Consequence):  # pylint: disable=abstract-method
@@ -176,6 +177,7 @@ class AppendMatch(Consequence):  # pylint: disable=abstract-method
         if when_response not in matches:
             matches.append(when_response)
             return when_response
+        return None
 
 
 class RenameMatch(Consequence):  # pylint: disable=abstract-method
@@ -354,6 +356,7 @@ def execute_rule(rule: CustomRule, matches: Matches, context: dict[str, Any] | N
             return when_response
     else:
         log(rule.log_level, "Rule is disabled: %s", rule)
+    return None
 
 
 def toposort_rules(rules: list[CustomRule]) -> Iterator[set[CustomRule]]:

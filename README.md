@@ -36,6 +36,7 @@ Regular expression, string and function based patterns are declared in a
 ```python
 >>> from rebulk import Rebulk
 >>> bulk = Rebulk().string('brown').regex(r'qu\w+').functional(lambda s: (20, 25))
+
 ```
 
 When `Rebulk` object is fully configured, you can call `matches` method
@@ -45,6 +46,7 @@ pattern.
 ```python
 >>> bulk.matches("The quick brown fox jumps over the lazy dog")
 [<brown:(10, 15)>, <quick:(4, 9)>, <jumps:(20, 25)>]
+
 ```
 
 If multiple `Match` objects are found at the same position, only the
@@ -54,6 +56,7 @@ longer one is kept.
 >>> bulk = Rebulk().string('lakers').string('la')
 >>> bulk.matches("the lakers are from la")
 [<lakers:(4, 10)>, <la:(20, 22)>]
+
 ```
 
 String Patterns
@@ -73,6 +76,7 @@ method to find matches, but returns all matches in the string.
 
 >>> Rebulk().string('la', ignore_case=True).matches("LalAlilAla")
 [<La:(0, 2)>, <lA:(2, 4)>, <lA:(6, 8)>, <la:(8, 10)>]
+
 ```
 
 You can define several patterns with a single `string` method call.
@@ -80,6 +84,7 @@ You can define several patterns with a single `string` method call.
 ```python
 >>> Rebulk().string('Winter', 'coming').matches("Winter is coming...")
 [<Winter:(0, 6)>, <coming:(10, 16)>]
+
 ```
 
 Regular Expression Patterns
@@ -96,6 +101,7 @@ module](https://docs.python.org/3/library/re.html). Enable it with `REBULK_REGEX
 ```python
 >>> Rebulk().regex(r'l\w').matches("lolita")
 [<lo:(0, 2)>, <li:(2, 4)>]
+
 ```
 
 You can define several patterns with a single `regex` method call.
@@ -103,6 +109,7 @@ You can define several patterns with a single `regex` method call.
 ```python
 >>> Rebulk().regex(r'Wint\wr', r'com\w{3}').matches("Winter is coming...")
 [<Winter:(0, 6)>, <coming:(10, 16)>]
+
 ```
 
 All keyword arguments from
@@ -122,6 +129,7 @@ supported.
 >>> Rebulk().regex(('L[A-Z]', re.IGNORECASE), ('L[a-z]KeRs')) \
 ...         .matches("The LaKeRs are from La")
 [<La:(20, 22)>, <LaKeRs:(4, 10)>]
+
 ```
 
 If [regex module](https://pypi.python.org/pypi/regex) is available, it
@@ -138,6 +146,7 @@ automatically supports repeated captures.
 ...                   .matches("01-02-03-04")
 >>> matches[0].children
 [<01:(0, 2)+initiator=01-02-03-04>, <04:(9, 11)+initiator=01-02-03-04>]
+
 ```
 
 -   `abbreviations`
@@ -166,6 +175,7 @@ index of the `Match` object.
 ...         return 0, index - 11
 >>> Rebulk().functional(func).matches("Why do simple ? Forget about it ...")
 [<Why:(0, 3)>]
+
 ```
 
 You can also return a dict of keywords arguments for `Match` object.
@@ -187,8 +197,9 @@ patterns. Repeater can be set to define repetition on chain part.
 ...             .regex(r'v(?P<version>\d+)').repeater('?')\
 ...             .regex(r'[ex-](?P<episode>\d{1,4})').repeater('*')\
 ...             .close() # .repeater(1) could be omitted as it's the default behavior
->>> r.matches("This is E14v2-15-16-17").to_dict()  # converts matches to dict
-MatchesDict([('episode', [14, 15, 16, 17]), ('version', 2)])
+>>> dict(r.matches("This is E14v2-15-16-17").to_dict())  # converts matches to dict
+{'episode': [14, 15, 16, 17], 'version': 2}
+
 ```
 
 Patterns parameters
@@ -212,6 +223,7 @@ All patterns have options that can be given as keyword arguments.
     ...                   .matches("In year 1984 ...")
     >>> len(matches)
     1
+
     ```
 
 Some base validator functions are available in `rebulk.validators`
@@ -231,6 +243,7 @@ argument.
     ...                   .matches("In year 1982 ...")
     >>> isinstance(matches[0].value, int)
     True
+
     ```
 
 -   `pre_match_processor` / `post_match_processor`
@@ -341,6 +354,7 @@ converted to `children` matches of the main `Match` object.
 'one = 1'
 'two = 2'
 'three = 3'
+
 ```
 
 It\'s possible to retrieve only children by using `children` parameters.
@@ -353,6 +367,7 @@ You can also customize the way structure is generated with `every`,
 ...         .matches("Zero, 0, One, 1, Two, 2, Three, 3, Four, 4")
 >>> matches
 [<1:(14, 15)+name=one+initiator=One, 1, Two, 2, Three, 3>, <2:(22, 23)+name=two+initiator=One, 1, Two, 2, Three, 3>, <3:(32, 33)+name=three+initiator=One, 1, Two, 2, Three, 3>]
+
 ```
 
 Match object has the following properties that can be given to Pattern
@@ -370,6 +385,7 @@ objects
     ...                   .matches("In year 1982 ...")
     >>> isinstance(matches[0].value, int)
     True
+
     ```
 
 -   `format_all`
@@ -561,4 +577,5 @@ and `then` is called after all.
 [<This match is grabbed:(0, 21)+name=grabbed>]
 >>> rebulk.matches("if it's NOT the first match, This match is NOT grabbed")
 []
+
 ```

@@ -2,12 +2,14 @@
 # pylint: disable=pointless-statement, missing-docstring, no-member, len-as-condition
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..match import Matches
 from ..rebulk import Rebulk
 from ..rules import Rule
 from . import rebulk_rules_module as rm
+
+if TYPE_CHECKING:
+    from ..match import Matches
 
 
 def test_rebulk_simple() -> None:
@@ -455,7 +457,7 @@ class TestImmutable:
         input_string = "The quick brown fox jumps over the lazy dog"
         matches = Rebulk().string("quick").string("over").string("fox").matches(input_string)
 
-        for i in range(0, len(input_string)):
+        for i in range(len(input_string)):
             starting = matches.starting(i)
             for match in list(starting):
                 starting.remove(match)
@@ -466,7 +468,7 @@ class TestImmutable:
         input_string = "The quick brown fox jumps over the lazy dog"
         matches = Rebulk().string("quick").string("over").string("fox").matches(input_string)
 
-        for i in range(0, len(input_string)):
+        for i in range(len(input_string)):
             starting = matches.ending(i)
             for match in list(starting):
                 starting.remove(match)

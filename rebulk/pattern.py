@@ -7,8 +7,7 @@ Abstract pattern class definition along with various implementations (regexp, st
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Callable, Iterator, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from . import debug
 from .formatters import default_formatter
@@ -17,6 +16,9 @@ from .match import Match
 from .remodule import REGEX_ENABLED, re
 from .utils import find_all, get_first_defined, is_iterable
 from .validators import allways_true
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Sequence
 
 
 class BasePattern(metaclass=ABCMeta):
@@ -195,11 +197,9 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         raw_matches: list[Match] = []
 
         for pattern in self.patterns:
-            match_index = 0
-            for match in self._match(pattern, input_string, context):
+            for match_index, match in enumerate(self._match(pattern, input_string, context)):
                 raw_matches.append(match)
                 matches.extend(self._process_matches(match, match_index))
-                match_index += 1
 
         matches = self._post_process_matches(matches)
 
@@ -259,12 +259,9 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         """
 
         if (
-            match.name
-            and match.name in self.private_names
-            or not child
-            and self.private_parent
-            or child
-            and self.private_children
+            (match.name and match.name in self.private_names)
+            or (not child and self.private_parent)
+            or (child and self.private_children)
         ):
             match.private = True
 
@@ -503,7 +500,7 @@ class RePattern(Pattern):
         return self._match_kwargs
 
     def _match(self, pattern: Any, input_string: str, context: dict[str, Any] | None = None) -> Iterator[Match]:
-        names = dict((v, k) for k, v in pattern.groupindex.items())
+        names = {v: k for k, v in pattern.groupindex.items()}
         for match_object in pattern.finditer(input_string):
             start = match_object.start()
             end = match_object.end()

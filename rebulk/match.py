@@ -105,9 +105,8 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :param match:
         :type match: Match
         """
-        if self.__name_dict is not None:
-            if match.name:
-                _BaseMatches._base_add(self._name_dict[match.name], (match))
+        if self.__name_dict is not None and match.name:
+            _BaseMatches._base_add(self._name_dict[match.name], (match))
         if self.__tag_dict is not None:
             for tag in match.tags:
                 _BaseMatches._base_add(self._tag_dict[tag], match)
@@ -126,9 +125,8 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :param match:
         :type match: Match
         """
-        if self.__name_dict is not None:
-            if match.name:
-                _BaseMatches._base_remove(self._name_dict[match.name], match)
+        if self.__name_dict is not None and match.name:
+            _BaseMatches._base_remove(self._name_dict[match.name], match)
         if self.__tag_dict is not None:
             for tag in match.tags:
                 _BaseMatches._base_remove(self._tag_dict[tag], match)
@@ -256,10 +254,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :return: set of matches
         :rtype: set[Match]
         """
-        if end is None:
-            end = self.max_end
-        else:
-            end = min(self.max_end, end)
+        end = self.max_end if end is None else min(self.max_end, end)
         ret = _BaseMatches._base()
         for match in sorted(self):
             if match.start < end and match.end > start:
@@ -336,10 +331,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             position = position.end
         chain = _BaseMatches._base()
 
-        if end is None:
-            end = self.max_end
-        else:
-            end = min(self.max_end, end)
+        end = self.max_end if end is None else min(self.max_end, end)
 
         for i in range(position, end):
             index_matches = self.at_index(i)
@@ -371,7 +363,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :return:
         :rtype:
         """
-        for lindex in reversed(range(0, position)):
+        for lindex in reversed(range(position)):
             for starting in self.starting(lindex):
                 if not ignore or not ignore(starting):
                     return lindex
@@ -423,10 +415,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :rtype:
         """
         assert self.input_string if seps else True, "input_string must be defined when using seps parameter"
-        if end is None:
-            end = self.max_end
-        else:
-            end = min(self.max_end, end)
+        end = self.max_end if end is None else min(self.max_end, end)
         ret: list[Match] = _BaseMatches._base()
         hole = False
         rindex = start
@@ -551,7 +540,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             ret.matches[match.name].append(match)
             if not enforce_list and value not in ret.values_list[match.name]:
                 ret.values_list[match.name].append(value)
-            if match.name in ret.keys():
+            if match.name in ret:
                 if not first_value:
                     if not isinstance(ret[match.name], list):
                         if ret[match.name] == value:
@@ -733,7 +722,7 @@ class Match:
         :rtype:
         """
         if not self.children:
-            return set([self.name])
+            return {self.name}
         ret: set[str | None] = set()
         for child in self.children:
             for name in child.names:
@@ -818,7 +807,7 @@ class Match:
         :return: a list of Match objects
         :rtype: list[Match]
         """
-        if not is_iterable(crops) or len(crops) == 2 and isinstance(crops[0], int):
+        if not is_iterable(crops) or (len(crops) == 2 and isinstance(crops[0], int)):
             crops = [crops]
         initial = copy.deepcopy(self)
         ret = [initial]

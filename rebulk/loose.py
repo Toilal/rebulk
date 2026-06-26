@@ -102,14 +102,8 @@ def argspec_args(argspec: FullArgSpec, constructor: bool, *args: Any, **kwargs: 
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    if argspec.varkw:
-        call_kwarg = kwargs
-    else:
-        call_kwarg = dict((k, kwargs[k]) for k in kwargs if k in argspec.args)  # pylint:disable=consider-using-dict-items
-    if argspec.varargs:
-        call_args = args
-    else:
-        call_args = args[: len(argspec.args) - (1 if constructor else 0)]
+    call_kwarg = kwargs if argspec.varkw else {k: kwargs[k] for k in kwargs if k in argspec.args}
+    call_args = args if argspec.varargs else args[: len(argspec.args) - (1 if constructor else 0)]
     return call_args, call_kwarg
 
 
@@ -130,14 +124,8 @@ if not _FULLARGSPEC_SUPPORTED:
         :return: (args, kwargs) matching the function signature
         :rtype: tuple
         """
-        if argspec.keywords:
-            call_kwarg = kwargs
-        else:
-            call_kwarg = dict((k, kwargs[k]) for k in kwargs if k in argspec.args)  # pylint:disable=consider-using-dict-items
-        if argspec.varargs:
-            call_args = args
-        else:
-            call_args = args[: len(argspec.args) - (1 if constructor else 0)]
+        call_kwarg = kwargs if argspec.keywords else {k: kwargs[k] for k in kwargs if k in argspec.args}
+        call_args = args if argspec.varargs else args[: len(argspec.args) - (1 if constructor else 0)]
         return call_args, call_kwarg
 
     argspec_args = argspec_args_legacy
@@ -223,7 +211,7 @@ def set_defaults(defaults: dict[str, Any], kwargs: dict[str, Any], override: boo
     :return:
     :rtype:
     """
-    if "clear" in defaults.keys() and defaults.pop("clear"):
+    if "clear" in defaults and defaults.pop("clear"):
         kwargs.clear()
     for key, value in defaults.items():
         if key in kwargs:

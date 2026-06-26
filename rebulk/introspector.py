@@ -55,9 +55,9 @@ class PatternDescription(Description):
             }
             if pattern_values:
                 for value_key, value in pattern_values.items():
-                    extend_safe(self._properties[cast(str, value_key)], [value])
+                    extend_safe(self._properties[cast("str", value_key)], [value])
             elif isinstance(pattern, StringPattern):
-                extend_safe(self._properties[cast(str, pattern.name)], pattern.patterns)
+                extend_safe(self._properties[cast("str", pattern.name)], pattern.patterns)
             elif isinstance(pattern, RePattern):
                 if pattern.name and pattern.name not in pattern.private_names:
                     extend_safe(self._properties[pattern.name], [None])
@@ -66,9 +66,8 @@ class PatternDescription(Description):
                         for group_name in regex_pattern.groupindex:
                             if group_name not in pattern.private_names:
                                 extend_safe(self._properties[group_name], [None])
-            elif isinstance(pattern, FunctionalPattern):
-                if pattern.name and pattern.name not in pattern.private_names:
-                    extend_safe(self._properties[pattern.name], [None])
+            elif isinstance(pattern, FunctionalPattern) and pattern.name and pattern.name not in pattern.private_names:
+                extend_safe(self._properties[pattern.name], [None])
 
     @property
     def properties(self) -> dict[str, list[Any]]:

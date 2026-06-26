@@ -5,7 +5,6 @@ Processor functions
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from logging import getLogger
 from typing import TYPE_CHECKING, Any
 
@@ -13,6 +12,8 @@ from .rules import RemoveMatch, Rule
 from .utils import IdentitySet
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from .match import Match, Matches
 
 log = getLogger(__name__).log

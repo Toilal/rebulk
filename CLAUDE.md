@@ -15,7 +15,7 @@ This project is managed with [uv](https://docs.astral.sh/uv/). Tooling lives in 
 # Sync the dev environment (creates .venv from uv.lock, with the regex backend)
 uv sync --extra native
 
-# Run all tests (doctests run via --doctest-modules, configured in pyproject.toml)
+# Run all tests (also runs module doctests + README.md doctests, see pyproject.toml addopts)
 uv run pytest
 
 # Run a single test file
@@ -34,8 +34,11 @@ uv run mypy
 # Build sdist + wheel (uv build backend)
 uv build
 
-# Multi-version testing (tox via tox-uv)
+# Multi-version testing (tox via tox-uv: uv provisions each interpreter from the lock)
 uv run tox
+
+# Pre-commit hooks (local hooks invoking the tools through uvx)
+uvx pre-commit run --all-files
 
 # Run the suite against the `regex` backend (see remodule.py)
 REBULK_REGEX_ENABLED=1 uv run pytest
@@ -83,5 +86,6 @@ The library is built around a pipeline: **Patterns -> Matches -> Rules**.
 ## Conventions
 
 - **Conventional Commits are enforced.** CI runs `commitlint` on every push/PR, and releases are cut automatically by `python-semantic-release` from commit types (`feat:`, `fix:`, `chore:`, etc.). Non-conforming commit messages fail the pipeline. The version is the single source `pyproject.toml:project.version` (kept mirrored in `rebulk/__version__.py`) and is bumped by the release tooling — do not edit it by hand.
-- Doctests run as part of the default `pytest` invocation (`--doctest-modules`). Public functions carry executable docstring examples; keep them passing when changing behavior.
+- Doctests run as part of the default `pytest` invocation: module docstrings (`--doctest-modules`) and the `README.md` examples (`--doctest-glob`). Keep examples version-stable across the supported Python range (e.g. avoid relying on `OrderedDict` repr, which changed in 3.12).
+- Linting/formatting is **ruff** with an extended rule set (`E,W,F,I,UP,B,C4,SIM,PIE,RET,ISC,TC,FA,PT,RUF`). A `.pre-commit-config.yaml` runs ruff + mypy locally via `uvx`.
 - **The entire codebase (library + tests) is fully typed and `mypy` runs in strict mode** (`uv run mypy`). The package ships a `py.typed` marker (PEP 561), so keep new code annotated and strict-clean.

@@ -5,19 +5,21 @@ Entry point functions and classes for Rebulk
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, cast
 
 from .builder import Builder
 from .match import Match, Matches
-from .pattern import Pattern
 from .processors import ConflictSolver, PrivateRemover
 from .rules import CustomRule, Rules
 from .utils import extend_safe
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from typing_extensions import Self
+
+    from .pattern import Pattern
 
 log = getLogger(__name__).log
 

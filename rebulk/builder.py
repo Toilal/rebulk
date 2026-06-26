@@ -6,7 +6,6 @@ Base builder class for Rebulk
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator
 from contextlib import contextmanager
 from copy import deepcopy
 from logging import getLogger
@@ -16,6 +15,8 @@ from .loose import set_defaults
 from .pattern import FunctionalPattern, RePattern, StringPattern
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from typing_extensions import Self
 
     from .chain import Chain

@@ -7,10 +7,11 @@ All those function have last argument as match, so it's possible to use functool
 
 from __future__ import annotations
 
-from collections.abc import Callable, Container
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Container
+
     from .match import Match
 
 
@@ -72,10 +73,7 @@ def validators(*chained_validators: Callable[[Match], bool]) -> Callable[[Match]
     """
 
     def validator_chain(match: Match) -> bool:  # pylint:disable=missing-docstring
-        for chained_validator in chained_validators:
-            if not chained_validator(match):
-                return False
-        return True
+        return all(chained_validator(match) for chained_validator in chained_validators)
 
     return validator_chain
 
