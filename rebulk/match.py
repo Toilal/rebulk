@@ -140,6 +140,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         if match.end >= self._max_end and not self._end_dict[match.end]:
             self._max_end = max(self._end_dict.keys())
 
+    @overload
+    def previous(self, match: Match, predicate: int) -> Match | None: ...
+    @overload
+    def previous(self, match: Match, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def previous(self, match: Match, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def previous(self, match: Match, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def previous(
         self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
@@ -162,6 +170,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             current -= 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
+    @overload
+    def next(self, match: Match, predicate: int) -> Match | None: ...
+    @overload
+    def next(self, match: Match, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def next(self, match: Match, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def next(self, match: Match, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def next(
         self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
@@ -184,6 +200,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             current += 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
+    @overload
+    def named(self, name: str, predicate: int) -> Match | None: ...
+    @overload
+    def named(self, name: str, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def named(self, name: str, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def named(self, name: str, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def named(self, name: str, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that have the given name.
@@ -198,6 +222,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._name_dict[name]), predicate, index)
 
+    @overload
+    def tagged(self, tag: str, predicate: int) -> Match | None: ...
+    @overload
+    def tagged(self, tag: str, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def tagged(self, tag: str, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def tagged(self, tag: str, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def tagged(self, tag: str, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that have the given tag defined.
@@ -212,6 +244,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._tag_dict[tag]), predicate, index)
 
+    @overload
+    def starting(self, start: int, predicate: int) -> Match | None: ...
+    @overload
+    def starting(self, start: int, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def starting(self, start: int, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def starting(self, start: int, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def starting(
         self, start: int, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
@@ -228,6 +268,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._start_dict[start]), predicate, index)
 
+    @overload
+    def ending(self, end: int, predicate: int) -> Match | None: ...
+    @overload
+    def ending(self, end: int, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def ending(self, end: int, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def ending(self, end: int, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def ending(self, end: int, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that ends at given index.
@@ -240,6 +288,25 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._end_dict[end]), predicate, index)
 
+    @overload
+    def range(self, start: int, end: int | None, predicate: int) -> Match | None: ...
+    @overload
+    def range(
+        self, start: int, end: int | None, predicate: Callable[[Match], Any] | None, index: int
+    ) -> Match | None: ...
+    @overload
+    def range(
+        self,
+        start: int = ...,
+        end: int | None = ...,
+        predicate: Callable[[Match], Any] | None = ...,
+        *,
+        index: int,
+    ) -> Match | None: ...
+    @overload
+    def range(
+        self, start: int = ..., end: int | None = ..., predicate: Callable[[Match], Any] | None = ...
+    ) -> list[Match]: ...
     def range(
         self,
         start: int = 0,
@@ -267,6 +334,20 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
                 ret.append(match)
         return filter_index(ret, predicate, index)
 
+    @overload
+    def chain_before(
+        self,
+        position: int | Match,
+        seps: str,
+        start: int = ...,
+        predicate: Callable[[Match], Any] | None = ...,
+        *,
+        index: int,
+    ) -> Match | None: ...
+    @overload
+    def chain_before(
+        self, position: int | Match, seps: str, start: int = ..., predicate: Callable[[Match], Any] | None = ...
+    ) -> list[Match]: ...
     def chain_before(
         self,
         position: int | Match,
@@ -309,6 +390,20 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
         return filter_index(chain, predicate, index)
 
+    @overload
+    def chain_after(
+        self,
+        position: int | Match,
+        seps: str,
+        end: int | None = ...,
+        predicate: Callable[[Match], Any] | None = ...,
+        *,
+        index: int,
+    ) -> Match | None: ...
+    @overload
+    def chain_after(
+        self, position: int | Match, seps: str, end: int | None = ..., predicate: Callable[[Match], Any] | None = ...
+    ) -> list[Match]: ...
     def chain_after(
         self,
         position: int | Match,
@@ -391,6 +486,28 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
                     return rindex
         return self.max_end
 
+    @overload
+    def holes(
+        self,
+        start: int = ...,
+        end: int | None = ...,
+        formatter: Any = ...,
+        ignore: Callable[[Match], Any] | None = ...,
+        seps: str | None = ...,
+        predicate: Callable[[Match], Any] | None = ...,
+        *,
+        index: int,
+    ) -> Match | None: ...
+    @overload
+    def holes(
+        self,
+        start: int = ...,
+        end: int | None = ...,
+        formatter: Any = ...,
+        ignore: Callable[[Match], Any] | None = ...,
+        seps: str | None = ...,
+        predicate: Callable[[Match], Any] | None = ...,
+    ) -> list[Match]: ...
     def holes(
         self,
         start: int = 0,
@@ -454,6 +571,16 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             ret[-1].end = min(self._hole_end(rindex, ignore), end)
         return filter_index(ret, predicate, index)
 
+    @overload
+    def conflicting(self, match: Match, predicate: int) -> Match | None: ...
+    @overload
+    def conflicting(self, match: Match, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def conflicting(
+        self, match: Match, predicate: Callable[[Match], Any] | None = ..., *, index: int
+    ) -> Match | None: ...
+    @overload
+    def conflicting(self, match: Match, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def conflicting(
         self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
@@ -479,14 +606,34 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
         return filter_index(ret, predicate, index)
 
+    @overload
+    def at_match(self, match: Match, predicate: int) -> Match | None: ...
+    @overload
+    def at_match(self, match: Match, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def at_match(self, match: Match, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def at_match(self, match: Match, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def at_match(
         self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
         """
         Retrieves a list of matches from given match.
         """
-        return self.at_span(match.span, predicate, index)
+        # Delegating between overloaded methods: the loose impl-level union of
+        # predicate/index does not match any single public overload of at_span.
+        return self.at_span(match.span, predicate, index)  # type: ignore[arg-type]
 
+    @overload
+    def at_span(self, span: tuple[int, int], predicate: int) -> Match | None: ...
+    @overload
+    def at_span(self, span: tuple[int, int], predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def at_span(
+        self, span: tuple[int, int], predicate: Callable[[Match], Any] | None = ..., *, index: int
+    ) -> Match | None: ...
+    @overload
+    def at_span(self, span: tuple[int, int], predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def at_span(
         self,
         span: tuple[int, int],
@@ -506,6 +653,14 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
         return filter_index(merged, predicate, index)
 
+    @overload
+    def at_index(self, pos: int, predicate: int) -> Match | None: ...
+    @overload
+    def at_index(self, pos: int, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def at_index(self, pos: int, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def at_index(self, pos: int, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def at_index(
         self, pos: int, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
@@ -805,6 +960,14 @@ class Match:
             match = match.parent
         return match
 
+    @overload
+    def crop(self, crops: Any, predicate: int) -> Match | None: ...
+    @overload
+    def crop(self, crops: Any, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def crop(self, crops: Any, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def crop(self, crops: Any, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def crop(
         self,
         crops: Any,
@@ -846,6 +1009,14 @@ class Match:
                     current.end = start
         return filter_index(ret, predicate, index)
 
+    @overload
+    def split(self, seps: str, predicate: int) -> Match | None: ...
+    @overload
+    def split(self, seps: str, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
+    @overload
+    def split(self, seps: str, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    @overload
+    def split(self, seps: str, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
     def split(
         self,
         seps: str,

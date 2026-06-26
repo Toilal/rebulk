@@ -6,7 +6,7 @@ Abstract pattern class definition along with various implementations (regexp, st
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from . import debug
 from .formatters import default_formatter
@@ -25,25 +25,23 @@ class BasePattern(metaclass=ABCMeta):
     Base class for Pattern like objects
     """
 
+    # Computes all matches for a given input. When ``with_raw_matches`` is True, a
+    # ``(matches, raw_matches)`` tuple is returned, otherwise a plain list of matches.
+    @overload
     @abstractmethod
     def matches(
-        self,
-        input_string: str,
-        context: dict[str, Any] | None = None,
-        with_raw_matches: bool = False,
-    ) -> list[Match] | tuple[list[Match], list[Match]]:
-        """
-        Computes all matches for a given input
-
-        :param input_string: the string to parse
-        :type input_string: str
-        :param context: the context
-        :type context: dict
-        :param with_raw_matches: should return details
-        :type with_raw_matches: dict
-        :return: matches based on input_string for this pattern
-        :rtype: iterator[Match]
-        """
+        self, input_string: str, context: dict[str, Any] | None, with_raw_matches: Literal[True]
+    ) -> tuple[list[Match], list[Match]]: ...
+    @overload
+    @abstractmethod
+    def matches(
+        self, input_string: str, context: dict[str, Any] | None = ..., *, with_raw_matches: Literal[True]
+    ) -> tuple[list[Match], list[Match]]: ...
+    @overload
+    @abstractmethod
+    def matches(
+        self, input_string: str, context: dict[str, Any] | None = ..., with_raw_matches: Literal[False] = ...
+    ) -> list[Match]: ...
 
 
 class Pattern(BasePattern, metaclass=ABCMeta):
@@ -171,6 +169,18 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         """
         return self._log_level if self._log_level is not None else debug.LOG_LEVEL
 
+    @overload
+    def matches(
+        self, input_string: str, context: dict[str, Any] | None, with_raw_matches: Literal[True]
+    ) -> tuple[list[Match], list[Match]]: ...
+    @overload
+    def matches(
+        self, input_string: str, context: dict[str, Any] | None = ..., *, with_raw_matches: Literal[True]
+    ) -> tuple[list[Match], list[Match]]: ...
+    @overload
+    def matches(
+        self, input_string: str, context: dict[str, Any] | None = ..., with_raw_matches: Literal[False] = ...
+    ) -> list[Match]: ...
     def matches(
         self,
         input_string: str,

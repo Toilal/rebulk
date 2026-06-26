@@ -340,36 +340,38 @@ class TestMaches:
         assert selection[0].pattern.name == "1-str"
         assert selection[1].pattern.name == "1-re"
 
-        selection = matches.previous(matches.named("2-str", 0), lambda m: "str" in m.tags)
+        anchor = matches.named("2-str")[0]
+
+        selection = matches.previous(anchor, lambda m: "str" in m.tags)
         assert len(selection) == 1
         assert selection[0].pattern.name == "1-str"
 
-        selection = matches.next(matches.named("2-str", 0))
+        selection = matches.next(anchor)
         assert len(selection) == 2
         assert selection[0].pattern.name == "3-str"
         assert selection[1].pattern.name == "3-re"
 
-        selection = matches.next(matches.named("2-str", 0), index=0, predicate=lambda m: "re" in m.tags)
-        assert selection is not None
-        assert selection.pattern.name == "3-re"
+        single = matches.next(anchor, index=0, predicate=lambda m: "re" in m.tags)
+        assert single is not None
+        assert single.pattern.name == "3-re"
 
-        selection = matches.next(matches.named("2-str", index=0), lambda m: "re" in m.tags)
+        selection = matches.next(anchor, lambda m: "re" in m.tags)
         assert len(selection) == 1
         assert selection[0].pattern.name == "3-re"
 
         selection = matches.named("2-str", lambda m: "re" in m.tags)
         assert len(selection) == 0
 
-        selection = matches.named("2-re", lambda m: "re" in m.tags, 0)
-        assert selection is not None
-        assert selection.name == "2-re"
+        single = matches.named("2-re", lambda m: "re" in m.tags, 0)
+        assert single is not None
+        assert single.name == "2-re"
 
         selection = matches.named("2-re", lambda m: "re" in m.tags)
         assert len(selection) == 1
         assert selection[0].name == "2-re"
 
-        selection = matches.named("2-re", lambda m: "re" in m.tags, index=1000)
-        assert selection is None
+        single = matches.named("2-re", lambda m: "re" in m.tags, index=1000)
+        assert single is None
 
     def test_raw(self) -> None:
         input_string = "0123456789"
@@ -547,7 +549,7 @@ class TestMaches:
         input_string = "Test hole - with many separators + included"
         match = StringPattern("many").matches(input_string)
 
-        matches = Matches(match, input_string)  # type: ignore[arg-type]
+        matches = Matches(match, input_string)
         holes = matches.holes()
 
         assert len(holes) == 2

@@ -323,6 +323,8 @@ class TestMarkers:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
                 word_match = matches.named("word", 0)
+                if word_match is None:
+                    return None
                 marker = matches.markers.at_match(word_match, lambda marker: marker.name == "mark1", 0)
                 if not marker:
                     return word_match
@@ -354,6 +356,8 @@ class TestMarkers:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
                 word_match = matches.named("word", 0)
+                if word_match is None:
+                    return None
                 marker = matches.markers.at_match(word_match, lambda marker: marker.name in ["mark1", "mark2"])
                 if len(marker) < 2:
                     return word_match
@@ -386,6 +390,8 @@ class TestMarkers:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
                 word_match = matches.named("word", 0)
+                if word_match is None:
+                    return None
                 marker = matches.markers.at_index(word_match.start, lambda marker: marker.name == "mark1", 0)
                 if not marker:
                     return word_match

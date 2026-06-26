@@ -164,7 +164,7 @@ class TestDefaultRules:
         rules.execute_all_rules(matches, {})
 
         assert len(matches.named("tags")) == 1
-        assert matches.named("tags", index=0).tags == ["other", "new-tag"]
+        assert matches.named("tags")[0].tags == ["other", "new-tag"]
 
         rules = Rules(RuleAppendTags1)
 
@@ -172,7 +172,7 @@ class TestDefaultRules:
         rules.execute_all_rules(matches, {})
 
         assert len(matches.named("tags")) == 1
-        assert matches.named("tags", index=0).tags == ["other", "new-tag"]
+        assert matches.named("tags")[0].tags == ["other", "new-tag"]
 
     def test_remove_tags(self) -> None:
         rules = Rules(RuleRemoveTags0)
@@ -181,7 +181,7 @@ class TestDefaultRules:
         rules.execute_all_rules(matches, {})
 
         assert len(matches.named("tags")) == 1
-        assert matches.named("tags", index=0).tags == ["other"]
+        assert matches.named("tags")[0].tags == ["other"]
 
         rules = Rules(RuleRemoveTags1)
 
@@ -189,7 +189,7 @@ class TestDefaultRules:
         rules.execute_all_rules(matches, {})
 
         assert len(matches.named("tags")) == 1
-        assert matches.named("tags", index=0).tags == ["other"]
+        assert matches.named("tags")[0].tags == ["other"]
 
 
 def test_rule_module() -> None:
