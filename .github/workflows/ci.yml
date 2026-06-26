@@ -29,10 +29,10 @@ jobs:
           git config --global user.name "github-actions"
 
       - name: Sync dependencies
-        run: uv sync --group dev
+        run: uv sync --group test
 
       - name: Sync regex backend
-        run: uv sync --group dev --extra native
+        run: uv sync --group test --extra native
         if: ${{ matrix.regex == '1' }}
 
       - name: Tests
@@ -48,7 +48,7 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
-  lint:
+  pre-commit:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
@@ -61,32 +61,52 @@ jobs:
           python-version: "3.14"
           enable-cache: true
 
-      - name: Sync dependencies
-        run: uv sync --group dev
+      # Runs the whole .pre-commit-config.yaml (ruff, ruff-format, mypy) — the same
+      # hooks developers run locally, so CI and local stay in sync from one config.
+      - name: Run pre-commit
+        run: uvx pre-commit run --all-files --show-diff-on-failure
 
-      - name: Ruff lint
-        run: uv run ruff check rebulk
-
-      - name: Ruff format
-        run: uv run ruff format --check rebulk
-
-      - name: Mypy
-        run: uv run mypy
-
-  commitlint:
+  commit-messages:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      # commitizen (same [tool.commitizen] config as the local commit-msg hook).
+      - name: Check commit messages
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --quiet origin "${{ github.base_ref }}"
+            range="origin/${{ github.base_ref }}..HEAD"
+          else
+            before="${{ github.event.before }}"
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              range="HEAD~1..HEAD"
+            else
+              range="$before..${{ github.sha }}"
+            fi
+          fi
+          echo "Checking commit messages in range: $range"
+          uvx --from commitizen cz check --rev-range "$range"
 
   release:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-    needs: [ test, lint ]
+    needs: [ test, pre-commit ]
 
     runs-on: ubuntu-latest
+
+    # python-semantic-release pushes the version-bump commit + tag and creates the GitHub release.
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
