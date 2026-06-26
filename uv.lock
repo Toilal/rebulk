@@ -1116,7 +1116,7 @@ wheels = [
 
 [[package]]
 name = "rebulk"
-version = "3.2.0"
+version = "3.3.0"
 source = { editable = "." }
 
 [package.optional-dependencies]

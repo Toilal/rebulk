@@ -112,9 +112,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # python-semantic-release pushes the version-bump commit + tag and creates the GitHub release.
     permissions:
-      contents: write
+      contents: write   # semantic-release pushes the version commit + tag and creates the GitHub release
+      id-token: write   # PyPI trusted publishing (OIDC), no long-lived token needed
 
     steps:
       - name: Checkout
@@ -142,9 +142,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to PyPI
-        run: uv publish
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: uv publish --trusted-publishing always
 
       - name: Publish release
         run: uv run semantic-release publish
