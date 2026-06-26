@@ -36,7 +36,9 @@ jobs:
         if: ${{ matrix.regex == '1' }}
 
       - name: Tests
-        run: uv run coverage run -m pytest
+        # --no-sync: keep the env from the sync step above; a bare `uv run` would
+        # re-sync with the default dev group, pulling deps that don't build on PyPy.
+        run: uv run --no-sync coverage run -m pytest
         env:
           REBULK_REGEX_ENABLED: ${{ matrix.regex }}
 
