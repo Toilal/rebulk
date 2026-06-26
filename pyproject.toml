@@ -1,6 +1,6 @@
 [project]
 name = "rebulk"
-version = "4.0.0"
+version = "4.1.0"
 description = "Rebulk - Define simple search patterns in bulk to perform advanced matching on any string."
 readme = "README.md"
 requires-python = ">=3.10"
