@@ -251,11 +251,20 @@ class ChainPart(BasePattern):
     def _is_chain_start(self) -> bool:
         return self._chain.parts[0] == self
 
-    @overload  # type: ignore[override]
+    @overload
     def matches(
         self,
         input_string: str,
         context: dict[str, Any] | None,
+        with_raw_matches: Literal[True],
+    ) -> tuple[list[Match], list[Match]]: ...
+
+    @overload
+    def matches(
+        self,
+        input_string: str,
+        context: dict[str, Any] | None = ...,
+        *,
         with_raw_matches: Literal[True],
     ) -> tuple[list[Match], list[Match]]: ...
 

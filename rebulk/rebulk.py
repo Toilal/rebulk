@@ -9,7 +9,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Any, cast
 
 from .builder import Builder
-from .match import Match, Matches
+from .match import Matches
 from .processors import ConflictSolver, PrivateRemover
 from .rules import CustomRule, Rules
 from .utils import extend_safe
@@ -186,7 +186,7 @@ class Rebulk(Builder):
             patterns = self.effective_patterns(context)
             for pattern in patterns:
                 if not pattern.disabled(context):
-                    pattern_matches = cast("list[Match]", pattern.matches(cast("str", matches.input_string), context))
+                    pattern_matches = pattern.matches(cast("str", matches.input_string), context)
                     if pattern_matches:
                         log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
                     else:
