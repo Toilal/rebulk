@@ -1,15 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Entry point functions and classes for Rebulk
 """
+
+from __future__ import annotations
+
+from collections.abc import Callable
 from logging import getLogger
+from typing import TYPE_CHECKING, Any, cast
 
 from .builder import Builder
-from .match import Matches
+from .match import Match, Matches
+from .pattern import Pattern
 from .processors import ConflictSolver, PrivateRemover
-from .rules import Rules
+from .rules import CustomRule, Rules
 from .utils import extend_safe
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 log = getLogger(__name__).log
 
@@ -43,7 +51,11 @@ class Rebulk(Builder):
 
     # pylint:disable=protected-access
 
-    def __init__(self, disabled=lambda context: False, default_rules=True):
+    def __init__(
+        self,
+        disabled: bool | Callable[[dict[str, Any] | None], bool] = lambda context: False,
+        default_rules: bool = True,
+    ) -> None:
         """
         Creates a new Rebulk object.
         :param disabled: if True, this pattern is disabled. Can also be a function(context).
@@ -54,17 +66,18 @@ class Rebulk(Builder):
         :rtype:
         """
         super().__init__()
+        self.disabled: Callable[[dict[str, Any] | None], bool]
         if not callable(disabled):
             self.disabled = lambda context: disabled
         else:
             self.disabled = disabled
-        self._patterns = []
+        self._patterns: list[Pattern] = []
         self._rules = Rules()
         if default_rules:
             self.rules(ConflictSolver, PrivateRemover)
-        self._rebulks = []
+        self._rebulks: list[Rebulk] = []
 
-    def pattern(self, *pattern):
+    def pattern(self, *pattern: Pattern) -> Self:
         """
         Add patterns objects
 
@@ -76,7 +89,7 @@ class Rebulk(Builder):
         self._patterns.extend(pattern)
         return self
 
-    def rules(self, *rules):
+    def rules(self, *rules: CustomRule | type[CustomRule] | Any) -> Self:
         """
         Add rules as a module, class or instance.
         :param rules:
@@ -86,7 +99,7 @@ class Rebulk(Builder):
         self._rules.load(*rules)
         return self
 
-    def rebulk(self, *rebulks):
+    def rebulk(self, *rebulks: Rebulk) -> Self:
         """
         Add a children rebulk object
         :param rebulks:
@@ -96,7 +109,7 @@ class Rebulk(Builder):
         self._rebulks.extend(rebulks)
         return self
 
-    def matches(self, string, context=None):
+    def matches(self, string: str, context: dict[str, Any] | None = None) -> Matches:
         """
         Search for all matches with current configuration against input_string
         :param string: string to search into
@@ -116,7 +129,7 @@ class Rebulk(Builder):
 
         return matches
 
-    def effective_rules(self, context=None):
+    def effective_rules(self, context: dict[str, Any] | None = None) -> Rules:
         """
         Get effective rules for this rebulk object and its children.
         :param context:
@@ -131,7 +144,7 @@ class Rebulk(Builder):
                 extend_safe(rules, rebulk._rules)
         return rules
 
-    def _execute_rules(self, matches, context):
+    def _execute_rules(self, matches: Matches, context: dict[str, Any]) -> None:
         """
         Execute rules for this rebulk and children.
         :param matches:
@@ -145,7 +158,7 @@ class Rebulk(Builder):
             rules = self.effective_rules(context)
             rules.execute_all_rules(matches, context)
 
-    def effective_patterns(self, context=None):
+    def effective_patterns(self, context: dict[str, Any] | None = None) -> list[Pattern]:
         """
         Get effective patterns for this rebulk object and its children.
         :param context:
@@ -159,7 +172,7 @@ class Rebulk(Builder):
                 extend_safe(patterns, rebulk._patterns)
         return patterns
 
-    def _matches_patterns(self, matches, context):
+    def _matches_patterns(self, matches: Matches, context: dict[str, Any]) -> None:
         """
         Search for all matches with current paterns agains input_string
         :param matches: matches list
@@ -173,7 +186,7 @@ class Rebulk(Builder):
             patterns = self.effective_patterns(context)
             for pattern in patterns:
                 if not pattern.disabled(context):
-                    pattern_matches = pattern.matches(matches.input_string, context)
+                    pattern_matches = cast("list[Match]", pattern.matches(cast("str", matches.input_string), context))
                     if pattern_matches:
                         log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
                     else:

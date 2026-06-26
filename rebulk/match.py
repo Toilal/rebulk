@@ -1,53 +1,59 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Classes and functions related to matches
 """
+
+from __future__ import annotations
+
 import copy
 import itertools
-from collections import OrderedDict
-from collections import defaultdict
-from collections.abc import MutableSequence
+from collections import OrderedDict, defaultdict
+from collections.abc import Callable, Iterable, KeysView, MutableSequence
+from typing import TYPE_CHECKING, Any, overload
 
 from .debug import defined_at
 from .loose import ensure_list, filter_index
 from .utils import is_iterable
 
+if TYPE_CHECKING:
+    from .debug import Frame
 
-class MatchesDict(OrderedDict):
+
+class MatchesDict(OrderedDict):  # type: ignore[type-arg]
     """
     A custom dict with matches property.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.matches = defaultdict(list)
-        self.values_list = defaultdict(list)
+        self.matches: dict[str | None, list[Match]] = defaultdict(list)
+        self.values_list: dict[str | None, list[Any]] = defaultdict(list)
 
 
-class _BaseMatches(MutableSequence):
+class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
     """
     A custom list[Match] that automatically maintains name, tag, start and end lookup structures.
     """
+
     _base = list
     _base_add = _base.append
     _base_remove = _base.remove
     _base_extend = _base.extend
 
-    def __init__(self, matches=None, input_string=None):  # pylint: disable=super-init-not-called
+    def __init__(self, matches: Iterable[Match] | None = None, input_string: str | None = None) -> None:  # pylint: disable=super-init-not-called
         self.input_string = input_string
         self._max_end = 0
-        self._delegate = []
-        self.__name_dict = None
-        self.__tag_dict = None
-        self.__start_dict = None
-        self.__end_dict = None
-        self.__index_dict = None
+        self._delegate: list[Match] = []
+        self.__name_dict: dict[str | None, list[Match]] | None = None
+        self.__tag_dict: dict[str, list[Match]] | None = None
+        self.__start_dict: dict[int, list[Match]] | None = None
+        self.__end_dict: dict[int, list[Match]] | None = None
+        self.__index_dict: dict[int, list[Match]] | None = None
         if matches:
             self.extend(matches)
 
     @property
-    def _name_dict(self):
+    def _name_dict(self) -> dict[str | None, list[Match]]:
         if self.__name_dict is None:
             self.__name_dict = defaultdict(_BaseMatches._base)
             for name, values in itertools.groupby([m for m in self._delegate if m.name], lambda item: item.name):
@@ -56,7 +62,7 @@ class _BaseMatches(MutableSequence):
         return self.__name_dict
 
     @property
-    def _start_dict(self):
+    def _start_dict(self) -> dict[int, list[Match]]:
         if self.__start_dict is None:
             self.__start_dict = defaultdict(_BaseMatches._base)
             for start, values in itertools.groupby(list(self._delegate), lambda item: item.start):
@@ -65,7 +71,7 @@ class _BaseMatches(MutableSequence):
         return self.__start_dict
 
     @property
-    def _end_dict(self):
+    def _end_dict(self) -> dict[int, list[Match]]:
         if self.__end_dict is None:
             self.__end_dict = defaultdict(_BaseMatches._base)
             for start, values in itertools.groupby(list(self._delegate), lambda item: item.end):
@@ -74,7 +80,7 @@ class _BaseMatches(MutableSequence):
         return self.__end_dict
 
     @property
-    def _tag_dict(self):
+    def _tag_dict(self) -> dict[str, list[Match]]:
         if self.__tag_dict is None:
             self.__tag_dict = defaultdict(_BaseMatches._base)
             for match in self._delegate:
@@ -84,7 +90,7 @@ class _BaseMatches(MutableSequence):
         return self.__tag_dict
 
     @property
-    def _index_dict(self):
+    def _index_dict(self) -> dict[int, list[Match]]:
         if self.__index_dict is None:
             self.__index_dict = defaultdict(_BaseMatches._base)
             for match in self._delegate:
@@ -93,7 +99,7 @@ class _BaseMatches(MutableSequence):
 
         return self.__index_dict
 
-    def _add_match(self, match):
+    def _add_match(self, match: Match) -> None:
         """
         Add a match
         :param match:
@@ -112,10 +118,9 @@ class _BaseMatches(MutableSequence):
         if self.__index_dict is not None:
             for index in range(*match.span):
                 _BaseMatches._base_add(self._index_dict[index], match)
-        if match.end > self._max_end:
-            self._max_end = match.end
+        self._max_end = max(self._max_end, match.end)
 
-    def _remove_match(self, match):
+    def _remove_match(self, match: Match) -> None:
         """
         Remove a match
         :param match:
@@ -137,7 +142,7 @@ class _BaseMatches(MutableSequence):
         if match.end >= self._max_end and not self._end_dict[match.end]:
             self._max_end = max(self._end_dict.keys())
 
-    def previous(self, match, predicate=None, index=None):
+    def previous(self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves the nearest previous matches.
         :param match:
@@ -157,7 +162,7 @@ class _BaseMatches(MutableSequence):
             current -= 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
-    def next(self, match, predicate=None, index=None):
+    def next(self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves the nearest next matches.
         :param match:
@@ -177,7 +182,7 @@ class _BaseMatches(MutableSequence):
             current += 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
-    def named(self, name, predicate=None, index=None):
+    def named(self, name: str, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that have the given name.
         :param name:
@@ -191,7 +196,7 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(_BaseMatches._base(self._name_dict[name]), predicate, index)
 
-    def tagged(self, tag, predicate=None, index=None):
+    def tagged(self, tag: str, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that have the given tag defined.
         :param tag:
@@ -205,7 +210,7 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(_BaseMatches._base(self._tag_dict[tag]), predicate, index)
 
-    def starting(self, start, predicate=None, index=None):
+    def starting(self, start: int, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that starts at given index.
         :param start: the starting index
@@ -219,7 +224,7 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(_BaseMatches._base(self._start_dict[start]), predicate, index)
 
-    def ending(self, end, predicate=None, index=None):
+    def ending(self, end: int, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that ends at given index.
         :param end: the ending index
@@ -231,7 +236,13 @@ class _BaseMatches(MutableSequence):
         """
         return filter_index(_BaseMatches._base(self._end_dict[end]), predicate, index)
 
-    def range(self, start=0, end=None, predicate=None, index=None):
+    def range(
+        self,
+        start: int = 0,
+        end: int | None = None,
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         Retrieves a set of Match objects that are available in given range, sorted from start to end.
         :param start: the starting index
@@ -255,7 +266,14 @@ class _BaseMatches(MutableSequence):
                 ret.append(match)
         return filter_index(ret, predicate, index)
 
-    def chain_before(self, position, seps, start=0, predicate=None, index=None):
+    def chain_before(
+        self,
+        position: int | Match,
+        seps: str,
+        start: int = 0,
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         Retrieves a list of chained matches, before position, matching predicate and separated by characters from seps
         only.
@@ -272,7 +290,7 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
-        if hasattr(position, 'start'):
+        if hasattr(position, "start"):
             position = position.start
 
         chain = _BaseMatches._base()
@@ -285,12 +303,19 @@ class _BaseMatches(MutableSequence):
                 for chain_match in filtered_matches:
                     if chain_match not in chain:
                         chain.append(chain_match)
-            elif self.input_string[i] not in seps:
+            elif self.input_string[i] not in seps:  # type: ignore[index]
                 break
 
         return filter_index(chain, predicate, index)
 
-    def chain_after(self, position, seps, end=None, predicate=None, index=None):
+    def chain_after(
+        self,
+        position: int | Match,
+        seps: str,
+        end: int | None = None,
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         Retrieves a list of chained matches, after position, matching predicate and separated by characters from seps
         only.
@@ -307,7 +332,7 @@ class _BaseMatches(MutableSequence):
         :return:
         :rtype:
         """
-        if hasattr(position, 'end'):
+        if hasattr(position, "end"):
             position = position.end
         chain = _BaseMatches._base()
 
@@ -323,20 +348,20 @@ class _BaseMatches(MutableSequence):
                 for chain_match in filtered_matches:
                     if chain_match not in chain:
                         chain.append(chain_match)
-            elif self.input_string[i] not in seps:
+            elif self.input_string[i] not in seps:  # type: ignore[index]
                 break
 
         return filter_index(chain, predicate, index)
 
     @property
-    def max_end(self):
+    def max_end(self) -> int:
         """
         Retrieves the maximum index.
         :return:
         """
         return max(len(self.input_string), self._max_end) if self.input_string else self._max_end
 
-    def _hole_start(self, position, ignore=None):
+    def _hole_start(self, position: int, ignore: Callable[[Match], Any] | None = None) -> int:
         """
         Retrieves the start of hole index from position.
         :param position:
@@ -352,7 +377,7 @@ class _BaseMatches(MutableSequence):
                     return lindex
         return 0
 
-    def _hole_end(self, position, ignore=None):
+    def _hole_end(self, position: int, ignore: Callable[[Match], Any] | None = None) -> int:
         """
         Retrieves the end of hole index from position.
         :param position:
@@ -368,8 +393,16 @@ class _BaseMatches(MutableSequence):
                     return rindex
         return self.max_end
 
-    def holes(self, start=0, end=None, formatter=None, ignore=None, seps=None, predicate=None,
-              index=None):  # pylint: disable=too-many-branches,too-many-locals
+    def holes(  # pylint: disable=too-many-branches,too-many-locals
+        self,
+        start: int = 0,
+        end: int | None = None,
+        formatter: Any = None,
+        ignore: Callable[[Match], Any] | None = None,
+        seps: str | None = None,
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         Retrieves a set of Match objects that are not defined in given range.
         :param start:
@@ -394,7 +427,7 @@ class _BaseMatches(MutableSequence):
             end = self.max_end
         else:
             end = min(self.max_end, end)
-        ret = _BaseMatches._base()
+        ret: list[Match] = _BaseMatches._base()
         hole = False
         rindex = start
 
@@ -413,7 +446,9 @@ class _BaseMatches(MutableSequence):
                 if not current and not hole:
                     # Open a new hole match
                     hole = True
-                    ret.append(Match(max(rindex, start), None, input_string=self.input_string, formatter=formatter))
+                    ret.append(
+                        Match(max(rindex, start), None, input_string=self.input_string, formatter=formatter)  # type: ignore[arg-type]
+                    )
                 elif current and hole:
                     # Close current hole match
                     hole = False
@@ -424,7 +459,9 @@ class _BaseMatches(MutableSequence):
             ret[-1].end = min(self._hole_end(rindex, ignore), end)
         return filter_index(ret, predicate, index)
 
-    def conflicting(self, match, predicate=None, index=None):
+    def conflicting(
+        self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None
+    ) -> Any:
         """
         Retrieves a list of ``Match`` objects that conflicts with given match.
         :param match:
@@ -447,13 +484,18 @@ class _BaseMatches(MutableSequence):
 
         return filter_index(ret, predicate, index)
 
-    def at_match(self, match, predicate=None, index=None):
+    def at_match(self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves a list of matches from given match.
         """
         return self.at_span(match.span, predicate, index)
 
-    def at_span(self, span, predicate=None, index=None):
+    def at_span(
+        self,
+        span: tuple[int, int],
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         Retrieves a list of matches from given (start, end) tuple.
         """
@@ -467,14 +509,14 @@ class _BaseMatches(MutableSequence):
 
         return filter_index(merged, predicate, index)
 
-    def at_index(self, pos, predicate=None, index=None):
+    def at_index(self, pos: int, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
         """
         Retrieves a list of matches from given position
         """
         return filter_index(self._index_dict[pos], predicate, index)
 
     @property
-    def names(self):
+    def names(self) -> KeysView[str | None]:
         """
         Retrieve all names.
         :return:
@@ -482,14 +524,14 @@ class _BaseMatches(MutableSequence):
         return self._name_dict.keys()
 
     @property
-    def tags(self):
+    def tags(self) -> KeysView[str]:
         """
         Retrieve all tags.
         :return:
         """
         return self._tag_dict.keys()
 
-    def to_dict(self, details=False, first_value=False, enforce_list=False):
+    def to_dict(self, details: bool = False, first_value: bool = False, enforce_list: bool = False) -> MatchesDict:
         """
         Converts matches to a dict object.
         :param details if True, values will be complete Match object, else it will be only string Match.value property
@@ -526,24 +568,36 @@ class _BaseMatches(MutableSequence):
                     ret[match.name] = value
         return ret
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._delegate)
 
-    def __getitem__(self, index):
+    @overload
+    def __getitem__(self, index: int) -> Match: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Matches: ...
+
+    def __getitem__(self, index: int | slice) -> Match | Matches:
         ret = self._delegate[index]
         if isinstance(ret, list):
             return Matches(ret)
         return ret
 
-    def __setitem__(self, index, match):
-        self._delegate[index] = match
+    @overload
+    def __setitem__(self, index: int, match: Match) -> None: ...
+
+    @overload
+    def __setitem__(self, index: slice, match: Iterable[Match]) -> None: ...
+
+    def __setitem__(self, index: int | slice, match: Match | Iterable[Match]) -> None:
+        self._delegate[index] = match  # type: ignore[index,assignment]
         if isinstance(index, slice):
-            for match_item in match:
+            for match_item in match:  # type: ignore[union-attr]
                 self._add_match(match_item)
             return
-        self._add_match(match)
+        self._add_match(match)  # type: ignore[arg-type]
 
-    def __delitem__(self, index):
+    def __delitem__(self, index: int | slice) -> None:
         match = self._delegate[index]
         del self._delegate[index]
         if isinstance(match, list):
@@ -553,10 +607,10 @@ class _BaseMatches(MutableSequence):
         else:
             self._remove_match(match)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._delegate.__repr__()
 
-    def insert(self, index, value):
+    def insert(self, index: int, value: Match) -> None:
         self._delegate.insert(index, value)
         self._add_match(value)
 
@@ -566,11 +620,11 @@ class Matches(_BaseMatches):
     A custom list[Match] contains matches list.
     """
 
-    def __init__(self, matches=None, input_string=None):
+    def __init__(self, matches: Iterable[Match] | None = None, input_string: str | None = None) -> None:
         self.markers = Markers(input_string=input_string)
         super().__init__(matches=matches, input_string=input_string)
 
-    def _add_match(self, match):
+    def _add_match(self, match: Match) -> None:
         assert not match.marker, "A marker match should not be added to <Matches> object"
         super()._add_match(match)
 
@@ -580,10 +634,10 @@ class Markers(_BaseMatches):
     A custom list[Match] containing markers list.
     """
 
-    def __init__(self, matches=None, input_string=None):
+    def __init__(self, matches: Iterable[Match] | None = None, input_string: str | None = None) -> None:
         super().__init__(matches=None, input_string=input_string)
 
-    def _add_match(self, match):
+    def _add_match(self, match: Match) -> None:
         assert match.marker, "A non-marker match should not be added to <Markers> object"
         super()._add_match(match)
 
@@ -593,14 +647,28 @@ class Match:
     Object storing values related to a single match
     """
 
-    def __init__(self, start, end, value=None, name=None, tags=None, marker=None, parent=None, private=None,
-                 pattern=None, input_string=None, formatter=None, conflict_solver=None, **kwargs):
+    def __init__(
+        self,
+        start: int,
+        end: int,
+        value: Any = None,
+        name: str | None = None,
+        tags: list[str] | None = None,
+        marker: bool | None = None,
+        parent: Match | None = None,
+        private: bool | None = None,
+        pattern: Any = None,
+        input_string: str | None = None,
+        formatter: Any = None,
+        conflict_solver: Any = None,
+        **kwargs: Any,
+    ) -> None:
         # pylint: disable=unused-argument
         self.start = start
         self.end = end
         self.name = name
         self._value = value
-        self.tags = ensure_list(tags)
+        self.tags: list[str] = ensure_list(tags)
         self.marker = marker
         self.parent = parent
         self.input_string = input_string
@@ -608,20 +676,20 @@ class Match:
         self.pattern = pattern
         self.private = private
         self.conflict_solver = conflict_solver
-        self._children = None
-        self._raw_start = None
-        self._raw_end = None
-        self.defined_at = pattern.defined_at if pattern else defined_at()
+        self._children: Matches | None = None
+        self._raw_start: int | None = None
+        self._raw_end: int | None = None
+        self.defined_at: Frame | None = pattern.defined_at if pattern else defined_at()
 
     @property
-    def span(self):
+    def span(self) -> tuple[int, int]:
         """
         2-tuple with start and end indices of the match
         """
         return self.start, self.end
 
     @property
-    def children(self):
+    def children(self) -> Matches:
         """
         Children matches.
         """
@@ -630,11 +698,11 @@ class Match:
         return self._children
 
     @children.setter
-    def children(self, value):
+    def children(self, value: Matches) -> None:
         self._children = value
 
     @property
-    def value(self):
+    def value(self) -> Any:
         """
         Get the value of the match, using formatter if defined.
         :return:
@@ -647,7 +715,7 @@ class Match:
         return self.raw
 
     @value.setter
-    def value(self, value):
+    def value(self, value: Any) -> None:
         """
         Set the value (hardcode)
         :param value:
@@ -658,7 +726,7 @@ class Match:
         self._value = value  # pylint: disable=attribute-defined-outside-init
 
     @property
-    def names(self):
+    def names(self) -> set[str | None]:
         """
         Get all names of children
         :return:
@@ -666,14 +734,14 @@ class Match:
         """
         if not self.children:
             return set([self.name])
-        ret = set()
+        ret: set[str | None] = set()
         for child in self.children:
             for name in child.names:
                 ret.add(name)
         return ret
 
     @property
-    def raw_start(self):
+    def raw_start(self) -> int:
         """
         start index of raw value
         :return:
@@ -684,7 +752,7 @@ class Match:
         return self._raw_start
 
     @raw_start.setter
-    def raw_start(self, value):
+    def raw_start(self, value: int) -> None:
         """
         Set start index of raw value
         :return:
@@ -693,7 +761,7 @@ class Match:
         self._raw_start = value
 
     @property
-    def raw_end(self):
+    def raw_end(self) -> int:
         """
         end index of raw value
         :return:
@@ -704,7 +772,7 @@ class Match:
         return self._raw_end
 
     @raw_end.setter
-    def raw_end(self, value):
+    def raw_end(self, value: int) -> None:
         """
         Set end index of raw value
         :return:
@@ -713,18 +781,18 @@ class Match:
         self._raw_end = value
 
     @property
-    def raw(self):
+    def raw(self) -> str | None:
         """
         Get the raw value of the match, without using hardcoded value nor formatter.
         :return:
         :rtype:
         """
         if self.input_string:
-            return self.input_string[self.raw_start:self.raw_end]
+            return self.input_string[self.raw_start : self.raw_end]
         return None
 
     @property
-    def initiator(self):
+    def initiator(self) -> Match:
         """
         Retrieve the initiator parent of a match
         :param match:
@@ -737,7 +805,12 @@ class Match:
             match = match.parent
         return match
 
-    def crop(self, crops, predicate=None, index=None):
+    def crop(
+        self,
+        crops: Any,
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         crop the match with given Match objects or spans tuples
         :param crops:
@@ -750,7 +823,7 @@ class Match:
         initial = copy.deepcopy(self)
         ret = [initial]
         for crop in crops:
-            if hasattr(crop, 'span'):
+            if hasattr(crop, "span"):
                 start, end = crop.span
             else:
                 start, end = crop
@@ -773,7 +846,12 @@ class Match:
                     current.end = start
         return filter_index(ret, predicate, index)
 
-    def split(self, seps, predicate=None, index=None):
+    def split(
+        self,
+        seps: str,
+        predicate: Callable[[Match], Any] | None = None,
+        index: int | None = None,
+    ) -> Any:
         """
         Split this match in multiple matches using given separators.
         :param seps:
@@ -781,11 +859,11 @@ class Match:
         :return: list of new Match objects
         :rtype: list
         """
-        split_match = copy.deepcopy(self)
-        current_match = split_match
-        ret = []
+        current_match: Match = copy.deepcopy(self)
+        split_match: Match | None = current_match
+        ret: list[Match] = []
 
-        for i, char in enumerate(self.raw):
+        for i, char in enumerate(self.raw):  # type: ignore[arg-type]
             if char in seps:
                 if not split_match:
                     split_match = copy.deepcopy(current_match)
@@ -800,7 +878,7 @@ class Match:
 
         return filter_index(ret, predicate, index)
 
-    def tagged(self, *tags):
+    def tagged(self, *tags: str) -> bool:
         """
         Check if this match has at least one of the provided tags
 
@@ -809,7 +887,7 @@ class Match:
         """
         return any(tag in self.tags for tag in tags)
 
-    def named(self, *names):
+    def named(self, *names: str) -> bool:
         """
         Check if one of the children match has one of the provided name
 
@@ -818,45 +896,53 @@ class Match:
         """
         return any(name in self.names for name in names)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.end - self.start
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(Match) + hash(self.start) + hash(self.end) + hash(self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Match):
-            return self.span == other.span and self.value == other.value and self.name == other.name and \
-                   self.parent == other.parent
+            return (
+                self.span == other.span
+                and self.value == other.value
+                and self.name == other.name
+                and self.parent == other.parent
+            )
         return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         if isinstance(other, Match):
-            return self.span != other.span or self.value != other.value or self.name != other.name or \
-                   self.parent != other.parent
+            return (
+                self.span != other.span
+                or self.value != other.value
+                or self.name != other.name
+                or self.parent != other.parent
+            )
         return NotImplemented
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         if isinstance(other, Match):
             return self.span < other.span
         return NotImplemented
 
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> bool:
         if isinstance(other, Match):
             return self.span > other.span
         return NotImplemented
 
-    def __le__(self, other):
+    def __le__(self, other: object) -> bool:
         if isinstance(other, Match):
             return self.span <= other.span
         return NotImplemented
 
-    def __ge__(self, other):
+    def __ge__(self, other: object) -> bool:
         if isinstance(other, Match):
             return self.span >= other.span
         return NotImplemented
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         flags = ""
         name = ""
         tags = ""
@@ -865,7 +951,7 @@ class Match:
         if self.initiator.value != self.value:
             initiator = f"+initiator={self.initiator.value}"
         if self.private:
-            flags += '+private'
+            flags += "+private"
         if self.name:
             name = f"+name={self.name}"
         if self.tags:

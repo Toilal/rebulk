@@ -1,7 +1,74 @@
+[project]
+name = "rebulk"
+version = "3.2.0"
+description = "Rebulk - Define simple search patterns in bulk to perform advanced matching on any string."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rémi Alvergnat", email = "toilal.dev@gmail.com" }]
+keywords = ["re", "regexp", "regular expression", "search", "pattern", "string", "match"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Toilal/rebulk/"
+
+[project.optional-dependencies]
+# `regex` backend, enabled at runtime via REBULK_REGEX_ENABLED=1 (see rebulk/remodule.py)
+native = ["regex"]
+
+[dependency-groups]
+# Dev tooling only — the distributed package itself has no dependencies.
+dev = [
+    "pytest",
+    "coverage",
+    "ruff",
+    "mypy",
+    "python-semantic-release",
+    "tox",
+    "tox-uv",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# Flat layout: the `rebulk` package lives at the project root, not under src/.
+module-name = "rebulk"
+module-root = ""
+
 [tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
 version_variables = ["rebulk/__version__.py:__version__"]
+build_command = "uv build"
 commit_message = "chore(release): release v{version}"
 commit_author = "github-actions <actions@github.com>"
 
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["rebulk"]
+strict = true
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
-addopts = "--ignore=setup.py --ignore=build --doctest-modules --doctest-glob='README.rst'"
+addopts = "--ignore=build --doctest-modules"

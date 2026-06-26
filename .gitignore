@@ -17,6 +17,9 @@ build/
 # Tox
 .tox/
 
+# uv
+.venv/
+
 # py.test
 lastfailed
 
