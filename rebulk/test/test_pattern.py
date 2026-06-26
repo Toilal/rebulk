@@ -833,7 +833,7 @@ class TestValidator:
         def invalid_func(match: Match) -> bool:
             if match.name == "intParam":
                 return True
-            return match.value.startswith("abc")  # type: ignore[no-any-return]
+            return bool(match.value.startswith("abc"))
 
         pattern = RePattern(
             r"contains (?P<intParam>\d+)", formatter=int, validator=invalid_func, validate_all=True, children=True
@@ -845,7 +845,7 @@ class TestValidator:
         def func(match: Match) -> bool:
             if match.name == "intParam":
                 return True
-            return match.value.startswith("contains")  # type: ignore[no-any-return]
+            return bool(match.value.startswith("contains"))
 
         pattern = RePattern(
             r"contains (?P<intParam>\d+)", formatter=int, validator=func, validate_all=True, children=True

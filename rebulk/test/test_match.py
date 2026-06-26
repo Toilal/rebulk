@@ -340,16 +340,16 @@ class TestMaches:
         assert selection[0].pattern.name == "1-str"
         assert selection[1].pattern.name == "1-re"
 
-        selection = matches.previous(matches.named("2-str", 0), lambda m: "str" in m.tags)  # type: ignore[arg-type]
+        selection = matches.previous(matches.named("2-str", 0), lambda m: "str" in m.tags)
         assert len(selection) == 1
         assert selection[0].pattern.name == "1-str"
 
-        selection = matches.next(matches.named("2-str", 0))  # type: ignore[arg-type]
+        selection = matches.next(matches.named("2-str", 0))
         assert len(selection) == 2
         assert selection[0].pattern.name == "3-str"
         assert selection[1].pattern.name == "3-re"
 
-        selection = matches.next(matches.named("2-str", 0), index=0, predicate=lambda m: "re" in m.tags)  # type: ignore[arg-type]
+        selection = matches.next(matches.named("2-str", 0), index=0, predicate=lambda m: "re" in m.tags)
         assert selection is not None
         assert selection.pattern.name == "3-re"
 
@@ -385,8 +385,8 @@ class TestMaches:
         assert match.value == match.raw * 2
         assert match.raw == input_string[1:9]
 
-        match.raw_end = None  # type: ignore[assignment]
-        match.raw_start = None  # type: ignore[assignment]
+        match.raw_end = None
+        match.raw_start = None
 
         assert match.value == match.raw * 2
         assert match.raw == input_string

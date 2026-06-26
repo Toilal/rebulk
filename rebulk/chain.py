@@ -216,7 +216,7 @@ class Chain(Pattern, Builder):
     @staticmethod
     def _group_by_match_index(matches: Iterable[Match]) -> dict[int, list[Match]]:
         grouped_matches_dict: dict[int, list[Match]] = {}
-        for match_index, match in itertools.groupby(matches, lambda m: m.match_index):  # type: ignore[attr-defined]
+        for match_index, match in itertools.groupby(matches, lambda m: m.match_index):
             grouped_matches_dict[match_index] = list(match)
         return grouped_matches_dict
 
@@ -302,13 +302,13 @@ class ChainPart(BasePattern):
             j += 1
         truncated = matches[:j]
         if self.repeater_end is not None:
-            truncated = [m for m in truncated if m.match_index < self.repeater_end]  # type: ignore[attr-defined]
+            truncated = [m for m in truncated if m.match_index < self.repeater_end]
         return truncated
 
     def _validate_repeater(self, matches: list[Match]) -> None:
         max_match_index = -1
         if matches:
-            max_match_index = max(m.match_index for m in matches)  # type: ignore[attr-defined]
+            max_match_index = max(m.match_index for m in matches)
         if max_match_index + 1 < self.repeater_start:
             raise _InvalidChainException
 
