@@ -77,19 +77,13 @@ def test_various_pattern() -> None:
     assert len(introspected.patterns) == 8
     assert len(introspected.rules) == 2
 
-    # NOTE: these assertions were previously dead (missing `assert`), so they never ran.
-    # Enabling them surfaced that the introspector does NOT reflect a `value=` passed to the
-    # pattern constructor (it is not stored in `match_options`), so `first`/`func` yield [None]
-    # and `second` yields the raw literals instead of the expected ["string"]/["test"]/["digit"].
-    # The expected values below lock in the *current* behavior; this divergence likely indicates
-    # an introspector bug to be triaged separately.
     first_properties = introspected.patterns[0].properties
     assert len(first_properties) == 1
-    assert first_properties["first"] == [None]
+    assert first_properties["first"] == ["string"]
 
     second_properties = introspected.patterns[1].properties
     assert len(second_properties) == 1
-    assert second_properties["second"] == ["1", "2", "3"]
+    assert second_properties["second"] == ["digit"]
 
     third_properties = introspected.patterns[2].properties
     assert len(third_properties) == 1
@@ -97,7 +91,7 @@ def test_various_pattern() -> None:
 
     func_properties = introspected.patterns[3].properties
     assert len(func_properties) == 1
-    assert func_properties["func"] == [None]
+    assert func_properties["func"] == ["test"]
 
     regex_name_properties = introspected.patterns[4].properties
     assert len(regex_name_properties) == 1

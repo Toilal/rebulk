@@ -44,21 +44,31 @@ class PatternDescription(Description):
         if pattern.properties:
             for key, values in pattern.properties.items():
                 extend_safe(self._properties[key], values)
-        elif "value" in pattern.match_options:
-            self._properties[cast(str, pattern.name)].append(pattern.match_options["value"])
-        elif isinstance(pattern, StringPattern):
-            extend_safe(self._properties[cast(str, pattern.name)], pattern.patterns)
-        elif isinstance(pattern, RePattern):
-            if pattern.name and pattern.name not in pattern.private_names:
-                extend_safe(self._properties[pattern.name], [None])
-            if not pattern.private_children:
-                for regex_pattern in pattern.patterns:
-                    for group_name in regex_pattern.groupindex:
-                        if group_name not in pattern.private_names:
-                            extend_safe(self._properties[group_name], [None])
-        elif isinstance(pattern, FunctionalPattern):
-            if pattern.name and pattern.name not in pattern.private_names:
-                extend_safe(self._properties[pattern.name], [None])
+        else:
+            # A `value=` given to the pattern is stored in `pattern.values` (keyed by match
+            # name, or `None` for the default), not in `match_options`. When set, it is the
+            # introspected property value.
+            pattern_values = {
+                (value_name if value_name else pattern.name): value
+                for value_name, value in pattern.values.items()
+                if value is not None
+            }
+            if pattern_values:
+                for value_key, value in pattern_values.items():
+                    extend_safe(self._properties[cast(str, value_key)], [value])
+            elif isinstance(pattern, StringPattern):
+                extend_safe(self._properties[cast(str, pattern.name)], pattern.patterns)
+            elif isinstance(pattern, RePattern):
+                if pattern.name and pattern.name not in pattern.private_names:
+                    extend_safe(self._properties[pattern.name], [None])
+                if not pattern.private_children:
+                    for regex_pattern in pattern.patterns:
+                        for group_name in regex_pattern.groupindex:
+                            if group_name not in pattern.private_names:
+                                extend_safe(self._properties[group_name], [None])
+            elif isinstance(pattern, FunctionalPattern):
+                if pattern.name and pattern.name not in pattern.private_names:
+                    extend_safe(self._properties[pattern.name], [None])
 
     @property
     def properties(self) -> dict[str, list[Any]]:
