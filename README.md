@@ -571,7 +571,8 @@ keys are simply omitted):
 ```
 
 `to` also accepts a primitive type (returns the first value) or a `list[...]`
-type (returns the values of all matches):
+of a scalar type (returns the values of all matches). A `list` of a dataclass
+or `TypedDict` is rejected, as a flat match sequence has no record grouping.
 
 ```python
 >>> Rebulk().regex(r'\d{4}', key=year).matches("born 1984").to(int)

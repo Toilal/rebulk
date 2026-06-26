@@ -96,6 +96,14 @@ def test_to_list() -> None:
     assert values == [1, 2, 3]
 
 
+def test_to_list_of_structured_rejected() -> None:
+    matches = Rebulk().regex(r"\d{4}", key=Key("year", int)).matches("1984 2008")
+    with pytest.raises(TypeError, match="no record grouping"):
+        matches.to(list[Movie])
+    with pytest.raises(TypeError, match="no record grouping"):
+        matches.to(list[MovieDict])
+
+
 def test_to_primitive_empty_raises() -> None:
     year = Key("year", int)
     matches = Rebulk().regex(r"\d{4}", key=year).matches("no digits")

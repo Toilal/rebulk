@@ -10,7 +10,7 @@ import dataclasses
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, get_type_hints, is_typeddict, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, get_args, get_origin, get_type_hints, is_typeddict, overload
 
 from .debug import defined_at
 from .key import Key
@@ -765,7 +765,10 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
           order), any other field takes the first value. A field with no value
           is left to its default (dataclass, or raises if required) or omitted
           (``TypedDict``).
-        * a ``list[...]`` type — returns the values of all matches.
+        * a ``list[...]`` type of a *scalar* item — returns the values of all
+          matches. ``list`` of a ``dataclass`` / ``TypedDict`` is rejected:
+          matches are a flat sequence with no record grouping to build several
+          structured items from.
         * any other type (e.g. ``int``, ``str``, ``float``) — returns the value
           of the first match, and raises ``LookupError`` if there is none.
 
@@ -774,6 +777,13 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         ``formatter=``); ``to`` does not coerce them.
         """
         if get_origin(model) is list:
+            (item_type,) = get_args(model) or (object,)
+            if dataclasses.is_dataclass(item_type) or is_typeddict(item_type):
+                name = getattr(item_type, "__name__", item_type)
+                raise TypeError(
+                    f"list[{name}] is not supported: matches have no record grouping to build "
+                    "several structured items; use list of a scalar type, or a single dataclass/TypedDict"
+                )
             return cast("M", [match.value for match in self])
         if dataclasses.is_dataclass(model):
             hints = get_type_hints(model)
