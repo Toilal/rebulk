@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# pylint: disable=pointless-statement, missing-docstring, invalid-name, len-as-condition
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any

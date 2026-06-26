@@ -72,13 +72,13 @@ def validators(*chained_validators: Callable[[Match], bool]) -> Callable[[Match]
     :rtype:
     """
 
-    def validator_chain(match: Match) -> bool:  # pylint:disable=missing-docstring
+    def validator_chain(match: Match) -> bool:
         return all(chained_validator(match) for chained_validator in chained_validators)
 
     return validator_chain
 
 
-def allways_true(match: Match) -> bool:  # pylint:disable=unused-argument
+def allways_true(match: Match) -> bool:
     """
     A validator which is allways true
     :param match:

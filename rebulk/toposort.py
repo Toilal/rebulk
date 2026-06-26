@@ -14,7 +14,6 @@
 #   - import reduce as original name
 #   - support python 2.6 dict comprehension
 
-# pylint: skip-file
 from __future__ import annotations
 
 from functools import reduce

@@ -34,7 +34,7 @@ class Chain(Pattern, Builder):
         parent: Any,
         chain_breaker: Callable[[Matches], bool] | None = None,
         **kwargs: Any,
-    ) -> None:  # pylint: disable=super-init-not-called
+    ) -> None:
         Builder.__init__(self)
         call(Pattern.__init__, self, **kwargs)
         self._kwargs = kwargs
@@ -77,7 +77,6 @@ class Chain(Pattern, Builder):
         input_string: str,
         context: dict[str, Any] | None = None,
     ) -> Iterator[Match]:
-        # pylint: disable=too-many-locals,too-many-nested-blocks
         chain_matches: list[Match] = []
         chain_input_string = input_string
         offset = 0
@@ -155,7 +154,6 @@ class Chain(Pattern, Builder):
         :return:
         :rtype:
         """
-        # pylint: disable=too-many-locals
         ret = super()._process_match(match, match_index, child=child)
         if ret:
             return True

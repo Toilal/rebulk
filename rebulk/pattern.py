@@ -2,7 +2,6 @@
 """
 Abstract pattern class definition along with various implementations (regexp, string, functional)
 """
-# pylint: disable=super-init-not-called,wrong-import-position
 
 from __future__ import annotations
 
@@ -124,7 +123,6 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         :param post_match_processor: Post match processing function
         :type post_match_processor: func
         """
-        # pylint:disable=too-many-locals,unused-argument
         self.name = name
         self.tags: list[str] = ensure_list(tags)
         self.formatters, self._default_formatter = ensure_dict(formatter, default_formatter)
@@ -191,7 +189,6 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         :return: matches based on input_string for this pattern
         :rtype: iterator[Match]
         """
-        # pylint: disable=too-many-branches
 
         matches: list[Match] = []
         raw_matches: list[Match] = []

@@ -22,7 +22,7 @@ def formatters(*chained_formatters: Callable[[Any], Any]) -> Callable[[Any], Any
     :rtype:
     """
 
-    def formatters_chain(input_string: Any) -> Any:  # pylint:disable=missing-docstring
+    def formatters_chain(input_string: Any) -> Any:
         for chained_formatter in chained_formatters:
             input_string = chained_formatter(input_string)
         return input_string

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# pylint: disable=pointless-statement, missing-docstring, unneeded-not, len-as-condition
 
 from __future__ import annotations
 
@@ -363,7 +362,7 @@ class TestMaches:
 
         selection = matches.named("2-re", lambda m: "re" in m.tags, 0)
         assert selection is not None
-        assert selection.name == "2-re"  # pylint:disable=no-member
+        assert selection.name == "2-re"
 
         selection = matches.named("2-re", lambda m: "re" in m.tags)
         assert len(selection) == 1

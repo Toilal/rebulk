@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# pylint: disable=pointless-statement, missing-docstring, unbalanced-tuple-unpacking, len-as-condition, no-member
 
 from __future__ import annotations
 

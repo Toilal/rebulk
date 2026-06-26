@@ -52,7 +52,6 @@ def find_all(
     :return: all indices in the input string
     :rtype: __generator[str]
     """
-    # pylint: disable=unused-argument
     if ignore_case:
         sub = sub.lower()
         string = string.lower()
@@ -98,7 +97,6 @@ def is_iterable(obj: Any) -> bool:
     We don't need to check for the Python 2 `unicode` type, because it doesn't
     have an `__iter__` attribute anyway.
     """
-    # pylint: disable=consider-using-ternary
     return (hasattr(obj, "__iter__") and not isinstance(obj, str)) or isinstance(obj, GeneratorType)
 
 
@@ -135,7 +133,7 @@ class IdentitySet(MutableSet[Any]):  # pragma: no cover
     Set based on identity
     """
 
-    def __init__(self, items: Iterable[Any] | None = None) -> None:  # pylint: disable=super-init-not-called
+    def __init__(self, items: Iterable[Any] | None = None) -> None:
         if items is None:
             items = []
         self.refs = set(map(_Ref, items))

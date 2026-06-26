@@ -66,7 +66,7 @@ def function_args(callable_: Any, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    argspec = getargspec(callable_)  # pylint:disable=deprecated-method
+    argspec = getargspec(callable_)
     return argspec_args(argspec, False, *args, **kwargs)
 
 
@@ -83,7 +83,7 @@ def constructor_args(class_: Any, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    argspec = getargspec(_constructor(class_))  # pylint:disable=deprecated-method
+    argspec = getargspec(_constructor(class_))
     return argspec_args(argspec, True, *args, **kwargs)
 
 

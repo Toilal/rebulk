@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# pylint: disable=pointless-statement, missing-docstring, protected-access, invalid-name, len-as-condition
 
 from .. import debug
 from ..match import Match
@@ -67,8 +66,8 @@ class TestDebug:
 
         assert str(self.rebulk._patterns[1].defined_at).startswith("test_debug.py#L")
 
-        assert self.matches[0].defined_at == self.rebulk._patterns[0].defined_at  # pylint: disable=no-member
-        assert self.matches[1].defined_at == self.rebulk._patterns[1].defined_at  # pylint: disable=no-member
+        assert self.matches[0].defined_at == self.rebulk._patterns[0].defined_at
+        assert self.matches[1].defined_at == self.rebulk._patterns[1].defined_at
 
     def test_repr(self) -> None:
         str(self.matches)

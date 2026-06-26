@@ -40,7 +40,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
     _base_remove = _base.remove
     _base_extend = _base.extend
 
-    def __init__(self, matches: Iterable[Match] | None = None, input_string: str | None = None) -> None:  # pylint: disable=super-init-not-called
+    def __init__(self, matches: Iterable[Match] | None = None, input_string: str | None = None) -> None:
         self.input_string = input_string
         self._max_end = 0
         self._delegate: list[Match] = []
@@ -385,7 +385,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
                     return rindex
         return self.max_end
 
-    def holes(  # pylint: disable=too-many-branches,too-many-locals
+    def holes(
         self,
         start: int = 0,
         end: int | None = None,
@@ -652,7 +652,6 @@ class Match:
         conflict_solver: Any = None,
         **kwargs: Any,
     ) -> None:
-        # pylint: disable=unused-argument
         self.start = start
         self.end = end
         self.name = name
@@ -712,7 +711,7 @@ class Match:
         :return:
         :rtype:
         """
-        self._value = value  # pylint: disable=attribute-defined-outside-init
+        self._value = value
 
     @property
     def names(self) -> set[str | None]:
