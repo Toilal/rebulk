@@ -83,7 +83,7 @@ jobs:
       - uses: wagoid/commitlint-github-action@v6
 
   release:
-    if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     needs: [ test, lint ]
 
     runs-on: ubuntu-latest
@@ -123,10 +123,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Merge master to develop
+      - name: Merge main to develop
         uses: robotology/gh-action-nightly-merge@v1.5.2
         with:
-          stable_branch: 'master'
+          stable_branch: 'main'
           development_branch: 'develop'
           allow_ff: true
           user_name: github-actions
