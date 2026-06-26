@@ -6,14 +6,16 @@ Chain patterns and handle repetiting capture group
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable, Iterable, Iterator
-from typing import Any, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from .builder import Builder
 from .loose import call
 from .match import Match, Matches
 from .pattern import BasePattern, Pattern, filter_match_kwargs
 from .remodule import re
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator
 
 
 class _InvalidChainException(Exception):
@@ -295,7 +297,7 @@ class ChainPart(BasePattern):
                 return []
 
         j = 1
-        for i in range(0, len(matches) - 1):
+        for i in range(len(matches) - 1):
             separator = input_string[matches[i].initiator.raw_end : matches[i + 1].initiator.raw_start]
             if separator:
                 break

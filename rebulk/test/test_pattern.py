@@ -25,7 +25,7 @@ class TestStringPattern:
     def test_single(self) -> None:
         pattern = StringPattern("Celtic")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -40,38 +40,38 @@ class TestStringPattern:
     def test_ignore_case(self) -> None:
         pattern = StringPattern("celtic", ignore_case=False)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         pattern = StringPattern("celtic", ignore_case=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert matches[0].value == "Celtic"
 
     def test_private_names(self) -> None:
         pattern = StringPattern("celtic", name="test", private_names=["test"], ignore_case=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert matches[0].private
 
     def test_ignore_names(self) -> None:
         pattern = StringPattern("celtic", name="test", ignore_names=["test"], ignore_case=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
     def test_no_match(self) -> None:
         pattern = StringPattern("Python")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert not matches
 
     def test_multiple_patterns(self) -> None:
         pattern = StringPattern("playing", "annoyed", "Hebrew")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
 
         assert isinstance(matches[0], Match)
@@ -91,13 +91,13 @@ class TestStringPattern:
 
     def test_start_end_kwargs(self) -> None:
         pattern = StringPattern("Abyssinian", start=20, end=40)
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 0
 
     def test_matches_kwargs(self) -> None:
         pattern = StringPattern("Abyssinian", name="test", value="AB")
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 1
         assert matches[0].name == "test"
@@ -111,7 +111,7 @@ class TestStringPattern:
             return []
 
         pattern = StringPattern("Abyssinian", name="test", value="AB", post_processor=post_processor)
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 0
 
@@ -128,7 +128,7 @@ class TestRePattern:
     def test_single_compiled(self) -> None:
         pattern = RePattern(re.compile("Celt.?c"))
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -138,7 +138,7 @@ class TestRePattern:
     def test_single_string(self) -> None:
         pattern = RePattern("Celt.?c")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -148,7 +148,7 @@ class TestRePattern:
     def test_single_kwargs(self) -> None:
         pattern = RePattern({"pattern": "celt.?c", "flags": re.IGNORECASE})
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -158,7 +158,7 @@ class TestRePattern:
     def test_single_vargs(self) -> None:
         pattern = RePattern(("celt.?c", re.IGNORECASE))
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -168,24 +168,24 @@ class TestRePattern:
     def test_no_match(self) -> None:
         pattern = RePattern("abc.?def")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
     def test_shortcuts(self) -> None:
         pattern = RePattern("Celtic-violin", abbreviations=[("-", r"[\W_]+")])
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         pattern = RePattern({"pattern": "celtic-violin", "flags": re.IGNORECASE}, abbreviations=[("-", r"[\W_]+")])
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
     def test_multiple_patterns(self) -> None:
         pattern = RePattern("pla.?ing", "ann.?yed", "Heb.?ew")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
 
         assert isinstance(matches[0], Match)
@@ -206,7 +206,7 @@ class TestRePattern:
     def test_unnamed_groups(self) -> None:
         pattern = RePattern(r"(Celt.?c)\s+(\w+)")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         parent = matches[0]
@@ -238,7 +238,7 @@ class TestRePattern:
     def test_named_groups(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         parent = matches[0]
@@ -269,7 +269,7 @@ class TestRePattern:
     def test_children(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", children=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 2
         group1, group2 = matches
 
@@ -288,7 +288,7 @@ class TestRePattern:
     def test_children_parent_private(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", children=True, private_parent=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
         parent, group1, group2 = matches
 
@@ -316,7 +316,7 @@ class TestRePattern:
     def test_parent_children_private(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", private_children=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
         parent, group1, group2 = matches
 
@@ -344,7 +344,7 @@ class TestRePattern:
     def test_every(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", every=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
         parent, group1, group2 = matches
 
@@ -372,7 +372,7 @@ class TestRePattern:
     def test_private_names(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", private_names=["param2"], children=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 2
         assert matches[0].name == "param1"
         assert not matches[0].private
@@ -382,20 +382,20 @@ class TestRePattern:
     def test_ignore_names(self) -> None:
         pattern = RePattern(r"(?P<param1>Celt.?c)\s+(?P<param2>\w+)", ignore_names=["param2"], children=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert matches[0].name == "param1"
 
     def test_matches_kwargs(self) -> None:
         pattern = RePattern("He.rew", name="test", value="HE")
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 1
         assert matches[0].name == "test"
         assert matches[0].value == "HE"
 
         pattern = RePattern("H(e.)(rew)", name="test", value="HE")
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 1
         assert matches[0].name == "test"
@@ -410,7 +410,7 @@ class TestRePattern:
         assert children[1].value == "HE"
 
         pattern = RePattern("H(?P<first>e.)(?P<second>rew)", name="test", value="HE")
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 1
         assert matches[0].name == "test"
@@ -439,10 +439,11 @@ class TestFunctionalPattern:
             i = input_string.find("fly")
             if i > -1:
                 return i, i + len("fly"), "fly", "functional"
+            return None
 
         pattern = FunctionalPattern(func)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -455,10 +456,11 @@ class TestFunctionalPattern:
             i = input_string.find("fly")
             if i > -1:
                 return {"start": i, "end": i + len("fly"), "name": "functional"}
+            return None
 
         pattern = FunctionalPattern(func)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -482,7 +484,7 @@ class TestFunctionalPattern:
 
         pattern = FunctionalPattern(func)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -514,7 +516,7 @@ class TestFunctionalPattern:
 
         pattern = FunctionalPattern(func)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -535,7 +537,7 @@ class TestFunctionalPattern:
     def test_no_match(self) -> None:
         pattern = FunctionalPattern(lambda x: None)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
     def test_multiple_patterns(self) -> None:
@@ -543,20 +545,23 @@ class TestFunctionalPattern:
             i = input_string.find("playing")
             if i > -1:
                 return i, i + len("playing")
+            return None
 
         def annoyed(input_string: str) -> Any:
             i = input_string.find("annoyed")
             if i > -1:
                 return i, i + len("annoyed")
+            return None
 
         def hebrew(input_string: str) -> Any:
             i = input_string.find("Hebrew")
             if i > -1:
                 return i, i + len("Hebrew")
+            return None
 
         pattern = FunctionalPattern(playing, annoyed, hebrew)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 3
 
         assert isinstance(matches[0], Match)
@@ -579,9 +584,10 @@ class TestFunctionalPattern:
             i = input_string.find("playing")
             if i > -1:
                 return i, i + len("playing")
+            return None
 
         pattern = FunctionalPattern(playing, name="test", value="PLAY")
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
 
         assert len(matches) == 1
         assert matches[0].name == "test"
@@ -598,7 +604,7 @@ class TestValue:
     def test_str_value(self) -> None:
         pattern = StringPattern("1849", name="dummy", value="test")
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -613,7 +619,7 @@ class TestValue:
             value={"intParam": "INT_PARAM_VALUE"},
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         parent = matches[0]
@@ -639,7 +645,7 @@ class TestValue:
             value={"__children__": "CHILD", "strParam": "STR_VALUE", "__parent__": "PARENT"},
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         parent = matches[0]
@@ -669,7 +675,7 @@ class TestFormatter:
     def test_single_string(self) -> None:
         pattern = StringPattern("1849", name="dummy", formatter=lambda x: int(x) / 2)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -679,7 +685,7 @@ class TestFormatter:
     def test_single_re_no_group(self) -> None:
         pattern = RePattern(r"\d+", formatter=lambda x: int(x) * 2)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -693,7 +699,7 @@ class TestFormatter:
             format_all=True,
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         parent = matches[0]
@@ -714,7 +720,7 @@ class TestFormatter:
     def test_repeated_captures_option(self) -> None:
         pattern = RePattern(r"\[(\d+)\](?:-(\d+))*")
 
-        matches = cast(list[Match], list(pattern.matches("[02]-03-04-05-06")))
+        matches = cast("list[Match]", list(pattern.matches("[02]-03-04-05-06")))
         assert len(matches) == 1
 
         match = matches[0]
@@ -730,7 +736,7 @@ class TestFormatter:
 
         pattern = RePattern(r"\[(\d+)\](?:-(\d+))*", repeated_captures=False)
 
-        matches = cast(list[Match], list(pattern.matches("[02]-03-04-05-06")))
+        matches = cast("list[Match]", list(pattern.matches("[02]-03-04-05-06")))
         assert len(matches) == 1
 
         match = matches[0]
@@ -742,10 +748,11 @@ class TestFormatter:
             i = input_string.find("1849")
             if i > -1:
                 return i, i + len("1849")
+            return None
 
         pattern = FunctionalPattern(digit, formatter=lambda x: int(x) * 3)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         assert isinstance(matches[0], Match)
         assert matches[0].pattern == pattern
@@ -771,23 +778,23 @@ class TestValidator:
     def test_single_string(self) -> None:
         pattern = StringPattern("1849", name="dummy", validator=self.false_validator)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         pattern = StringPattern("1849", validator=self.true_validator)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
     def test_single_re_no_group(self) -> None:
         pattern = RePattern(r"\d+", validator=self.false_validator)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         pattern = RePattern(r"\d+", validator=self.true_validator)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
     def test_single_re_named_groups(self) -> None:
@@ -797,7 +804,7 @@ class TestValidator:
             validate_all=True,
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         pattern = RePattern(
@@ -806,7 +813,7 @@ class TestValidator:
             validate_all=True,
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
     def test_validate_all(self) -> None:
@@ -814,14 +821,14 @@ class TestValidator:
             r"contains (?P<intParam>\d+)", formatter=int, validator=lambda match: match.value < 100, children=True
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         pattern = RePattern(
             r"contains (?P<intParam>\d+)", formatter=int, validator=lambda match: match.value > 100, children=True
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
         def invalid_func(match: Match) -> bool:
@@ -833,7 +840,7 @@ class TestValidator:
             r"contains (?P<intParam>\d+)", formatter=int, validator=invalid_func, validate_all=True, children=True
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         def func(match: Match) -> bool:
@@ -845,20 +852,20 @@ class TestValidator:
             r"contains (?P<intParam>\d+)", formatter=int, validator=func, validate_all=True, children=True
         )
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
 
     def test_format_all(self) -> None:
         pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, children=True)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1
         for match in matches:
             assert match.value is not None
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011, PT012
             pattern = RePattern(r"contains (?P<intParam>\d+)", formatter=int, format_all=True)
-            matches = cast(list[Match], list(pattern.matches(self.input_string)))
+            matches = cast("list[Match]", list(pattern.matches(self.input_string)))
             for match in matches:
                 assert match.value is not None
 
@@ -867,13 +874,14 @@ class TestValidator:
             i = input_string.find("1849")
             if i > -1:
                 return i, i + len("1849")
+            return None
 
         pattern = FunctionalPattern(digit, validator=self.false_validator)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 0
 
         pattern = FunctionalPattern(digit, validator=self.true_validator)
 
-        matches = cast(list[Match], list(pattern.matches(self.input_string)))
+        matches = cast("list[Match]", list(pattern.matches(self.input_string)))
         assert len(matches) == 1

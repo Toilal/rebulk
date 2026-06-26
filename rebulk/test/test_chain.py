@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import re
 from functools import partial
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rebulk.pattern import FunctionalPattern, RePattern, StringPattern
 
 from ..chain import Chain
-from ..match import Match, Matches
 from ..rebulk import Rebulk
 from ..validators import chars_surround
+
+if TYPE_CHECKING:
+    from ..match import Match, Matches
 
 
 def test_chain_close() -> None:
@@ -426,10 +428,7 @@ def test_matches_7() -> None:
 def test_chain_breaker() -> None:
     def chain_breaker(matches: Matches) -> bool:
         seasons = matches.named("season")
-        if len(seasons) > 1:
-            if seasons[-1].value - seasons[-2].value > 10:
-                return True
-        return False
+        return bool(len(seasons) > 1 and seasons[-1].value - seasons[-2].value > 10)
 
     seps_surround = partial(chars_surround, " .-/")
     rebulk = Rebulk()
@@ -451,10 +450,7 @@ def test_chain_breaker() -> None:
 def test_chain_breaker_defaults() -> None:
     def chain_breaker(matches: Matches) -> bool:
         seasons = matches.named("season")
-        if len(seasons) > 1:
-            if seasons[-1].value - seasons[-2].value > 10:
-                return True
-        return False
+        return bool(len(seasons) > 1 and seasons[-1].value - seasons[-2].value > 10)
 
     seps_surround = partial(chars_surround, " .-/")
     rebulk = Rebulk()
@@ -476,10 +472,7 @@ def test_chain_breaker_defaults() -> None:
 def test_chain_breaker_defaults2() -> None:
     def chain_breaker(matches: Matches) -> bool:
         seasons = matches.named("season")
-        if len(seasons) > 1:
-            if seasons[-1].value - seasons[-2].value > 10:
-                return True
-        return False
+        return bool(len(seasons) > 1 and seasons[-1].value - seasons[-2].value > 10)
 
     seps_surround = partial(chars_surround, " .-/")
     rebulk = Rebulk()

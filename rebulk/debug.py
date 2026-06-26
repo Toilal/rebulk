@@ -17,8 +17,10 @@ import inspect
 import logging
 import os
 from collections import namedtuple
-from types import FrameType
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from types import FrameType
 
 DEBUG: bool = False
 LOG_LEVEL: int = logging.DEBUG
@@ -51,7 +53,7 @@ def defined_at() -> Frame | None:
                 # If package is missing, consider we are in. Workaround for python 3.3.
                 break
             frame = frame.f_back
-        frame = cast(FrameType, frame)
+        frame = cast("FrameType", frame)
         ret = Frame(
             frame.f_lineno,
             frame.f_globals.get("__package__"),

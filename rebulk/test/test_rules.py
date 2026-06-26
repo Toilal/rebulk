@@ -46,7 +46,7 @@ def test_rules_duplicates() -> None:
 
     rules = Rules(Rule1, Rule1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         rules.execute_all_rules(matches, {})
 
 

@@ -99,7 +99,7 @@ def is_iterable(obj: Any) -> bool:
     have an `__iter__` attribute anyway.
     """
     # pylint: disable=consider-using-ternary
-    return hasattr(obj, "__iter__") and not isinstance(obj, str) or isinstance(obj, GeneratorType)
+    return (hasattr(obj, "__iter__") and not isinstance(obj, str)) or isinstance(obj, GeneratorType)
 
 
 def extend_safe(target: list[_T], source: Iterable[_T]) -> None:

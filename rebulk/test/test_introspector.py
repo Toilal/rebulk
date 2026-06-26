@@ -6,10 +6,14 @@ Introspector tests
 # pylint: disable=pointless-statement,missing-docstring,protected-access,invalid-name,len-as-condition
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .. import introspector
-from ..introspector import Introspection
 from ..rebulk import Rebulk
 from .default_rules_module import RuleAppend2, RuleAppend3
+
+if TYPE_CHECKING:
+    from ..introspector import Introspection
 
 
 def test_string_introspector() -> None:

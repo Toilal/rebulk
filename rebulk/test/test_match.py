@@ -25,7 +25,7 @@ class TestMatchClass:
         parent.children.append(Match(0, 10, name="child1", parent=parent))
         parent.children.append(Match(0, 10, name="child2", parent=parent))
 
-        assert set(parent.names) == set(["child1", "child2"])
+        assert set(parent.names) == {"child1", "child2"}
 
     def test_equality(self) -> None:
         match1 = Match(1, 3, value="es")
@@ -37,7 +37,7 @@ class TestMatchClass:
         assert hash(match1) != hash(other)
 
         assert match1 == match2
-        assert not match1 == other
+        assert match1 != other
 
     def test_inequality(self) -> None:
         match1 = Match(0, 2, value="te")
@@ -311,7 +311,7 @@ class TestMaches:
         matches.extend(StringPattern("Three", name="3-str", tags=["Three", "str"]).matches(input_string))
         matches.extend(RePattern("Three", name="3-re", tags=["Three", "re"]).matches(input_string))
 
-        assert set(matches.names) == set(["1-str", "1-re", "2-str", "2-re", "3-str", "3-re"])
+        assert set(matches.names) == {"1-str", "1-re", "2-str", "2-re", "3-str", "3-re"}
 
     def test_filters(self) -> None:
         input_string = "One Two Three"
