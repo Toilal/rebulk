@@ -6,10 +6,11 @@ Classes and functions related to matches
 from __future__ import annotations
 
 import copy
+import dataclasses
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, TypeVar, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, get_type_hints, overload
 
 from .debug import defined_at
 from .key import Key
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from .debug import Frame
 
 T = TypeVar("T")
+M = TypeVar("M")
 
 
 class MatchesDict(OrderedDict):  # type: ignore[type-arg]
@@ -751,6 +753,31 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         Retrieve all values for the given typed key, in match order.
         """
         return [match.value for match in self._name_dict[key.name]]
+
+    def to(self, model: type[M]) -> M:
+        """
+        Build a typed dataclass instance from named matches.
+
+        Each dataclass field is populated from matches sharing its name: a
+        ``list[...]`` field collects all values (in match order), any other
+        field takes the first value. Fields with no matching value fall back to
+        their default (or raise, if the field is required). The result is typed
+        end to end via ``def to(self, model: type[M]) -> M``.
+
+        Values are used as produced by each pattern's formatter (see ``key=`` /
+        ``formatter=``); ``to`` does not coerce them.
+        """
+        if not dataclasses.is_dataclass(model):
+            raise TypeError(f"{model!r} is not a dataclass")
+        hints = get_type_hints(model)
+        kwargs: dict[str, Any] = {}
+        for data_field in dataclasses.fields(model):
+            values = [match.value for match in self._name_dict[data_field.name]]
+            if get_origin(hints.get(data_field.name)) is list:
+                kwargs[data_field.name] = values
+            elif values:
+                kwargs[data_field.name] = values[0]
+        return cast("M", model(**kwargs))
 
     @overload
     def __setitem__(self, index: int, match: Match) -> None: ...
