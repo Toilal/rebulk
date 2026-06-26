@@ -554,6 +554,22 @@ Movie(year=2008, title='Big Buck Bunny', tags=['HD', 'BluRay'])
 
 ```
 
+`Matches.to` also accepts a `TypedDict`, returning a typed dict (unmatched
+keys are simply omitted):
+
+```python
+>>> from typing import TypedDict
+>>> class MovieDict(TypedDict):
+...     year: int
+...     title: str
+...     tags: list[str]
+>>> Rebulk().regex(r'\d{4}', key=year).string('Big Buck Bunny', key=title) \
+...        .string('HD', key=tag).string('BluRay', key=tag) \
+...        .matches("Big Buck Bunny 2008 HD BluRay").to(MovieDict)
+{'year': 2008, 'title': 'Big Buck Bunny', 'tags': ['HD', 'BluRay']}
+
+```
+
 Markers
 =======
 

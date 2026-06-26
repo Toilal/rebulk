@@ -10,7 +10,7 @@ import dataclasses
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, get_type_hints, overload
+from typing import TYPE_CHECKING, Any, TypeVar, get_origin, get_type_hints, is_typeddict, overload
 
 from .debug import defined_at
 from .key import Key
@@ -756,28 +756,33 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
     def to(self, model: type[M]) -> M:
         """
-        Build a typed dataclass instance from named matches.
+        Build a typed ``dataclass`` or ``TypedDict`` instance from named matches.
 
-        Each dataclass field is populated from matches sharing its name: a
-        ``list[...]`` field collects all values (in match order), any other
-        field takes the first value. Fields with no matching value fall back to
-        their default (or raise, if the field is required). The result is typed
-        end to end via ``def to(self, model: type[M]) -> M``.
+        Each field is populated from matches sharing its name: a ``list[...]``
+        field collects all values (in match order), any other field takes the
+        first value. A field with no matching value is left to its default
+        (dataclass) or simply omitted (``TypedDict``); a required dataclass
+        field with no value and no default raises. The result is typed end to
+        end via ``def to(self, model: type[M]) -> M``.
 
         Values are used as produced by each pattern's formatter (see ``key=`` /
         ``formatter=``); ``to`` does not coerce them.
         """
-        if not dataclasses.is_dataclass(model):
-            raise TypeError(f"{model!r} is not a dataclass")
         hints = get_type_hints(model)
+        if dataclasses.is_dataclass(model):
+            field_names: Iterable[str] = [data_field.name for data_field in dataclasses.fields(model)]
+        elif is_typeddict(model):
+            field_names = hints
+        else:
+            raise TypeError(f"{model!r} is not a dataclass or TypedDict")
         kwargs: dict[str, Any] = {}
-        for data_field in dataclasses.fields(model):
-            values = [match.value for match in self._name_dict[data_field.name]]
-            if get_origin(hints.get(data_field.name)) is list:
-                kwargs[data_field.name] = values
+        for name in field_names:
+            values = [match.value for match in self._name_dict[name]]
+            if get_origin(hints.get(name)) is list:
+                kwargs[name] = values
             elif values:
-                kwargs[data_field.name] = values[0]
-        return cast("M", model(**kwargs))
+                kwargs[name] = values[0]
+        return model(**kwargs)
 
     @overload
     def __setitem__(self, index: int, match: Match) -> None: ...
