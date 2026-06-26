@@ -39,6 +39,7 @@ test = [
 ]
 dev = [
     {include-group = "test"},
+    "pre-commit",
     "ruff",
     "mypy",
     "commitizen",

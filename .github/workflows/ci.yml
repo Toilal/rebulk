@@ -63,10 +63,13 @@ jobs:
           python-version: "3.14"
           enable-cache: true
 
+      - name: Sync dependencies
+        run: uv sync --group dev
+
       # Runs the whole .pre-commit-config.yaml (ruff, ruff-format, mypy) — the same
       # hooks developers run locally, so CI and local stay in sync from one config.
       - name: Run pre-commit
-        run: uvx pre-commit run --all-files --show-diff-on-failure
+        run: uv run pre-commit run --all-files --show-diff-on-failure
 
   commit-messages:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
@@ -83,7 +86,10 @@ jobs:
           python-version: "3.14"
           enable-cache: true
 
-      # commitizen (same [tool.commitizen] config as the local commit-msg hook).
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      # commitizen (same [tool.commitizen] config + pinned version as the local commit-msg hook).
       - name: Check commit messages
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -98,7 +104,7 @@ jobs:
             fi
           fi
           echo "Checking commit messages in range: $range"
-          uvx --from commitizen cz check --rev-range "$range"
+          uv run cz check --rev-range "$range"
 
   release:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
