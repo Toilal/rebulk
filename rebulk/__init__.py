@@ -3,6 +3,7 @@
 Define simple search patterns in bulk to perform advanced matching on any string.
 """
 
+from .key import Key
 from .processors import POST_PROCESS, PRE_PROCESS, ConflictSolver, PrivateRemover
 from .rebulk import Rebulk
 from .remodule import REGEX_ENABLED
@@ -16,6 +17,7 @@ __all__ = [
     "AppendTags",
     "ConflictSolver",
     "CustomRule",
+    "Key",
     "PrivateRemover",
     "Rebulk",
     "RemoveMatch",

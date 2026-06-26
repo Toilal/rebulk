@@ -6,17 +6,22 @@ Classes and functions related to matches
 from __future__ import annotations
 
 import copy
+import dataclasses
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, get_args, get_origin, get_type_hints, is_typeddict, overload
 
 from .debug import defined_at
+from .key import Key
 from .loose import ensure_list, filter_index
 from .utils import is_iterable
 
 if TYPE_CHECKING:
     from .debug import Frame
+
+T = TypeVar("T")
+M = TypeVar("M")
 
 
 class MatchesDict(OrderedDict):  # type: ignore[type-arg]
@@ -731,11 +736,75 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
     @overload
     def __getitem__(self, index: slice) -> Matches: ...
 
-    def __getitem__(self, index: int | slice) -> Match | Matches:
+    @overload
+    def __getitem__(self, index: Key[T]) -> T | None: ...
+
+    def __getitem__(self, index: int | slice | Key[Any]) -> Any:
+        if isinstance(index, Key):
+            named = self._name_dict[index.name]
+            return named[0].value if named else None
         ret = self._delegate[index]
         if isinstance(ret, list):
             return Matches(ret)
         return ret
+
+    def all(self, key: Key[T]) -> list[T]:
+        """
+        Retrieve all values for the given typed key, in match order.
+        """
+        return [match.value for match in self._name_dict[key.name]]
+
+    def to(self, model: type[M]) -> M:
+        """
+        Project named matches onto a typed model.
+
+        ``model`` may be:
+
+        * a ``dataclass`` or ``TypedDict`` — each field is filled from matches
+          sharing its name: a ``list[...]`` field collects all values (in match
+          order), any other field takes the first value. A field with no value
+          is left to its default (dataclass, or raises if required) or omitted
+          (``TypedDict``).
+        * a ``list[...]`` type of a *scalar* item — returns the values of all
+          matches. ``list`` of a ``dataclass`` / ``TypedDict`` is rejected:
+          matches are a flat sequence with no record grouping to build several
+          structured items from.
+        * any other type (e.g. ``int``, ``str``, ``float``) — returns the value
+          of the first match, and raises ``LookupError`` if there is none.
+
+        The result is typed end to end via ``def to(self, model: type[M]) -> M``.
+        Values are used as produced by each pattern's formatter (see ``key=`` /
+        ``formatter=``); ``to`` does not coerce them.
+        """
+        if get_origin(model) is list:
+            (item_type,) = get_args(model) or (object,)
+            if dataclasses.is_dataclass(item_type) or is_typeddict(item_type):
+                name = getattr(item_type, "__name__", item_type)
+                raise TypeError(
+                    f"list[{name}] is not supported: matches have no record grouping to build "
+                    "several structured items; use list of a scalar type, or a single dataclass/TypedDict"
+                )
+            return cast("M", [match.value for match in self])
+        if dataclasses.is_dataclass(model):
+            hints = get_type_hints(model)
+            field_names: Iterable[str] = [data_field.name for data_field in dataclasses.fields(model)]
+        elif is_typeddict(model):
+            hints = get_type_hints(model)
+            field_names = hints
+        elif isinstance(model, type):
+            if not self._delegate:
+                raise LookupError(f"no match available to build a {model.__name__}")
+            return cast("M", self[0].value)
+        else:
+            raise TypeError(f"{model!r} is not a dataclass, TypedDict, primitive or list type")
+        kwargs: dict[str, Any] = {}
+        for name in field_names:
+            values = [match.value for match in self._name_dict[name]]
+            if get_origin(hints.get(name)) is list:
+                kwargs[name] = values
+            elif values:
+                kwargs[name] = values[0]
+        return model(**kwargs)
 
     @overload
     def __setitem__(self, index: int, match: Match) -> None: ...

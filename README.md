@@ -509,6 +509,80 @@ It has the following additional methods and properties on it.
     A custom `Matches` sequences specialized for `markers` matches (see
     below)
 
+Typed retrieval
+===============
+
+By default `Match.value` is dynamically typed (`Any`). For type-safe access,
+declare a `Key` that binds a match name to its value type, and pass it to a
+builder method with `key=`. The value type is used as the formatter, and
+reading the value back through `Matches` is fully typed: `matches[key]`
+returns `T | None`, and `matches.all(key)` returns `list[T]`.
+
+```python
+>>> from rebulk import Rebulk, Key
+>>> year = Key("year", int)
+>>> title = Key("title", str)
+>>> matches = Rebulk().regex(r'\d{4}', key=year).string('Big Buck Bunny', key=title) \
+...                   .matches("Big Buck Bunny 2008")
+>>> matches[year]
+2008
+>>> matches.all(year)
+[2008]
+>>> matches[title]
+'Big Buck Bunny'
+
+```
+
+You can also project the matches onto a typed dataclass with `to`. Each field
+is filled from matches sharing its name: a `list[...]` field collects all
+values, any other field takes the first, and unmatched fields fall back to
+their default.
+
+```python
+>>> from dataclasses import dataclass, field
+>>> @dataclass
+... class Movie:
+...     year: int
+...     title: str
+...     tags: list[str] = field(default_factory=list)
+>>> tag = Key("tags", str)
+>>> matches = Rebulk().regex(r'\d{4}', key=year).string('Big Buck Bunny', key=title) \
+...                   .string('HD', key=tag).string('BluRay', key=tag) \
+...                   .matches("Big Buck Bunny 2008 HD BluRay")
+>>> matches.to(Movie)
+Movie(year=2008, title='Big Buck Bunny', tags=['HD', 'BluRay'])
+
+```
+
+`Matches.to` also accepts a `TypedDict`, returning a typed dict (unmatched
+keys are simply omitted):
+
+```python
+>>> from typing import TypedDict
+>>> class MovieDict(TypedDict):
+...     year: int
+...     title: str
+...     tags: list[str]
+>>> Rebulk().regex(r'\d{4}', key=year).string('Big Buck Bunny', key=title) \
+...        .string('HD', key=tag).string('BluRay', key=tag) \
+...        .matches("Big Buck Bunny 2008 HD BluRay").to(MovieDict)
+{'year': 2008, 'title': 'Big Buck Bunny', 'tags': ['HD', 'BluRay']}
+
+```
+
+`to` also accepts a primitive type (returns the first value) or a `list[...]`
+of a scalar type (returns the values of all matches). A `list` of a dataclass
+or `TypedDict` is rejected, as a flat match sequence has no record grouping.
+
+```python
+>>> Rebulk().regex(r'\d{4}', key=year).matches("born 1984").to(int)
+1984
+>>> digit = Key("digit", int)
+>>> Rebulk().regex(r'\d', key=digit).matches("1 2 3").to(list[int])
+[1, 2, 3]
+
+```
+
 Markers
 =======
 

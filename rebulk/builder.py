@@ -20,8 +20,20 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .chain import Chain
+    from .key import Key
 
 log = getLogger(__name__).log
+
+
+def _apply_key(key: Key[Any] | None, kwargs: dict[str, Any]) -> dict[str, Any]:
+    """
+    Inject a typed :class:`~rebulk.key.Key`'s name and value type (used as
+    formatter) into pattern kwargs, without overriding explicit values.
+    """
+    if key is not None:
+        kwargs.setdefault("name", key.name)
+        kwargs.setdefault("formatter", key.value_type)
+    return kwargs
 
 
 @contextmanager
@@ -202,38 +214,41 @@ class Builder(metaclass=ABCMeta):
         :return:
         """
 
-    def regex(self, *pattern: Any, **kwargs: Any) -> Self:
+    def regex(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> Self:
         """
         Add re pattern
 
         :param pattern:
         :type pattern:
+        :param key: optional typed key wiring up the match name and value type.
         :return: self
         :rtype: Rebulk
         """
-        return self.pattern(self.build_re(*pattern, **kwargs))
+        return self.pattern(self.build_re(*pattern, **_apply_key(key, kwargs)))
 
-    def string(self, *pattern: Any, **kwargs: Any) -> Self:
+    def string(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> Self:
         """
         Add string pattern
 
         :param pattern:
         :type pattern:
+        :param key: optional typed key wiring up the match name and value type.
         :return: self
         :rtype: Rebulk
         """
-        return self.pattern(self.build_string(*pattern, **kwargs))
+        return self.pattern(self.build_string(*pattern, **_apply_key(key, kwargs)))
 
-    def functional(self, *pattern: Any, **kwargs: Any) -> Self:
+    def functional(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> Self:
         """
         Add functional pattern
 
         :param pattern:
         :type pattern:
+        :param key: optional typed key wiring up the match name and value type.
         :return: self
         :rtype: Rebulk
         """
-        functional = self.build_functional(*pattern, **kwargs)
+        functional = self.build_functional(*pattern, **_apply_key(key, kwargs))
         return self.pattern(functional)
 
     def chain(self, **kwargs: Any) -> Chain:
