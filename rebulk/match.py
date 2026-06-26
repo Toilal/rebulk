@@ -140,7 +140,9 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         if match.end >= self._max_end and not self._end_dict[match.end]:
             self._max_end = max(self._end_dict.keys())
 
-    def previous(self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def previous(
+        self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
+    ) -> Any:
         """
         Retrieves the nearest previous matches.
         :param match:
@@ -160,7 +162,9 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             current -= 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
-    def next(self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def next(
+        self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
+    ) -> Any:
         """
         Retrieves the nearest next matches.
         :param match:
@@ -180,7 +184,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
             current += 1
         return filter_index(_BaseMatches._base(), predicate, index)
 
-    def named(self, name: str, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def named(self, name: str, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that have the given name.
         :param name:
@@ -194,7 +198,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._name_dict[name]), predicate, index)
 
-    def tagged(self, tag: str, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def tagged(self, tag: str, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that have the given tag defined.
         :param tag:
@@ -208,7 +212,9 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._tag_dict[tag]), predicate, index)
 
-    def starting(self, start: int, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def starting(
+        self, start: int, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
+    ) -> Any:
         """
         Retrieves a set of Match objects that starts at given index.
         :param start: the starting index
@@ -222,7 +228,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return filter_index(_BaseMatches._base(self._start_dict[start]), predicate, index)
 
-    def ending(self, end: int, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def ending(self, end: int, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
         """
         Retrieves a set of Match objects that ends at given index.
         :param end: the ending index
@@ -238,7 +244,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         self,
         start: int = 0,
         end: int | None = None,
-        predicate: Callable[[Match], Any] | None = None,
+        predicate: Callable[[Match], Any] | int | None = None,
         index: int | None = None,
     ) -> Any:
         """
@@ -392,7 +398,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         formatter: Any = None,
         ignore: Callable[[Match], Any] | None = None,
         seps: str | None = None,
-        predicate: Callable[[Match], Any] | None = None,
+        predicate: Callable[[Match], Any] | int | None = None,
         index: int | None = None,
     ) -> Any:
         """
@@ -449,7 +455,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         return filter_index(ret, predicate, index)
 
     def conflicting(
-        self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None
+        self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
     ) -> Any:
         """
         Retrieves a list of ``Match`` objects that conflicts with given match.
@@ -473,7 +479,9 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
         return filter_index(ret, predicate, index)
 
-    def at_match(self, match: Match, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def at_match(
+        self, match: Match, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
+    ) -> Any:
         """
         Retrieves a list of matches from given match.
         """
@@ -482,7 +490,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
     def at_span(
         self,
         span: tuple[int, int],
-        predicate: Callable[[Match], Any] | None = None,
+        predicate: Callable[[Match], Any] | int | None = None,
         index: int | None = None,
     ) -> Any:
         """
@@ -498,7 +506,9 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
 
         return filter_index(merged, predicate, index)
 
-    def at_index(self, pos: int, predicate: Callable[[Match], Any] | None = None, index: int | None = None) -> Any:
+    def at_index(
+        self, pos: int, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None
+    ) -> Any:
         """
         Retrieves a list of matches from given position
         """
@@ -667,6 +677,8 @@ class Match:
         self._children: Matches | None = None
         self._raw_start: int | None = None
         self._raw_end: int | None = None
+        # Set by Pattern processing for matches produced by repeated/multi patterns.
+        self.match_index: int = 0
         self.defined_at: Frame | None = pattern.defined_at if pattern else defined_at()
 
     @property
@@ -740,7 +752,7 @@ class Match:
         return self._raw_start
 
     @raw_start.setter
-    def raw_start(self, value: int) -> None:
+    def raw_start(self, value: int | None) -> None:
         """
         Set start index of raw value
         :return:
@@ -760,7 +772,7 @@ class Match:
         return self._raw_end
 
     @raw_end.setter
-    def raw_end(self, value: int) -> None:
+    def raw_end(self, value: int | None) -> None:
         """
         Set end index of raw value
         :return:
@@ -796,7 +808,7 @@ class Match:
     def crop(
         self,
         crops: Any,
-        predicate: Callable[[Match], Any] | None = None,
+        predicate: Callable[[Match], Any] | int | None = None,
         index: int | None = None,
     ) -> Any:
         """
@@ -837,7 +849,7 @@ class Match:
     def split(
         self,
         seps: str,
-        predicate: Callable[[Match], Any] | None = None,
+        predicate: Callable[[Match], Any] | int | None = None,
         index: int | None = None,
     ) -> Any:
         """

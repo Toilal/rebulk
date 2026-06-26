@@ -86,14 +86,14 @@ class RuleAppendTags0(Rule):
     consequence = AppendTags(["new-tag"])
 
     def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-        return matches.named("tags", 0)  # type: ignore[arg-type]
+        return matches.named("tags", 0)
 
 
 class RuleRemoveTags0(Rule):
     consequence = RemoveTags(["new-tag"])
 
     def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-        return matches.named("tags", 0)  # type: ignore[arg-type]
+        return matches.named("tags", 0)
 
 
 class RuleAppendTags1(Rule):

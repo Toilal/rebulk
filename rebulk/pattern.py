@@ -244,7 +244,7 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         :param match:
         :return:
         """
-        match.match_index = match_index  # type: ignore[attr-defined]
+        match.match_index = match_index
 
     def _process_match_private(self, match: Match, child: bool = False) -> None:
         """

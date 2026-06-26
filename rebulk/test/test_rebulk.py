@@ -295,7 +295,7 @@ def test_rebulk_rules_3() -> None:
 def test_rebulk_rules_4() -> None:
     class FirstOnlyRule(Rule):
         def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-            grabbed = matches.named("grabbed", 0)  # type: ignore[arg-type]
+            grabbed = matches.named("grabbed", 0)
             if grabbed and matches.previous(grabbed):
                 return grabbed
             return None
@@ -322,7 +322,7 @@ class TestMarkers:
     def test_one_marker(self) -> None:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-                word_match = matches.named("word", 0)  # type: ignore[arg-type]
+                word_match = matches.named("word", 0)
                 marker = matches.markers.at_match(word_match, lambda marker: marker.name == "mark1", 0)
                 if not marker:
                     return word_match
@@ -353,7 +353,7 @@ class TestMarkers:
     def test_multiple_marker(self) -> None:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-                word_match = matches.named("word", 0)  # type: ignore[arg-type]
+                word_match = matches.named("word", 0)
                 marker = matches.markers.at_match(word_match, lambda marker: marker.name in ["mark1", "mark2"])
                 if len(marker) < 2:
                     return word_match
@@ -385,7 +385,7 @@ class TestMarkers:
     def test_at_index_marker(self) -> None:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-                word_match = matches.named("word", 0)  # type: ignore[arg-type]
+                word_match = matches.named("word", 0)
                 marker = matches.markers.at_index(word_match.start, lambda marker: marker.name == "mark1", 0)
                 if not marker:
                     return word_match
@@ -408,7 +408,7 @@ class TestMarkers:
     def test_remove_marker(self) -> None:
         class MarkerRule(Rule):
             def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
-                marker = matches.markers.named("mark1", 0)  # type: ignore[arg-type]
+                marker = matches.markers.named("mark1", 0)
                 if marker:
                     return marker
                 return None

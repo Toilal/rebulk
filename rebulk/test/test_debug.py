@@ -31,38 +31,48 @@ class TestDebug:
         debug.DEBUG = False
 
     def test_pattern(self) -> None:
-        assert self.pattern.defined_at.lineno > 0  # type: ignore[union-attr]
-        assert self.pattern.defined_at.name == "rebulk.test.test_debug"  # type: ignore[union-attr]
-        assert self.pattern.defined_at.filename.endswith("test_debug.py")  # type: ignore[union-attr]
+        defined = self.pattern.defined_at
+        assert defined is not None
+        assert defined.lineno > 0
+        assert defined.name == "rebulk.test.test_debug"
+        assert defined.filename.endswith("test_debug.py")
 
         assert str(self.pattern.defined_at).startswith("test_debug.py#L")
         assert repr(self.pattern).startswith("<StringPattern@test_debug.py#L")
 
     def test_match(self) -> None:
-        assert self.match.defined_at.lineno > 0  # type: ignore[union-attr]
-        assert self.match.defined_at.name == "rebulk.test.test_debug"  # type: ignore[union-attr]
-        assert self.match.defined_at.filename.endswith("test_debug.py")  # type: ignore[union-attr]
+        defined = self.match.defined_at
+        assert defined is not None
+        assert defined.lineno > 0
+        assert defined.name == "rebulk.test.test_debug"
+        assert defined.filename.endswith("test_debug.py")
 
         assert str(self.match.defined_at).startswith("test_debug.py#L")
 
     def test_rule(self) -> None:
-        assert self.rule.defined_at.lineno > 0  # type: ignore[union-attr]
-        assert self.rule.defined_at.name == "rebulk.test.test_debug"  # type: ignore[union-attr]
-        assert self.rule.defined_at.filename.endswith("test_debug.py")  # type: ignore[union-attr]
+        defined = self.rule.defined_at
+        assert defined is not None
+        assert defined.lineno > 0
+        assert defined.name == "rebulk.test.test_debug"
+        assert defined.filename.endswith("test_debug.py")
 
         assert str(self.rule.defined_at).startswith("test_debug.py#L")
         assert repr(self.rule).startswith("<RuleRemove0@test_debug.py#L")
 
     def test_rebulk(self) -> None:
-        assert self.rebulk._patterns[0].defined_at.lineno > 0  # type: ignore[union-attr]
-        assert self.rebulk._patterns[0].defined_at.name == "rebulk.test.test_debug"  # type: ignore[union-attr]
-        assert self.rebulk._patterns[0].defined_at.filename.endswith("test_debug.py")  # type: ignore[union-attr]
+        defined0 = self.rebulk._patterns[0].defined_at
+        assert defined0 is not None
+        assert defined0.lineno > 0
+        assert defined0.name == "rebulk.test.test_debug"
+        assert defined0.filename.endswith("test_debug.py")
 
         assert str(self.rebulk._patterns[0].defined_at).startswith("test_debug.py#L")
 
-        assert self.rebulk._patterns[1].defined_at.lineno > 0  # type: ignore[union-attr]
-        assert self.rebulk._patterns[1].defined_at.name == "rebulk.test.test_debug"  # type: ignore[union-attr]
-        assert self.rebulk._patterns[1].defined_at.filename.endswith("test_debug.py")  # type: ignore[union-attr]
+        defined1 = self.rebulk._patterns[1].defined_at
+        assert defined1 is not None
+        assert defined1.lineno > 0
+        assert defined1.name == "rebulk.test.test_debug"
+        assert defined1.filename.endswith("test_debug.py")
 
         assert str(self.rebulk._patterns[1].defined_at).startswith("test_debug.py#L")
 

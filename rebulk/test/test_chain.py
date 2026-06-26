@@ -91,13 +91,13 @@ def test_chain_defaults() -> None:
 
 def test_chain_with_validators() -> None:
     def chain_validator(match: Match) -> bool:
-        return match.value.startswith("t") and match.value.endswith("t")  # type: ignore[no-any-return]
+        return bool(match.value.startswith("t") and match.value.endswith("t"))
 
     def default_validator(match: Match) -> bool:
-        return match.value.startswith("t") and match.value.endswith("g")  # type: ignore[no-any-return]
+        return bool(match.value.startswith("t") and match.value.endswith("g"))
 
     def custom_validator(match: Match) -> bool:
-        return match.value.startswith("b") and match.value.endswith("t")  # type: ignore[no-any-return]
+        return bool(match.value.startswith("b") and match.value.endswith("t"))
 
     rebulk = Rebulk()
     rebulk.defaults(children=True, validator=default_validator)
