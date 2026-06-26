@@ -60,7 +60,7 @@ class Builder(metaclass=ABCMeta):
 
         :return:
         """
-        self.__init__()  # type: ignore[misc]  # pylint: disable=unnecessary-dunder-call
+        self.__init__()  # type: ignore[misc]
 
     def defaults(self, **kwargs: Any) -> Self:
         """
@@ -179,18 +179,18 @@ class Builder(metaclass=ABCMeta):
         :return:
         :rtype:
         """
-        from .chain import Chain  # pylint:disable=import-outside-toplevel,cyclic-import
+        from .chain import Chain
 
         with overrides(kwargs):
             set_defaults(self._chain_defaults, kwargs)
             set_defaults(self._defaults, kwargs)
 
         chain = Chain(self, **kwargs)
-        chain._defaults = deepcopy(self._defaults)  # pylint: disable=protected-access
-        chain._regex_defaults = deepcopy(self._regex_defaults)  # pylint: disable=protected-access
-        chain._functional_defaults = deepcopy(self._functional_defaults)  # pylint: disable=protected-access
-        chain._string_defaults = deepcopy(self._string_defaults)  # pylint: disable=protected-access
-        chain._chain_defaults = deepcopy(self._chain_defaults)  # pylint: disable=protected-access
+        chain._defaults = deepcopy(self._defaults)
+        chain._regex_defaults = deepcopy(self._regex_defaults)
+        chain._functional_defaults = deepcopy(self._functional_defaults)
+        chain._string_defaults = deepcopy(self._string_defaults)
+        chain._chain_defaults = deepcopy(self._chain_defaults)
 
         return chain
 

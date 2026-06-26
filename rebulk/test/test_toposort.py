@@ -11,7 +11,6 @@
 #   - https://bitbucket.org/ericvsmith/toposort (1.4)
 # Modifications:
 #   - port to pytest
-# pylint: skip-file
 from __future__ import annotations
 
 import pytest

@@ -37,7 +37,7 @@ class PatternDescription(Description):
     Description of a pattern.
     """
 
-    def __init__(self, pattern: Pattern) -> None:  # pylint:disable=too-many-branches
+    def __init__(self, pattern: Pattern) -> None:
         self.pattern = pattern
         self._properties: defaultdict[str, list[Any]] = defaultdict(list)
 

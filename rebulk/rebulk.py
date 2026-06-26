@@ -51,8 +51,6 @@ class Rebulk(Builder):
         [<lakers:(4, 10)>, <la:(20, 22)>]
     """
 
-    # pylint:disable=protected-access
-
     def __init__(
         self,
         disabled: bool | Callable[[dict[str, Any] | None], bool] = lambda context: False,

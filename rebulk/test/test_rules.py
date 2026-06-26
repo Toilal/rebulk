@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# pylint: disable=pointless-statement, missing-docstring, invalid-name, no-member, len-as-condition
 import pytest
 
 from rebulk.test.default_rules_module import (
