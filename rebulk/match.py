@@ -9,14 +9,17 @@ import copy
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from .debug import defined_at
+from .key import Key
 from .loose import ensure_list, filter_index
 from .utils import is_iterable
 
 if TYPE_CHECKING:
     from .debug import Frame
+
+T = TypeVar("T")
 
 
 class MatchesDict(OrderedDict):  # type: ignore[type-arg]
@@ -731,11 +734,23 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
     @overload
     def __getitem__(self, index: slice) -> Matches: ...
 
-    def __getitem__(self, index: int | slice) -> Match | Matches:
+    @overload
+    def __getitem__(self, index: Key[T]) -> T | None: ...
+
+    def __getitem__(self, index: int | slice | Key[Any]) -> Any:
+        if isinstance(index, Key):
+            named = self._name_dict[index.name]
+            return named[0].value if named else None
         ret = self._delegate[index]
         if isinstance(ret, list):
             return Matches(ret)
         return ret
+
+    def all(self, key: Key[T]) -> list[T]:
+        """
+        Retrieve all values for the given typed key, in match order.
+        """
+        return [match.value for match in self._name_dict[key.name]]
 
     @overload
     def __setitem__(self, index: int, match: Match) -> None: ...
