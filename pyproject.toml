@@ -31,11 +31,17 @@ native = ["regex"]
 
 [dependency-groups]
 # Dev tooling only — the distributed package itself has no dependencies.
-dev = [
+# `test` is the minimal set needed to run the suite (kept free of heavy,
+# native deps so it installs on every interpreter, incl. PyPy 3.10).
+test = [
     "pytest",
     "coverage",
+]
+dev = [
+    {include-group = "test"},
     "ruff",
     "mypy",
+    "commitizen",
     "python-semantic-release",
     "tox",
     "tox-uv",
@@ -49,6 +55,10 @@ build-backend = "uv_build"
 # Flat layout: the `rebulk` package lives at the project root, not under src/.
 module-name = "rebulk"
 module-root = ""
+
+[tool.commitizen]
+# Conventional Commits ruleset, used by `cz check` (local pre-commit + CI).
+name = "cz_conventional_commits"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]

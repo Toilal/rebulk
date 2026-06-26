@@ -1,9 +1,10 @@
-# Run locally with:  uvx pre-commit run --all-files
-# Install the git hook with:  uvx pre-commit install
+# Install the git hooks with:  uvx pre-commit install
+# Run the file hooks manually with:  uvx pre-commit run --all-files
 #
-# All hooks are `local` + `language: system` and invoke the tools through `uvx`,
-# so pre-commit never manages its own hook environments and tool versions stay
-# under uv's control.
+# All hooks are `local` + `language: system` so pre-commit never manages its own
+# hook environments; every tool runs through `uvx`.
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
   - repo: local
     hooks:
@@ -25,3 +26,8 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: commitizen
+        name: commitizen check
+        entry: uvx --from commitizen cz check --commit-msg-file
+        language: system
+        stages: [commit-msg]
