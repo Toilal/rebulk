@@ -1,32 +1,33 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # pylint: disable=pointless-statement, missing-docstring, unneeded-not, len-as-condition
+
+from __future__ import annotations
 
 import pytest
 
-from ..match import Match, Matches
-from ..pattern import StringPattern, RePattern
 from ..formatters import formatters
+from ..match import Match, Matches
+from ..pattern import RePattern, StringPattern
 
 
 class TestMatchClass:
-    def test_repr(self):
+    def test_repr(self) -> None:
         match1 = Match(1, 3, value="es")
 
-        assert repr(match1) == '<es:(1, 3)>'
+        assert repr(match1) == "<es:(1, 3)>"
 
-        match2 = Match(0, 4, value="test", private=True, name="abc", tags=['one', 'two'])
+        match2 = Match(0, 4, value="test", private=True, name="abc", tags=["one", "two"])
 
-        assert repr(match2) == '<test:(0, 4)+private+name=abc+tags=[\'one\', \'two\']>'
+        assert repr(match2) == "<test:(0, 4)+private+name=abc+tags=['one', 'two']>"
 
-    def test_names(self):
+    def test_names(self) -> None:
         parent = Match(0, 10, name="test")
         parent.children.append(Match(0, 10, name="child1", parent=parent))
         parent.children.append(Match(0, 10, name="child2", parent=parent))
 
         assert set(parent.names) == set(["child1", "child2"])
 
-    def test_equality(self):
+    def test_equality(self) -> None:
         match1 = Match(1, 3, value="es")
         match2 = Match(1, 3, value="es")
 
@@ -38,7 +39,7 @@ class TestMatchClass:
         assert match1 == match2
         assert not match1 == other
 
-    def test_inequality(self):
+    def test_inequality(self) -> None:
         match1 = Match(0, 2, value="te")
         match2 = Match(2, 4, value="st")
         match3 = Match(0, 2, value="other")
@@ -52,14 +53,14 @@ class TestMatchClass:
         assert match1 != match2
         assert match1 != match3
 
-    def test_length(self):
+    def test_length(self) -> None:
         match1 = Match(0, 4, value="test")
         match2 = Match(0, 2, value="spanIsUsed")
 
         assert len(match1) == 4
         assert len(match2) == 2
 
-    def test_compare(self):
+    def test_compare(self) -> None:
         match1 = Match(0, 2, value="te")
         match2 = Match(2, 4, value="st")
 
@@ -72,19 +73,18 @@ class TestMatchClass:
         assert match2 >= match1
 
         with pytest.raises(TypeError):
-            match1 < other
+            match1 < other  # noqa: B015
 
         with pytest.raises(TypeError):
-            match1 <= other
+            match1 <= other  # noqa: B015
 
         with pytest.raises(TypeError):
-            match1 > other
+            match1 > other  # noqa: B015
 
         with pytest.raises(TypeError):
-            match1 >= other
+            match1 >= other  # noqa: B015
 
-
-    def test_value(self):
+    def test_value(self) -> None:
         match1 = Match(1, 3)
         match1.value = "test"
 
@@ -93,11 +93,11 @@ class TestMatchClass:
 
 class TestMatchesClass:
     match1 = Match(0, 2, value="te", name="start")
-    match2 = Match(2, 3, value="s", tags="tag1")
+    match2 = Match(2, 3, value="s", tags="tag1")  # type: ignore[arg-type]
     match3 = Match(3, 4, value="t", tags=["tag1", "tag2"])
     match4 = Match(2, 4, value="st", name="end")
 
-    def test_tag(self):
+    def test_tag(self) -> None:
         matches = Matches()
         matches.append(self.match1)
         matches.append(self.match2)
@@ -130,7 +130,7 @@ class TestMatchesClass:
         assert len(end) == 1
         assert end[0] == self.match4
 
-    def test_base(self):
+    def test_base(self) -> None:
         matches = Matches()
         matches.append(self.match1)
 
@@ -169,7 +169,7 @@ class TestMatchesClass:
         assert len(matches.ending(3)) == 0
         assert len(matches.ending(4)) == 0
 
-    def test_get_slices(self):
+    def test_get_slices(self) -> None:
         matches = Matches()
         matches.append(self.match1)
         matches.append(self.match2)
@@ -184,7 +184,7 @@ class TestMatchesClass:
         assert slice_matches[0] == self.match2
         assert slice_matches[1] == self.match3
 
-    def test_remove_slices(self):
+    def test_remove_slices(self) -> None:
         matches = Matches()
         matches.append(self.match1)
         matches.append(self.match2)
@@ -197,7 +197,7 @@ class TestMatchesClass:
         assert matches[0] == self.match1
         assert matches[1] == self.match4
 
-    def test_set_slices(self):
+    def test_set_slices(self) -> None:
         matches = Matches()
         matches.append(self.match1)
         matches.append(self.match2)
@@ -212,7 +212,7 @@ class TestMatchesClass:
         assert matches[2] == self.match4
         assert matches[3] == self.match4
 
-    def test_set_index(self):
+    def test_set_index(self) -> None:
         matches = Matches()
         matches.append(self.match1)
         matches.append(self.match2)
@@ -225,7 +225,7 @@ class TestMatchesClass:
         assert matches[1] == self.match4
         assert matches[2] == self.match3
 
-    def test_constructor(self):
+    def test_constructor(self) -> None:
         matches = Matches([self.match1, self.match2, self.match3, self.match4])
 
         assert len(matches) == 4
@@ -236,7 +236,7 @@ class TestMatchesClass:
         assert list(matches.ending(3)) == [self.match2]
         assert list(matches.ending(4)) == [self.match3, self.match4]
 
-    def test_constructor_kwargs(self):
+    def test_constructor_kwargs(self) -> None:
         matches = Matches([self.match1, self.match2, self.match3, self.match4], input_string="test")
 
         assert len(matches) == 4
@@ -248,7 +248,7 @@ class TestMatchesClass:
         assert list(matches.ending(3)) == [self.match2]
         assert list(matches.ending(4)) == [self.match3, self.match4]
 
-    def test_crop(self):
+    def test_crop(self) -> None:
         input_string = "abcdefghijklmnopqrstuvwxyz"
 
         match1 = Match(1, 10, input_string=input_string)
@@ -289,7 +289,7 @@ class TestMatchesClass:
         assert ret[1].span == (5, 7)
         assert ret[2].span == (9, 10)
 
-    def test_split(self):
+    def test_split(self) -> None:
         input_string = "123 +word1  -  word2  + word3  456"
         match = Match(3, len(input_string) - 3, input_string=input_string)
         splitted = match.split(" -+")
@@ -299,7 +299,7 @@ class TestMatchesClass:
 
 
 class TestMaches:
-    def test_names(self):
+    def test_names(self) -> None:
         input_string = "One Two Three"
 
         matches = Matches()
@@ -313,7 +313,7 @@ class TestMaches:
 
         assert set(matches.names) == set(["1-str", "1-re", "2-str", "2-re", "3-str", "3-re"])
 
-    def test_filters(self):
+    def test_filters(self) -> None:
         input_string = "One Two Three"
 
         matches = Matches()
@@ -341,16 +341,16 @@ class TestMaches:
         assert selection[0].pattern.name == "1-str"
         assert selection[1].pattern.name == "1-re"
 
-        selection = matches.previous(matches.named("2-str", 0), lambda m: "str" in m.tags)
+        selection = matches.previous(matches.named("2-str", 0), lambda m: "str" in m.tags)  # type: ignore[arg-type]
         assert len(selection) == 1
         assert selection[0].pattern.name == "1-str"
 
-        selection = matches.next(matches.named("2-str", 0))
+        selection = matches.next(matches.named("2-str", 0))  # type: ignore[arg-type]
         assert len(selection) == 2
         assert selection[0].pattern.name == "3-str"
         assert selection[1].pattern.name == "3-re"
 
-        selection = matches.next(matches.named("2-str", 0), index=0, predicate=lambda m: "re" in m.tags)
+        selection = matches.next(matches.named("2-str", 0), index=0, predicate=lambda m: "re" in m.tags)  # type: ignore[arg-type]
         assert selection is not None
         assert selection.pattern.name == "3-re"
 
@@ -372,12 +372,12 @@ class TestMaches:
         selection = matches.named("2-re", lambda m: "re" in m.tags, index=1000)
         assert selection is None
 
-    def test_raw(self):
+    def test_raw(self) -> None:
         input_string = "0123456789"
 
-        match = Match(0, 10, input_string=input_string, formatter=lambda s: s*2)
+        match = Match(0, 10, input_string=input_string, formatter=lambda s: s * 2)
 
-        assert match.value == match.raw * 2
+        assert match.value == match.raw * 2  # type: ignore[operator]
         assert match.raw == input_string
 
         match.raw_end = 9
@@ -386,23 +386,21 @@ class TestMaches:
         assert match.value == match.raw * 2
         assert match.raw == input_string[1:9]
 
-        match.raw_end = None
-        match.raw_start = None
+        match.raw_end = None  # type: ignore[assignment]
+        match.raw_start = None  # type: ignore[assignment]
 
         assert match.value == match.raw * 2
         assert match.raw == input_string
 
-
-    def test_formatter_chain(self):
+    def test_formatter_chain(self) -> None:
         input_string = "100"
 
-        match = Match(0, 3, input_string=input_string, formatter=formatters(int, lambda s: s*2, lambda  s: s+10))
+        match = Match(0, 3, input_string=input_string, formatter=formatters(int, lambda s: s * 2, lambda s: s + 10))
 
         assert match.raw == input_string
         assert match.value == 100 * 2 + 10
 
-
-    def test_to_dict(self):
+    def test_to_dict(self) -> None:
         input_string = "One Two Two Three"
 
         matches = Matches()
@@ -417,11 +415,7 @@ class TestMaches:
         matches.extend(RePattern(r"(\w+)", name="words").matches(input_string))
 
         kvalues = matches.to_dict(first_value=True)
-        assert kvalues == {"1": "One",
-                           "2": "Two",
-                           "3": "Three",
-                           "3bis": "Three",
-                           "words": "One"}
+        assert kvalues == {"1": "One", "2": "Two", "3": "Three", "3bis": "Three", "words": "One"}
         assert kvalues.values_list["words"] == ["One", "Two", "Three"]
 
         kvalues = matches.to_dict(enforce_list=True)
@@ -459,7 +453,7 @@ class TestMaches:
         assert kvalues.values_list["words"][2].value == "Two"
         assert kvalues.values_list["words"][3].value == "Three"
 
-    def test_chains(self):
+    def test_chains(self) -> None:
         input_string = "wordX 10 20 30 40 wordA, wordB, wordC 70 80 wordX"
 
         matches = Matches(input_string=input_string)
@@ -469,21 +463,21 @@ class TestMaches:
 
         assert len(matches) == 11
 
-        a_start = input_string.find('wordA')
+        a_start = input_string.find("wordA")
 
-        b_start = input_string.find('wordB')
-        b_end = b_start + len('wordB')
+        b_start = input_string.find("wordB")
+        b_end = b_start + len("wordB")
 
-        c_start = input_string.find('wordC')
-        c_end = c_start + len('wordC')
+        c_start = input_string.find("wordC")
+        c_end = c_start + len("wordC")
 
         chain_before = matches.chain_before(b_start, " ,", predicate=lambda match: match.name == "word")
         assert len(chain_before) == 1
-        assert chain_before[0].value == 'wordA'
+        assert chain_before[0].value == "wordA"
 
         chain_before = matches.chain_before(Match(b_start, b_start), " ,", predicate=lambda match: match.name == "word")
         assert len(chain_before) == 1
-        assert chain_before[0].value == 'wordA'
+        assert chain_before[0].value == "wordA"
 
         chain_before = matches.chain_before(b_start, " ,", predicate=lambda match: match.name == "digit")
         assert len(chain_before) == 0
@@ -494,11 +488,11 @@ class TestMaches:
 
         chain_after = matches.chain_after(b_end, " ,", predicate=lambda match: match.name == "word")
         assert len(chain_after) == 1
-        assert chain_after[0].value == 'wordC'
+        assert chain_after[0].value == "wordC"
 
         chain_after = matches.chain_after(Match(b_end, b_end), " ,", predicate=lambda match: match.name == "word")
         assert len(chain_after) == 1
-        assert chain_after[0].value == 'wordC'
+        assert chain_after[0].value == "wordC"
 
         chain_after = matches.chain_after(b_end, " ,", predicate=lambda match: match.name == "digit")
         assert len(chain_after) == 0
@@ -511,8 +505,8 @@ class TestMaches:
         assert len(chain_after) == 2
         assert [match.value for match in chain_after] == ["70", "80"]
 
-    def test_holes(self):
-        input_string = '1'*10+'2'*10+'3'*10+'4'*10+'5'*10+'6'*10+'7'*10
+    def test_holes(self) -> None:
+        input_string = "1" * 10 + "2" * 10 + "3" * 10 + "4" * 10 + "5" * 10 + "6" * 10 + "7" * 10
 
         hole1 = Match(0, 10, input_string=input_string)
         hole2 = Match(20, 30, input_string=input_string)
@@ -526,14 +520,14 @@ class TestMaches:
         holes = list(matches.holes())
         assert len(holes) == 2
         assert holes[0].span == (10, 20)
-        assert holes[0].value == '2'*10
+        assert holes[0].value == "2" * 10
         assert holes[1].span == (40, 60)
-        assert holes[1].value == '5' * 10 + '6' * 10
+        assert holes[1].value == "5" * 10 + "6" * 10
 
         holes = list(matches.holes(5, 15))
         assert len(holes) == 1
         assert holes[0].span == (10, 15)
-        assert holes[0].value == '2'*5
+        assert holes[0].value == "2" * 5
 
         holes = list(matches.holes(5, 15, formatter=lambda value: "formatted"))
         assert len(holes) == 1
@@ -543,18 +537,18 @@ class TestMaches:
         holes = list(matches.holes(5, 15, predicate=lambda hole: False))
         assert len(holes) == 0
 
-    def test_holes_empty(self):
+    def test_holes_empty(self) -> None:
         input_string = "Test hole on empty matches"
         matches = Matches(input_string=input_string)
         holes = matches.holes()
         assert len(holes) == 1
         assert holes[0].value == input_string
 
-    def test_holes_seps(self):
+    def test_holes_seps(self) -> None:
         input_string = "Test hole - with many separators + included"
         match = StringPattern("many").matches(input_string)
 
-        matches = Matches(match, input_string)
+        matches = Matches(match, input_string)  # type: ignore[arg-type]
         holes = matches.holes()
 
         assert len(holes) == 2

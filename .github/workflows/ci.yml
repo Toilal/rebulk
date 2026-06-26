@@ -3,112 +3,128 @@ on:
   push: ~
   pull_request: ~
 jobs:
-  build:
+  test:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.8", "pypy-3.9", "pypy-3.10" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14", "pypy-3.10", "pypy-3.11" ]
         regex: [ "1", "0" ]
 
     steps:
-      - name: Setup python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Checkout
-        uses: actions/checkout@v4
+          enable-cache: true
 
       - name: Git User config
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "github-actions"
 
-      - name: Install Dependencies
-        run: |
-          pip install -e .[dev,test]
-          pip install coveralls
+      - name: Sync dependencies
+        run: uv sync --group dev
 
-      - name: Install regex
-        run: |
-          pip install regex
+      - name: Sync regex backend
+        run: uv sync --group dev --extra native
         if: ${{ matrix.regex == '1' }}
 
-      - run: pylint rebulk
-
-      - run: coverage run -m pytest
+      - name: Tests
+        run: uv run coverage run -m pytest
         env:
           REBULK_REGEX_ENABLED: ${{ matrix.regex }}
 
-      - run: python setup.py build
+      - name: Build
+        run: uv build
 
       - name: Coveralls
-        run: coveralls
+        run: uvx coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+  lint:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Ruff lint
+        run: uv run ruff check rebulk
+
+      - name: Ruff format
+        run: uv run ruff format --check rebulk
+
+      - name: Mypy
+        run: uv run mypy
 
   commitlint:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v5
+      - uses: wagoid/commitlint-github-action@v6
 
   release:
     if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
-    needs: build
+    needs: [ test, lint ]
 
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ 3.12 ]
-
     steps:
-      - name: Setup python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: "3.14"
+          enable-cache: true
 
       - name: Git User config
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "github-actions"
 
-      - name: Install Dependencies
-        run: pip install -e .[dev,test]
-
-      - name: Install python-semantic-release and twine
-        run: pip install python-semantic-release twine
+      - name: Sync dependencies
+        run: uv sync --group dev
 
       - name: Bump version
-        run: semantic-release version
+        run: uv run semantic-release version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload to pypi
-        run: twine upload --username "__token__" --password "${PYPI_TOKEN}" dist/*
+      - name: Upload to PyPI
+        run: uv publish
         env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
       - name: Publish release
-        run: semantic-release publish
+        run: uv run semantic-release publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge master to develop
-        uses: robotology/gh-action-nightly-merge@v1.4.0
+        uses: robotology/gh-action-nightly-merge@v1.5.2
         with:
           stable_branch: 'master'
           development_branch: 'develop'

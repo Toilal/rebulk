@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright 2014 True Blade Systems, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +15,23 @@
 #   - support python 2.6 dict comprehension
 
 # pylint: skip-file
+from __future__ import annotations
+
+from collections.abc import Iterator
 from functools import reduce
+from typing import Any, TypeVar, cast
+
+_T = TypeVar("_T")
 
 
 class CyclicDependency(ValueError):
-    def __init__(self, cyclic):
-        s = 'Cyclic dependencies exist among these items: {0}'.format(', '.join(repr(x) for x in cyclic.items()))
+    def __init__(self, cyclic: dict[_T, set[_T]]) -> None:
+        s = "Cyclic dependencies exist among these items: {}".format(", ".join(repr(x) for x in cyclic.items()))
         super().__init__(s)
         self.cyclic = cyclic
 
 
-def toposort(data):
+def toposort(data: dict[_T, set[_T]]) -> Iterator[set[_T]]:
     """
     Dependencies are expressed as a dictionary whose keys are items
     and whose values are a set of dependent items. Output is a list of
@@ -58,14 +63,12 @@ def toposort(data):
         if not ordered:
             break
         yield ordered
-        data = dict((item, (dep - ordered))
-                for item, dep in data.items()
-                if item not in ordered)
+        data = dict((item, (dep - ordered)) for item, dep in data.items() if item not in ordered)
     if len(data) != 0:
         raise CyclicDependency(data)
 
 
-def toposort_flatten(data, sort=True):
+def toposort_flatten(data: dict[_T, set[_T]], sort: bool = True) -> list[_T]:
     """
     Returns a single list of dependencies. For any set returned by
     toposort(), those items are sorted and appended to the result (just to
@@ -78,7 +81,7 @@ def toposort_flatten(data, sort=True):
     :rtype: list
     """
 
-    result = []
+    result: list[_T] = []
     for d in toposort(data):
-        result.extend((sorted if sort else list)(d))
+        result.extend(cast("list[_T]", sorted(cast("Any", d))) if sort else list(d))
     return result

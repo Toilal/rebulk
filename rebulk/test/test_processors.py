@@ -1,18 +1,20 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # pylint: disable=pointless-statement, missing-docstring, no-member, len-as-condition
+from __future__ import annotations
 
-from ..pattern import StringPattern, RePattern
+from typing import cast
+
+from ..match import Match, Matches
+from ..pattern import RePattern, StringPattern
 from ..processors import ConflictSolver
 from ..rules import execute_rule
-from ..match import Matches
 
 
-def test_conflict_1():
+def test_conflict_1() -> None:
     input_string = "abcdefghijklmnopqrstuvwxyz"
 
     pattern = StringPattern("ijklmn", "kl", "abcdef", "ab", "ef", "yz")
-    matches = Matches(pattern.matches(input_string))
+    matches = Matches(cast("list[Match]", pattern.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
 
@@ -21,11 +23,11 @@ def test_conflict_1():
     assert values == ["ijklmn", "abcdef", "yz"]
 
 
-def test_conflict_2():
+def test_conflict_2() -> None:
     input_string = "abcdefghijklmnopqrstuvwxyz"
 
     pattern = StringPattern("ijklmn", "jklmnopqrst")
-    matches = Matches(pattern.matches(input_string))
+    matches = Matches(cast("list[Match]", pattern.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
 
@@ -34,11 +36,11 @@ def test_conflict_2():
     assert values == ["jklmnopqrst"]
 
 
-def test_conflict_3():
+def test_conflict_3() -> None:
     input_string = "abcdefghijklmnopqrstuvwxyz"
 
     pattern = StringPattern("ijklmnopqrst", "jklmnopqrst")
-    matches = Matches(pattern.matches(input_string))
+    matches = Matches(cast("list[Match]", pattern.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
 
@@ -47,11 +49,11 @@ def test_conflict_3():
     assert values == ["ijklmnopqrst"]
 
 
-def test_conflict_4():
+def test_conflict_4() -> None:
     input_string = "123456789"
 
     pattern = StringPattern("123", "456789")
-    matches = Matches(pattern.matches(input_string))
+    matches = Matches(cast("list[Match]", pattern.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
 
@@ -59,11 +61,11 @@ def test_conflict_4():
     assert values == ["123", "456789"]
 
 
-def test_conflict_5():
+def test_conflict_5() -> None:
     input_string = "123456789"
 
     pattern = StringPattern("123456", "789")
-    matches = Matches(pattern.matches(input_string))
+    matches = Matches(cast("list[Match]", pattern.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
 
@@ -71,14 +73,14 @@ def test_conflict_5():
     assert values == ["123456", "789"]
 
 
-def test_prefer_longer_parent():
+def test_prefer_longer_parent() -> None:
     input_string = "xxx.1x02.xxx"
 
-    re1 = RePattern("([0-9]+)x([0-9]+)", name='prefer', children=True, formatter=int)
-    re2 = RePattern("x([0-9]+)", name='skip', children=True)
+    re1 = RePattern("([0-9]+)x([0-9]+)", name="prefer", children=True, formatter=int)
+    re2 = RePattern("x([0-9]+)", name="skip", children=True)
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 2
@@ -86,130 +88,157 @@ def test_prefer_longer_parent():
     assert matches[1].value == 2
 
 
-def test_conflict_solver_1():
+def test_conflict_solver_1() -> None:
     input_string = "123456789"
 
-    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: '__default__')
+    re1 = StringPattern(
+        "2345678",
+        conflict_solver=lambda match, conflicting: "__default__",  # noqa: ARG005
+    )
     re2 = StringPattern("34567")
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "2345678"
 
 
-def test_conflict_solver_2():
+def test_conflict_solver_2() -> None:
     input_string = "123456789"
 
-    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: '__default__')
-    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
+    re1 = StringPattern(
+        "2345678",
+        conflict_solver=lambda match, conflicting: "__default__",  # noqa: ARG005
+    )
+    re2 = StringPattern(
+        "34567",
+        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+    )
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "34567"
 
 
-def test_conflict_solver_3():
+def test_conflict_solver_3() -> None:
     input_string = "123456789"
 
-    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: match)
+    re1 = StringPattern(
+        "2345678",
+        conflict_solver=lambda match, conflicting: match,  # noqa: ARG005
+    )
     re2 = StringPattern("34567")
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "34567"
 
 
-def test_conflict_solver_4():
+def test_conflict_solver_4() -> None:
     input_string = "123456789"
 
     re1 = StringPattern("2345678")
-    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
+    re2 = StringPattern(
+        "34567",
+        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+    )
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "34567"
 
 
-def test_conflict_solver_5():
+def test_conflict_solver_5() -> None:
     input_string = "123456789"
 
-    re1 = StringPattern("2345678", conflict_solver=lambda match, conflicting: conflicting)
+    re1 = StringPattern(
+        "2345678",
+        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+    )
     re2 = StringPattern("34567")
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "2345678"
 
 
-def test_conflict_solver_6():
+def test_conflict_solver_6() -> None:
     input_string = "123456789"
 
     re1 = StringPattern("2345678")
-    re2 = StringPattern("34567", conflict_solver=lambda match, conflicting: conflicting)
+    re2 = StringPattern(
+        "34567",
+        conflict_solver=lambda match, conflicting: conflicting,  # noqa: ARG005
+    )
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "34567"
 
 
-def test_conflict_solver_7():
+def test_conflict_solver_7() -> None:
     input_string = "102"
 
     re1 = StringPattern("102")
     re2 = StringPattern("02")
 
-    matches = Matches(re2.matches(input_string))
-    matches.extend(re1.matches(input_string))
+    matches = Matches(cast("list[Match]", re2.matches(input_string)))
+    matches.extend(cast("list[Match]", re1.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 1
     assert matches[0].value == "102"
 
 
-def test_unresolved():
+def test_unresolved() -> None:
     input_string = "123456789"
 
     re1 = StringPattern("23456")
     re2 = StringPattern("34567")
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 2
 
     re1 = StringPattern("34567")
-    re2 = StringPattern("2345678", conflict_solver=lambda match, conflicting: None)
+    re2 = StringPattern(
+        "2345678",
+        conflict_solver=lambda match, conflicting: None,  # noqa: ARG005
+    )
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 2
 
-    re1 = StringPattern("34567", conflict_solver=lambda match, conflicting: None)
+    re1 = StringPattern(
+        "34567",
+        conflict_solver=lambda match, conflicting: None,  # noqa: ARG005
+    )
     re2 = StringPattern("2345678")
 
-    matches = Matches(re1.matches(input_string))
-    matches.extend(re2.matches(input_string))
+    matches = Matches(cast("list[Match]", re1.matches(input_string)))
+    matches.extend(cast("list[Match]", re2.matches(input_string)))
 
     execute_rule(ConflictSolver(), matches, None)
     assert len(matches) == 2
