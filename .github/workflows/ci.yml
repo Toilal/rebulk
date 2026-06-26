@@ -29,10 +29,10 @@ jobs:
           git config --global user.name "github-actions"
 
       - name: Sync dependencies
-        run: uv sync --group test
+        run: uv sync --no-dev --group test
 
       - name: Sync regex backend
-        run: uv sync --group test --extra native
+        run: uv sync --no-dev --group test --extra native
         if: ${{ matrix.regex == '1' }}
 
       - name: Tests
