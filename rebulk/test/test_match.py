@@ -51,11 +51,23 @@ class TestMatchClass:
         other = object()
 
         assert hash(match1) != hash(match2)
-        assert hash(match1) != hash(match3)
+        # same span, different value: hashes collide (hash must not depend on the
+        # mutable value); equality still tells them apart below.
+        assert hash(match1) == hash(match3)
 
         assert match1 != other
         assert match1 != match2
         assert match1 != match3
+
+    def test_hash_is_stable_under_value_mutation(self) -> None:
+        match = Match(1, 3, value="es")
+        bucket = {match}
+
+        match.value = "changed"
+
+        # The hash must not change when the value is mutated, so the match stays
+        # findable in the set it was added to.
+        assert match in bucket
 
     def test_length(self) -> None:
         match1 = Match(0, 4, value="test")
