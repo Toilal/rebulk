@@ -47,8 +47,9 @@ Each item: **Problem → Proposed API (with before/after) → Breaking? → Effo
 - makes `Builder` impossible to parametrise cleanly (blocks 3.2).
 
 **Proposed API.** Split the *matchable* `Chain` (a `Pattern`) from the *fluent builder*
-that assembles it. Crucially, **the public fluent API stays byte-for-byte identical** — the
-change is internal:
+that assembles it. Crucially, **the fluent API the developer writes is unchanged** — the
+change is internal (the only visible shift is the static return type of `.chain()`, from
+`Chain` to `ChainBuilder`, which is invisible to code that doesn't annotate it):
 
 ```python
 # UNCHANGED for the developer:
