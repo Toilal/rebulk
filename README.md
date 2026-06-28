@@ -434,9 +434,18 @@ It has the following additional methods and properties on it.
 
     Retrieves a list of `Match` objects that have the given tag defined.
 
--   `named(name, predicate=None, index=None)`
+-   `named(*names, predicate=None, index=None)`
 
-    Retrieves a list of `Match` objects that have the given name.
+    Retrieves a list of `Match` objects that have any of the given names
+    (in the order of the names, then match order within each).
+
+    ```python
+    >>> matches = Rebulk().regex(r'\d{4}', name="year").string("Big Buck Bunny", name="title") \
+    ...                   .matches("Big Buck Bunny 2008")
+    >>> [m.name for m in matches.named("title", "year")]
+    ['title', 'year']
+
+    ```
 
 -   `range(start=0, end=None, predicate=None, index=None)`
 

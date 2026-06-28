@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from ..formatters import formatters
 from ..match import Match, Matches
 from ..pattern import RePattern, StringPattern
+
+if TYPE_CHECKING:
+    from typing_extensions import assert_type
 
 
 class TestMatchClass:
@@ -558,3 +563,55 @@ class TestMaches:
 
         assert len(holes) == 4
         assert [hole.value for hole in holes] == ["Test hole ", " with ", " separators ", " included"]
+
+
+class TestNamedMultiple:
+    @staticmethod
+    def _matches() -> Matches:
+        input_string = "a b c d"
+        return Matches(
+            [
+                Match(0, 1, name="title", input_string=input_string),
+                Match(2, 3, name="episode_title", input_string=input_string),
+                Match(4, 5, name="title", input_string=input_string),
+                Match(6, 7, name="year", input_string=input_string),
+            ]
+        )
+
+    def test_any_of_several_names(self) -> None:
+        matches = self._matches()
+        selection = matches.named("title", "episode_title")
+        assert [(m.name, m.start) for m in selection] == [("title", 0), ("title", 4), ("episode_title", 2)]
+
+    def test_single_name_unchanged(self) -> None:
+        matches = self._matches()
+        assert [m.start for m in matches.named("title")] == [0, 4]
+
+    def test_index_with_multiple_names(self) -> None:
+        matches = self._matches()
+        first = matches.named("episode_title", "year", index=0)
+        assert first is not None
+        assert first.name == "episode_title"
+
+    def test_predicate_with_multiple_names(self) -> None:
+        matches = self._matches()
+        selection = matches.named("title", "year", predicate=lambda m: m.start > 3)
+        assert [m.start for m in selection] == [4, 6]
+
+    def test_duplicate_names_deduplicated(self) -> None:
+        matches = self._matches()
+        assert [m.start for m in matches.named("title", "title")] == [0, 4]
+
+    def test_missing_names(self) -> None:
+        matches = self._matches()
+        assert matches.named("nope", "nada") == []
+
+
+if TYPE_CHECKING:
+
+    def _named_reveal_types(matches: Matches) -> None:
+        assert_type(matches.named("title", "episode_title"), "list[Match]")
+        assert_type(matches.named("title", "episode_title", index=0), "Match | None")
+        assert_type(matches.named("title", index=0), "Match | None")
+        assert_type(matches.named("title", 0), "Match | None")
+        assert_type(matches.named("title", lambda m: True), "list[Match]")
