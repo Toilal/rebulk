@@ -210,22 +210,46 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
     @overload
     def named(self, name: str, predicate: Callable[[Match], Any] | None, index: int) -> Match | None: ...
     @overload
-    def named(self, name: str, predicate: Callable[[Match], Any] | None = ..., *, index: int) -> Match | None: ...
+    def named(self, name: str, predicate: Callable[[Match], Any] | None) -> list[Match]: ...
     @overload
-    def named(self, name: str, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
-    def named(self, name: str, predicate: Callable[[Match], Any] | int | None = None, index: int | None = None) -> Any:
+    def named(self, *names: str, predicate: Callable[[Match], Any] | None = ..., index: int) -> Match | None: ...
+    @overload
+    def named(self, *names: str, predicate: Callable[[Match], Any] | None = ...) -> list[Match]: ...
+    def named(self, *names: Any, **kwargs: Any) -> Any:
         """
-        Retrieves a set of Match objects that have the given name.
-        :param name:
-        :type name: str
+        Retrieves a set of Match objects that have any of the given names.
+
+        Several names can be passed to select matches named by any of them (a
+        match has a single name, so this is an "any-of" selection), in the order
+        of the given names then match order within each. ``predicate`` and
+        ``index`` keep their usual meaning.
+
+        :param names: one or more match names.
         :param predicate:
-        :type predicate:
         :param index:
-        :type index: int
         :return: set of matches
-        :rtype: set[Match]
+        :rtype: list[Match]
         """
-        return filter_index(_BaseMatches._base(self._name_dict[name]), predicate, index)
+        predicate = kwargs.pop("predicate", None)
+        index = kwargs.pop("index", None)
+        if kwargs:
+            raise TypeError(f"named() got unexpected keyword arguments {list(kwargs)}")
+        name_list: list[str] = []
+        extras: list[Any] = []
+        for arg in names:
+            if isinstance(arg, str) and not extras:
+                name_list.append(arg)
+            else:
+                # positional predicate / index following the names
+                extras.append(arg)
+        if extras and predicate is None:
+            predicate = extras[0]
+        if len(extras) > 1 and index is None:
+            index = extras[1]
+        collection: list[Match] = []
+        for name in dict.fromkeys(name_list):
+            collection.extend(self._name_dict[name])
+        return filter_index(collection, predicate, index)
 
     @overload
     def tagged(self, tag: str, predicate: int) -> Match | None: ...
