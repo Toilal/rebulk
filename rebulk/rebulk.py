@@ -189,9 +189,6 @@ class Rebulk(Builder):
                     pattern_matches = pattern.matches(cast("str", matches.input_string), context)
                     if pattern_matches:
                         log(pattern.log_level, "Pattern has %s match(es). (%s)", len(pattern_matches), pattern)
-                    else:
-                        pass
-                        # log(pattern.log_level, "Pattern doesn't match. (%s)" % (pattern,))
                     for match in pattern_matches:
                         if match.marker:
                             log(pattern.log_level, "Marker found. (%s)", match)
