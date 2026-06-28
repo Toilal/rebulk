@@ -5,16 +5,8 @@ Various utilities functions
 
 from __future__ import annotations
 
-from inspect import isclass
+from inspect import getfullargspec, isclass
 from typing import TYPE_CHECKING, Any, cast
-
-try:
-    from inspect import getfullargspec as getargspec
-
-    _FULLARGSPEC_SUPPORTED = True
-except ImportError:
-    _FULLARGSPEC_SUPPORTED = False
-    from inspect import getargspec  # type: ignore[assignment]  # removed in Python 3.11, dead on supported versions
 
 from .utils import is_iterable
 
@@ -66,7 +58,7 @@ def function_args(callable_: Any, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    argspec = getargspec(callable_)
+    argspec = getfullargspec(callable_)
     return argspec_args(argspec, False, *args, **kwargs)
 
 
@@ -83,7 +75,7 @@ def constructor_args(class_: Any, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
     :return: (args, kwargs) matching the function signature
     :rtype: tuple
     """
-    argspec = getargspec(_constructor(class_))
+    argspec = getfullargspec(_constructor(class_))
     return argspec_args(argspec, True, *args, **kwargs)
 
 
@@ -105,30 +97,6 @@ def argspec_args(argspec: FullArgSpec, constructor: bool, *args: Any, **kwargs: 
     call_kwarg = kwargs if argspec.varkw else {k: kwargs[k] for k in kwargs if k in argspec.args}
     call_args = args if argspec.varargs else args[: len(argspec.args) - (1 if constructor else 0)]
     return call_args, call_kwarg
-
-
-if not _FULLARGSPEC_SUPPORTED:
-
-    def argspec_args_legacy(argspec: Any, constructor: bool, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
-        """
-        Return (args, kwargs) matching the argspec object
-
-        :param argspec: argspec to use
-        :type argspec: argspec
-        :param constructor: is it a constructor ?
-        :type constructor: bool
-        :param args:
-        :type args:
-        :param kwargs:
-        :type kwargs:
-        :return: (args, kwargs) matching the function signature
-        :rtype: tuple
-        """
-        call_kwarg = kwargs if argspec.keywords else {k: kwargs[k] for k in kwargs if k in argspec.args}
-        call_args = args if argspec.varargs else args[: len(argspec.args) - (1 if constructor else 0)]
-        return call_args, call_kwarg
-
-    argspec_args = argspec_args_legacy
 
 
 def ensure_list(param: Any) -> list[Any]:
