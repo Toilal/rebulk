@@ -8,11 +8,12 @@ from typing import TYPE_CHECKING, Any
 from rebulk.pattern import FunctionalPattern, RePattern, StringPattern
 
 from ..chain import Chain
+from ..match import Match
 from ..rebulk import Rebulk
 from ..validators import chars_surround
 
 if TYPE_CHECKING:
-    from ..match import Match, Matches
+    from ..match import Matches
 
 
 def test_chain_close() -> None:
@@ -489,3 +490,22 @@ def test_chain_breaker_defaults2() -> None:
     matches[0].value = 1
     matches[1].value = 2
     matches[2].value = 3
+
+
+def test_group_by_match_index_sorts_unordered_input() -> None:
+    # groupby only groups consecutive equal keys, so _group_by_match_index must
+    # sort by match_index first; otherwise unordered matches split (and overwrite)
+    # groups sharing an index.
+    matches: list[Match] = []
+    for start, match_index in ((0, 2), (5, 0), (10, 1), (15, 2)):
+        match = Match(start, start + 1, name="test")
+        match.match_index = match_index
+        matches.append(match)
+
+    grouped = Chain._group_by_match_index(matches)
+
+    assert sorted(grouped) == [0, 1, 2]
+    assert [m.start for m in grouped[0]] == [5]
+    assert [m.start for m in grouped[1]] == [10]
+    # both match_index=2 matches are kept, in their original relative order
+    assert [m.start for m in grouped[2]] == [0, 15]

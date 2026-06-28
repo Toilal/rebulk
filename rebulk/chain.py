@@ -216,7 +216,10 @@ class Chain(Pattern, Builder):
     @staticmethod
     def _group_by_match_index(matches: Iterable[Match]) -> dict[int, list[Match]]:
         grouped_matches_dict: dict[int, list[Match]] = {}
-        for match_index, match in itertools.groupby(matches, lambda m: m.match_index):
+        # groupby only groups consecutive equal keys, so sort by match_index first
+        # to avoid splitting (and overwriting) groups when matches are unordered.
+        sorted_matches = sorted(matches, key=lambda m: m.match_index)
+        for match_index, match in itertools.groupby(sorted_matches, lambda m: m.match_index):
             grouped_matches_dict[match_index] = list(match)
         return grouped_matches_dict
 
