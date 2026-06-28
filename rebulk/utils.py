@@ -102,15 +102,28 @@ def is_iterable(obj: Any) -> bool:
 
 def extend_safe(target: list[_T], source: Iterable[_T]) -> None:
     """
-    Extends source list to target list only if elements doesn't exists in target list.
+    Extends target with elements from source that are not already present.
+
+    Uses a set for O(1) membership checks when elements are hashable (the common
+    case: patterns and rules are deduplicated on every ``matches()`` call), and
+    falls back to linear membership when they are not (e.g. unhashable
+    introspected property values).
+
     :param target:
     :type target: list
     :param source:
     :type source: list
     """
-    for elt in source:
-        if elt not in target:
-            target.append(elt)
+    try:
+        seen = set(target)
+        for elt in source:
+            if elt not in seen:
+                target.append(elt)
+                seen.add(elt)
+    except TypeError:  # unhashable element: fall back to linear membership checks
+        for elt in source:
+            if elt not in target:
+                target.append(elt)
 
 
 class _Ref:
