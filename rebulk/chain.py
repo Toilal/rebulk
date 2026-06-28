@@ -324,7 +324,7 @@ class ChainPart(BasePattern):
         if max_match_index + 1 < self.repeater_start:
             raise _InvalidChainException
 
-    def chain(self) -> Any:
+    def chain(self) -> Chain:
         """
         Add patterns chain, using configuration from this chain
 
@@ -354,7 +354,7 @@ class ChainPart(BasePattern):
         """
         return self._hidden
 
-    def regex(self, *pattern: Any, **kwargs: Any) -> Any:
+    def regex(self, *pattern: Any, **kwargs: Any) -> ChainPart:
         """
         Add re pattern
 
@@ -365,9 +365,11 @@ class ChainPart(BasePattern):
         :return:
         :rtype:
         """
-        return self._chain.regex(*pattern, **kwargs)
+        # The builder's regex/string/functional are typed `-> Self` (Chain), but
+        # Chain.pattern() yields a ChainPart, which is what is actually returned.
+        return cast("ChainPart", self._chain.regex(*pattern, **kwargs))
 
-    def functional(self, *pattern: Any, **kwargs: Any) -> Any:
+    def functional(self, *pattern: Any, **kwargs: Any) -> ChainPart:
         """
         Add functional pattern
 
@@ -378,9 +380,9 @@ class ChainPart(BasePattern):
         :return:
         :rtype:
         """
-        return self._chain.functional(*pattern, **kwargs)
+        return cast("ChainPart", self._chain.functional(*pattern, **kwargs))
 
-    def string(self, *pattern: Any, **kwargs: Any) -> Any:
+    def string(self, *pattern: Any, **kwargs: Any) -> ChainPart:
         """
         Add string pattern
 
@@ -391,7 +393,7 @@ class ChainPart(BasePattern):
         :return:
         :rtype:
         """
-        return self._chain.string(*pattern, **kwargs)
+        return cast("ChainPart", self._chain.string(*pattern, **kwargs))
 
     def close(self) -> Any:
         """
