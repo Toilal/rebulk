@@ -105,6 +105,11 @@ select = [
 python_version = "3.10"
 files = ["rebulk"]
 strict = true
+
+[[tool.mypy.overrides]]
+# `regex` (the optional `native` extra) ships no type information; scope the
+# relaxation to it instead of silencing missing imports across the whole project.
+module = ["regex.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
