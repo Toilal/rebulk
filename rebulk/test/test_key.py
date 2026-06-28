@@ -5,7 +5,10 @@ Tests for typed Key retrieval (POC for type-safe value access).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, TypedDict
+
+import pytest
 
 from ..key import Key
 from ..rebulk import Rebulk
@@ -26,6 +29,22 @@ def test_key_scalar_retrieval() -> None:
     assert matches[year] == 2008
     assert matches.all(year) == [2008]
     assert matches[title] == "Big Buck Bunny"
+
+
+def test_key_rejects_structured_value_type() -> None:
+    @dataclass
+    class Movie:
+        year: int
+        title: str
+
+    class MovieDict(TypedDict):
+        year: int
+        title: str
+
+    with pytest.raises(TypeError, match=r"Matches\.to"):
+        Key("movie", Movie)
+    with pytest.raises(TypeError, match=r"Matches\.to"):
+        Key("movie", MovieDict)
 
 
 def test_key_missing_returns_none() -> None:
