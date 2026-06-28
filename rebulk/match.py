@@ -230,8 +230,10 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :return: set of matches
         :rtype: list[Match]
         """
-        predicate = kwargs.get("predicate")
-        index = kwargs.get("index")
+        predicate = kwargs.pop("predicate", None)
+        index = kwargs.pop("index", None)
+        if kwargs:
+            raise TypeError(f"named() got unexpected keyword arguments {list(kwargs)}")
         name_list: list[str] = []
         extras: list[Any] = []
         for arg in names:

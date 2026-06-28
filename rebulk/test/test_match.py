@@ -606,6 +606,11 @@ class TestNamedMultiple:
         matches = self._matches()
         assert matches.named("nope", "nada") == []
 
+    def test_unexpected_keyword_rejected(self) -> None:
+        matches = self._matches()
+        with pytest.raises(TypeError, match="unexpected keyword"):
+            matches.named("title", indx=0)  # type: ignore[call-overload]
+
 
 if TYPE_CHECKING:
 
