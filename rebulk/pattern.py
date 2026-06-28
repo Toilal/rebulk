@@ -20,6 +20,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
 
 
+def _callable_or_none(value: Any) -> Callable[..., Any] | None:
+    """Return ``value`` if it is callable, else ``None``."""
+    return value if callable(value) else None
+
+
 class BasePattern(metaclass=ABCMeta):
     """
     Base class for Pattern like objects
@@ -144,21 +149,9 @@ class Pattern(BasePattern, metaclass=ABCMeta):
         self._log_level = log_level
         self._properties = properties
         self.defined_at = debug.defined_at()
-        self.post_processor: Callable[..., Any] | None
-        if not callable(post_processor):
-            self.post_processor = None
-        else:
-            self.post_processor = post_processor
-        self.pre_match_processor: Callable[..., Any] | None
-        if not callable(pre_match_processor):
-            self.pre_match_processor = None
-        else:
-            self.pre_match_processor = pre_match_processor
-        self.post_match_processor: Callable[..., Any] | None
-        if not callable(post_match_processor):
-            self.post_match_processor = None
-        else:
-            self.post_match_processor = post_match_processor
+        self.post_processor = _callable_or_none(post_processor)
+        self.pre_match_processor = _callable_or_none(pre_match_processor)
+        self.post_match_processor = _callable_or_none(post_match_processor)
 
     @property
     def log_level(self) -> int:
@@ -517,32 +510,22 @@ class RePattern(Pattern):
                 for i in range(1, pattern.groups + 1):
                     name = names.get(i, main_match.name)
                     if self.repeated_captures:
-                        for start, end in match_object.spans(i):
-                            child_match = Match(
-                                start,
-                                end,
-                                name=name,
-                                parent=main_match,
-                                pattern=self,
-                                input_string=input_string,
-                                **self._children_match_kwargs,
-                            )
-                            if child_match:
-                                main_match.children.append(child_match)
+                        spans = match_object.spans(i)
                     else:
-                        start, end = match_object.span(i)
-                        if start > -1 and end > -1:
-                            child_match = Match(
-                                start,
-                                end,
-                                name=name,
-                                parent=main_match,
-                                pattern=self,
-                                input_string=input_string,
-                                **self._children_match_kwargs,
-                            )
-                            if child_match:
-                                main_match.children.append(child_match)
+                        span = match_object.span(i)
+                        spans = [span] if span[0] > -1 and span[1] > -1 else []
+                    for child_start, child_end in spans:
+                        child_match = Match(
+                            child_start,
+                            child_end,
+                            name=name,
+                            parent=main_match,
+                            pattern=self,
+                            input_string=input_string,
+                            **self._children_match_kwargs,
+                        )
+                        if child_match:
+                            main_match.children.append(child_match)
 
             if main_match:
                 yield main_match
