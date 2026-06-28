@@ -18,6 +18,13 @@ before *"is it type-safe?"*.
 The guiding test for every item below: *would a guessit-style consumer write less, clearer
 code with this?*
 
+> **TL;DR (see §6 Decisions).** "v5" is **not** a big-bang refactor. Almost nothing forces a
+> breaking change: the valuable work is *additive* and mostly already shipped in 4.2.x
+> (`Key`, `to()`, `named(*names)`). Keep shipping additive features on **4.x** — guessit picks
+> them up within its `rebulk<5` pin. `Rebulk[Ctx]` is **dropped** (use a `TypedDict`
+> convention), nested models **deferred**, `to_dict` **kept**, Python stays **`>=3.10`** until
+> 3.10's EOL (Oct 2026). A `v5.0.0` is reserved for the day a real break is actually needed.
+
 ## 2. Already shipped (4.2.x — the foundation)
 
 These landed before v5 and are the base the rest builds on:
@@ -78,7 +85,7 @@ longer a `Builder` subclass; build chains through `.chain()` as documented."
 
 ---
 
-### 3.2 Typed `context` — `Rebulk[Ctx]` (the expensive one)
+### 3.2 Typed `context` — `Rebulk[Ctx]` — ❌ dropped (use the `TypedDict` convention)
 
 **Problem.** `context: dict[str, Any]` flows through ~everything (323 sites across 7 modules:
 `matches()`, `when/then`, `disabled(context)`, processors). It is the last big `Any` in the
@@ -159,7 +166,7 @@ matches[RELEASED]   # -> date | None
 
 ---
 
-### 3.4 Nested / record models — `to(list[Model])`
+### 3.4 Nested / record models — `to(list[Model])` — ⏸ deferred (no demand)
 
 **Problem.** `to(list[Movie])` is currently rejected: a `Matches` is a *flat* sequence with
 no notion of a "record", so there's no canonical way to group matches into N items. (Note:
@@ -220,11 +227,20 @@ Dependency order (do earlier items first to avoid rework):
    `Rebulk[Ctx]` genericity unless 3.10/3.11 are dropped.
 5. **3.4 nested models** — defer until demand exists.
 
-**Does this need a major bump?** Most items are additive (could ship as 4.x minors). A
-**v5 major** is justified only if we also: (a) make `Chain` formally not-a-`Builder` and
-accept the rare break, and/or (b) bump the minimum Python (enabling PEP 696 for `Rebulk[Ctx]`
-and dropping the last dead-code paths). Recommendation: batch the (small) breaking bits into
-one **v5.0.0** so users migrate once, ship the additive bits as they're ready.
+**Does this need a major bump? No — "v5" is not a big-bang.** The investigation of the open
+questions (§6) showed almost nothing *forces* a major:
+
+- The main consumer, **guessit, pins `rebulk>=4.2.2,<5`** — so it picks up every additive
+  4.x release automatically, and will only adopt a v5 deliberately. That makes 4.x the right
+  vehicle for the additive work (most of it).
+- No item *requires* a break: `Rebulk[Ctx]` is dropped in favour of a convention (§3.2),
+  nested models are deferred (§3.4), `to_dict` stays (§3.5), and the Chain decoupling (§3.1)
+  is a cleanliness refactor that can be done **non-breaking**.
+
+**Recommendation: keep shipping additive features as 4.x minors** (guessit benefits within its
+`<5` pin). Reserve **v5.0.0** for the day a real break is actually needed — most likely the
+routine **drop of Python 3.10 after its EOL (Oct 2026)** — and batch any breaking bits then so
+users migrate once.
 
 ---
 
@@ -258,11 +274,38 @@ one **v5.0.0** so users migrate once, ship the additive bits as they're ready.
 
 ---
 
-## 6. Open questions
+## 6. Decisions
 
-1. **Major bump or not?** Batch the small breaks into v5.0.0, or keep shipping additive 4.x
-   and avoid the `Chain` break entirely (keep it a `Builder` but deprecated)?
-2. **Minimum Python for v5** — keep 3.10, or drop to 3.11/3.12 to unlock PEP 696 defaults
-   (and a cleaner `Rebulk[Ctx]`) without a `typing_extensions` runtime dep?
-3. **`to_dict` future** — soft-deprecate in favour of `to()`, or keep as a first-class API?
-4. **Nested models** — is there a real consumer? (guessit currently isn't one.)
+The originally-open questions, resolved with data from the ecosystem (mainly guessit, the
+primary consumer: it pins `rebulk>=4.2.2,<5` and floors at Python `>=3.10`).
+
+1. **Major bump? → No forced major; ship additive on 4.x.** Nothing currently forces a break.
+   guessit's `<5` pin means it auto-consumes additive 4.x and adopts v5 only deliberately, so
+   4.x is the right vehicle for the additive work. Cut **v5.0.0** only when a real break is
+   needed (most likely the Python-3.10 EOL drop), and batch breaks then.
+
+2. **Minimum Python? → Keep `>=3.10`; do not bump for typing.** The only driver for a bump
+   was `Rebulk[Ctx]` + PEP 696 defaults (native 3.13+ only). Since `Rebulk[Ctx]` is dropped
+   (see 4) and `typing_extensions` is a `TYPE_CHECKING`-only import (must stay off the runtime
+   deps), there is no reason to bump. Drop 3.10 as routine maintenance after its **EOL in
+   October 2026**, not before — and note guessit also floors at 3.10.
+
+3. **`to_dict` future? → Keep it first-class; do not deprecate.** guessit builds its public
+   output on `matches.to_dict(...)` (`api.py`) plus internal `match.children.to_dict()`.
+   Deprecating it would force churn on the #1 consumer for little gain. Action: document
+   `to()` / `Key` as the typed path for new code, and type the `enforce_list=True` shape as
+   `dict[str, list[Any]]`.
+
+4. **`Rebulk[Ctx]` generic context? → Dropped.** Too invasive (would make every `Rule`
+   generic), poor ergonomics, and blocked on either a runtime `typing_extensions` dep or an
+   aggressive 3.13 floor. Use the lightweight `TypedDict`-convention (§3.2) instead — works on
+   3.10, zero deps.
+
+5. **Nested models (`to(list[Model])`)? → Deferred indefinitely.** No demand in the guessit
+   audit and no other known consumer. Keep the explicit rejection with a helpful message;
+   implement only if a concrete need appears.
+
+**Net effect on the roadmap.** "v5" is *not* a big-bang refactor. The valuable work is
+additive and largely already shipped (4.2.x: `Key`, `to()`, `named(*names)`). Continue on
+**4.x**; the only genuinely-v5 items are the optional Chain cleanup (do non-breaking) and the
+eventual Python-3.10 drop.
