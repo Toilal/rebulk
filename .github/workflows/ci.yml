@@ -42,6 +42,10 @@ jobs:
         env:
           REBULK_REGEX_ENABLED: ${{ matrix.regex }}
 
+      - name: Coverage report
+        # Fails the job below the fail_under threshold set in .coveragerc.
+        run: uv run --no-sync coverage report
+
       - name: Build
         run: uv build
 

@@ -6,5 +6,8 @@ omit =
     rebulk/__version__.py
     rebulk/test/*
 [report]
+# Current coverage is ~96% on both backends; 95 is a floor that catches real
+# regressions without flaking on minor per-interpreter/per-backend differences.
+fail_under = 95
 exclude_lines =
     pragma: no cover
