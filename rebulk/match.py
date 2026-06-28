@@ -1164,7 +1164,11 @@ class Match:
         return self.end - self.start
 
     def __hash__(self) -> int:
-        return hash(Match) + hash(self.start) + hash(self.end) + hash(self.value)
+        # Hash on the span only (a subset of the __eq__ fields), never on the
+        # mutable value: a match kept in a set/dict must stay findable after its
+        # value is changed. Equal matches still share a hash; same-span matches
+        # with different values collide harmlessly and __eq__ tells them apart.
+        return hash((Match, self.start, self.end))
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Match):
