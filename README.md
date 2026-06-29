@@ -557,15 +557,16 @@ datetime.date(2008, 1, 2)
 ```
 
 A single `key=` wires one match name and formatter. For a `children=True`
-pattern that exposes several named groups, pass `keys=` instead: each key's
-converter is registered under its name as a per-name formatter, and an explicit
-per-pattern `formatter` entry still overrides it.
+pattern that exposes several named groups, pass a sequence of keys to the same
+`key=` parameter instead: each key's converter is registered under its name as a
+per-name formatter, and an explicit per-pattern `formatter` entry still
+overrides it.
 
 ```python
 >>> season = Key("season", int)
 >>> episode = Key("episode", int)
 >>> matches = Rebulk().regex(r'S(?P<season>\d+)E(?P<episode>\d+)',
-...                          keys=[season, episode], children=True) \
+...                          key=[season, episode], children=True) \
 ...                   .matches("Show.S03E07.mkv")
 >>> matches[season]
 3

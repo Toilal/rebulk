@@ -83,7 +83,7 @@ def test_keys_children_per_name_formatter() -> None:
     season = Key("season", int)
     episode = Key("episode", int)
 
-    bulk = Rebulk().regex(r"S(?P<season>\d+)E(?P<episode>\d+)", keys=[season, episode], children=True)
+    bulk = Rebulk().regex(r"S(?P<season>\d+)E(?P<episode>\d+)", key=[season, episode], children=True)
     matches = bulk.matches("Show.S03E07.mkv")
 
     assert matches[season] == 3
@@ -96,7 +96,7 @@ def test_keys_multiple_children_values() -> None:
 
     bulk = Rebulk().regex(
         r"S(?P<season>\d+)(?:E(?P<episode>\d+))+",
-        keys=[season, episode],
+        key=[season, episode],
         children=True,
     )
     matches = bulk.matches("Show.S03E07.mkv")
@@ -113,7 +113,7 @@ def test_keys_preserve_explicit_per_name_formatter() -> None:
     # the key would apply plain str, the override upper-cases instead.
     bulk = Rebulk().regex(
         r"S(?P<season>\d+)E(?P<episode>\w+)",
-        keys=[season, episode],
+        key=[season, episode],
         formatter={"episode": str.upper},
         children=True,
     )
@@ -127,12 +127,19 @@ def test_keys_rejects_single_formatter_callable() -> None:
     season = Key("season", int)
 
     with pytest.raises(TypeError, match=r"per-name formatter"):
-        Rebulk().regex(r"(?P<season>\d+)", keys=[season], formatter=int, children=True)
+        Rebulk().regex(r"(?P<season>\d+)", key=[season], formatter=int, children=True)
 
 
 def test_keys_none_is_noop() -> None:
     year = Key("year", int)
-    matches = Rebulk().regex(r"\d{4}", key=year, keys=None).matches("born in 1984")
+    matches = Rebulk().regex(r"\d{4}", key=None).regex(r"\d{4}", key=year).matches("born in 1984")
+
+    assert matches[year] == 1984
+
+
+def test_keys_empty_sequence_is_noop() -> None:
+    year = Key("year", int)
+    matches = Rebulk().regex(r"\d{4}", key=[]).regex(r"\d{4}", key=year).matches("born in 1984")
 
     assert matches[year] == 1984
 
@@ -142,7 +149,7 @@ def test_declare_keys_inherited_per_name_formatter() -> None:
     episode = Key("episode", int)
 
     bulk = Rebulk().declare_keys(season, episode)
-    # No keys=/formatter= on the pattern: the converters are inherited from the registry.
+    # No key=/formatter= on the pattern: the converters are inherited from the registry.
     bulk.regex(r"S(?P<season>\d+)E(?P<episode>\d+)", children=True)
     matches = bulk.matches("Show.S03E07.mkv")
 
@@ -204,9 +211,9 @@ def test_keys_does_not_mutate_caller_formatter_dict() -> None:
     season = Key("season", int)
     episode = Key("episode", int)
     shared = {"episode": str.upper}
-    Rebulk().regex(r"S(?P<season>\d+)E(?P<episode>\w+)", keys=[season, episode], formatter=shared, children=True)
+    Rebulk().regex(r"S(?P<season>\d+)E(?P<episode>\w+)", key=[season, episode], formatter=shared, children=True)
 
-    # keys= must not leak the season converter into the caller's dict.
+    # key= must not leak the season converter into the caller's dict.
     assert shared == {"episode": str.upper}
 
 
