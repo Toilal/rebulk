@@ -45,7 +45,13 @@ Everything below is **remaining** v5 work.
 
 Each item: **Problem → Proposed API (with before/after) → Breaking? → Effort → Migration.**
 
-### 3.1 Decouple `Chain` from `Builder` (architecture)
+### 3.1 Decouple `Chain` from `Builder` (architecture) — ✅ shipped (v5.0.0)
+
+**Status.** Implemented: `Chain` is now a plain `Pattern`; a new `ChainBuilder` (sharing a
+`PatternFactory` base with `Builder`) assembles it. The circular import and the Liskov
+`# type: ignore[override]` are gone, and the fluent chain is fully typed end to end. Breaking
+(`Chain` is no longer a `Builder`; `.chain()` returns a `ChainBuilder`) → cut in v5.0.0. The
+original analysis below is kept for reference.
 
 **Problem.** `class Chain(Pattern, Builder)` inherits from both, which:
 - forces a deferred `from .chain import Chain` inside `Builder.build_chain` (circular import);

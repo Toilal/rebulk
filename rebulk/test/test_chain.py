@@ -116,7 +116,7 @@ def test_chain_with_validators() -> None:
 
 def test_matches_docs() -> None:
     rebulk = (
-        Rebulk()  # type: ignore[attr-defined]
+        Rebulk()
         .regex_defaults(flags=re.IGNORECASE)
         .defaults(children=True, formatter={"episode": int, "version": int})
         .chain()
@@ -149,7 +149,7 @@ def test_matches() -> None:
     input_string = "1849testtestxxfixfux_foxabc1849testtestxoptionalfoxabc"
 
     chain = (
-        rebulk.chain()  # type: ignore[attr-defined]
+        rebulk.chain()
         .functional(digit)
         .string("test")
         .hidden()
@@ -215,7 +215,7 @@ def test_matches() -> None:
 
 def test_matches_2() -> None:
     rebulk = (
-        Rebulk()  # type: ignore[attr-defined]
+        Rebulk()
         .regex_defaults(flags=re.IGNORECASE)
         .defaults(children=True, formatter={"episode": int, "version": int})
         .chain()
