@@ -136,7 +136,10 @@ jobs:
             range="origin/${{ github.base_ref }}..HEAD"
           else
             before="${{ github.event.before }}"
-            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            # No usable "before": a new branch (empty/zero sha) or a force-push
+            # whose "before" commit is now orphaned and unreachable here.
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] \
+              || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
               range="HEAD~1..HEAD"
             else
               range="$before..${{ github.sha }}"
