@@ -640,6 +640,25 @@ or `TypedDict` is rejected, as a flat match sequence has no record grouping.
 
 ```
 
+Keys declared with `declare_keys` are carried on the resulting `Matches` (as
+`matches.declared_keys`) and used by `to` to close the typing loop: a model
+field whose type contradicts the declared `value_type` of a key with the same
+name raises `TypeError`, instead of silently building an ill-typed result. A
+`list[...]` field is checked against the declared *element* type, and fields
+with no matching declared key are left untouched.
+
+```python
+>>> @dataclass
+... class Wrong:
+...     season: str   # declared as int by the key above
+>>> Rebulk().declare_keys(season).regex(r'S(?P<season>\d+)', children=True) \
+...        .matches("S03").to(Wrong)
+Traceback (most recent call last):
+    ...
+TypeError: Wrong field 'season' typed <class 'str'> contradicts declared key 'season' of value_type <class 'int'>
+
+```
+
 Markers
 =======
 

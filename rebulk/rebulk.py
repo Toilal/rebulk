@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from .key import Key
     from .pattern import Pattern
 
 log = getLogger(__name__).log
@@ -123,6 +124,9 @@ class Rebulk(Builder):
         if context is None:
             context = {}
 
+        if not self.disabled(context):
+            matches.declared_keys = self.effective_keys(context)
+
         self._matches_patterns(matches, context)
 
         self._execute_rules(matches, context)
@@ -143,6 +147,24 @@ class Rebulk(Builder):
             if not rebulk.disabled(context):
                 extend_safe(rules, rebulk._rules)
         return rules
+
+    def effective_keys(self, context: dict[str, Any] | None = None) -> dict[str, Key[Any]]:
+        """
+        Get effective declared keys for this rebulk object and its children.
+
+        Keys declared on a child rebulk are merged in (without overriding the
+        parent's), so the returned registry mirrors the patterns actually run.
+        :param context:
+        :type context:
+        :return:
+        :rtype:
+        """
+        keys: dict[str, Key[Any]] = dict(self._keys)
+        for rebulk in self._rebulks:
+            if not rebulk.disabled(context):
+                for name, key in rebulk._keys.items():
+                    keys.setdefault(name, key)
+        return keys
 
     def _execute_rules(self, matches: Matches, context: dict[str, Any]) -> None:
         """

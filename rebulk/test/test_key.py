@@ -239,6 +239,46 @@ def test_declare_keys_inherited_in_chain() -> None:
     assert matches[version] == 2
 
 
+def test_declared_keys_carried_on_matches() -> None:
+    season = Key("season", int)
+    episode = Key("episode", int)
+
+    matches = Rebulk().declare_keys(season, episode).matches("Show.S03E07.mkv")
+
+    assert matches.declared_keys == {"season": season, "episode": episode}
+
+
+def test_declared_keys_empty_without_declaration() -> None:
+    # key= wires a pattern but does not populate the declared registry.
+    year = Key("year", int)
+    matches = Rebulk().regex(r"\d{4}", key=year).matches("1984")
+
+    assert matches.declared_keys == {}
+
+
+def test_effective_keys_merges_children() -> None:
+    season = Key("season", int)
+    episode = Key("episode", int)
+
+    child = Rebulk().declare_keys(episode)
+    parent = Rebulk().declare_keys(season).rebulk(child)
+
+    assert parent.effective_keys() == {"season": season, "episode": episode}
+
+    # Effective keys flow onto the produced Matches too.
+    matches = parent.matches("nothing")
+    assert matches.declared_keys == {"season": season, "episode": episode}
+
+
+def test_effective_keys_parent_wins_over_child() -> None:
+    parent_key = Key("dup", int)
+    child_key = Key("dup", str)
+
+    parent = Rebulk().declare_keys(parent_key).rebulk(Rebulk().declare_keys(child_key))
+
+    assert parent.effective_keys() == {"dup": parent_key}
+
+
 if TYPE_CHECKING:
 
     def _reveal_types() -> None:
