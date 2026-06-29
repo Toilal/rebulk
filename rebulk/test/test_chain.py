@@ -509,3 +509,17 @@ def test_group_by_match_index_sorts_unordered_input() -> None:
     assert [m.start for m in grouped[1]] == [10]
     # both match_index=2 matches are kept, in their original relative order
     assert [m.start for m in grouped[2]] == [0, 15]
+
+
+def test_nested_chain() -> None:
+    # A chain whose single part is itself a chain (a then b), matched end to end.
+    rebulk = Rebulk()
+    nested = rebulk.chain(children=True).chain()
+    nested.regex(r"(?P<a>a)").regex(r"(?P<b>b)")
+
+    assert nested.close() is rebulk
+
+    matches = rebulk.matches("ab")
+
+    assert [m.value for m in matches.named("a")] == ["a"]
+    assert [m.value for m in matches.named("b")] == ["b"]

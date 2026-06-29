@@ -216,7 +216,7 @@ class ChainBuilder(PatternFactory):
     ``chain`` nests another chain and ``close`` returns the owning builder.
     """
 
-    def __init__(self, parent: Any, chain: Chain) -> None:
+    def __init__(self, parent: Builder | ChainBuilder, chain: Chain) -> None:
         super().__init__()
         self._parent = parent
         self._chain = chain
