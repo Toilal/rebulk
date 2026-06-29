@@ -702,6 +702,21 @@ iterable).
 
 ```
 
+A functional pattern emits its match names dynamically, so they cannot be read
+off the pattern statically. Rather than allowlisting them, declare the names the
+callable emits via `properties` — a `{name: [values]}` mapping `check_keys`
+reads as the names that pattern can produce (the values are unused here). This
+keeps the key statically accounted for instead of silently exempted:
+
+```python
+>>> part = Key('part', int)
+>>> rb = Rebulk().declare_keys(part) \
+...        .functional(lambda string: None, properties={'part': [None]})
+>>> rb.check_keys()
+[]
+
+```
+
 Markers
 =======
 
