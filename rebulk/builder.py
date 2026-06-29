@@ -9,20 +9,23 @@ from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from copy import deepcopy
 from logging import getLogger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from .chain import Chain, ChainPart
+from .formatters import default_formatter
 from .loose import set_defaults
-from .pattern import FunctionalPattern, RePattern, StringPattern
+from .pattern import FunctionalPattern, Pattern, RePattern, StringPattern
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
     from typing_extensions import Self
 
     from .key import Key
 
 log = getLogger(__name__).log
+
+_P = TypeVar("_P", bound=Pattern)
 
 
 def _apply_key(key: Key[Any] | None, kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -34,6 +37,33 @@ def _apply_key(key: Key[Any] | None, kwargs: dict[str, Any]) -> dict[str, Any]:
     if key is not None:
         kwargs.setdefault("name", key.name)
         kwargs.setdefault("formatter", key.converter)
+    return kwargs
+
+
+def _apply_keys(keys: Sequence[Key[Any]] | None, kwargs: dict[str, Any]) -> dict[str, Any]:
+    """
+    Inject several typed :class:`~rebulk.key.Key` as a per-name ``formatter``
+    dict, composing with ``children=True`` patterns that expose several named
+    groups (e.g. ``(?P<season>\\d+)(?P<episode>\\d+)``).
+
+    Each key's converter is registered under its ``name``; explicit per-name
+    entries already present in ``formatter`` are preserved (a per-pattern
+    formatter still wins over the key's converter).
+    """
+    if keys:
+        formatter = kwargs.get("formatter")
+        if formatter is None:
+            formatter = {}
+        elif isinstance(formatter, dict):
+            formatter = dict(formatter)  # copy: never mutate the caller's dict
+        else:
+            raise TypeError(
+                "keys= builds a per-name formatter dict and cannot be combined with a single "
+                "formatter callable; pass a per-name formatter dict or drop the explicit formatter"
+            )
+        for key in keys:
+            formatter.setdefault(key.name, key.converter)
+        kwargs["formatter"] = formatter
     return kwargs
 
 
@@ -69,6 +99,40 @@ class PatternFactory:
         self._string_defaults: dict[str, Any] = {}
         self._functional_defaults: dict[str, Any] = {}
         self._chain_defaults: dict[str, Any] = {}
+        self._keys: dict[str, Key[Any]] = {}
+
+    def declare_keys(self, *keys: Key[Any]) -> Self:
+        """
+        Declare typed :class:`~rebulk.key.Key` once for this builder.
+
+        Every pattern built afterwards inherits each key's converter as a
+        per-name formatter for the matching group name, unless it defines its
+        own formatter for that name (an explicit per-pattern formatter still
+        wins). This gives a single source of truth for the common conversion of
+        named groups exposed by ``children=True`` patterns, while per-pattern
+        overrides preserve formatter variance across patterns.
+        """
+        for key in keys:
+            self._keys[key.name] = key
+        return self
+
+    def _inherit_keys(self, pattern: _P) -> _P:
+        """
+        Enrich a freshly built pattern with the declared keys' converters as
+        per-name formatters, without overriding any formatter it already defines.
+
+        A pattern that supplies its own formatter for a name keeps it: explicit
+        per-name entries take precedence, and a single bare-callable formatter
+        (whose ``_default_formatter`` differs from the library default) is left
+        untouched entirely. Enrichment writes to a fresh dict so the shared
+        ``defaults(formatter=...)`` / caller-owned dict is never mutated in place.
+        """
+        if not self._keys or pattern._default_formatter is not default_formatter:
+            return pattern
+        missing = {key.name: key.converter for key in self._keys.values() if key.name not in pattern.formatters}
+        if missing:
+            pattern.formatters = {**pattern.formatters, **missing}
+        return pattern
 
     def defaults(self, **kwargs: Any) -> Self:
         """
@@ -113,7 +177,7 @@ class PatternFactory:
             set_defaults(self._regex_defaults, kwargs)
             set_defaults(self._defaults, kwargs)
 
-        return RePattern(*pattern, **kwargs)
+        return self._inherit_keys(RePattern(*pattern, **kwargs))
 
     def build_string(self, *pattern: Any, **kwargs: Any) -> StringPattern:
         """
@@ -123,7 +187,7 @@ class PatternFactory:
             set_defaults(self._string_defaults, kwargs)
             set_defaults(self._defaults, kwargs)
 
-        return StringPattern(*pattern, **kwargs)
+        return self._inherit_keys(StringPattern(*pattern, **kwargs))
 
     def build_functional(self, *pattern: Any, **kwargs: Any) -> FunctionalPattern:
         """
@@ -133,7 +197,7 @@ class PatternFactory:
             set_defaults(self._functional_defaults, kwargs)
             set_defaults(self._defaults, kwargs)
 
-        return FunctionalPattern(*pattern, **kwargs)
+        return self._inherit_keys(FunctionalPattern(*pattern, **kwargs))
 
     def build_chain(self, **kwargs: Any) -> Chain:
         """
@@ -143,7 +207,7 @@ class PatternFactory:
             set_defaults(self._chain_defaults, kwargs)
             set_defaults(self._defaults, kwargs)
 
-        return Chain(**kwargs)
+        return self._inherit_keys(Chain(**kwargs))
 
 
 class Builder(PatternFactory, metaclass=ABCMeta):
@@ -166,32 +230,44 @@ class Builder(PatternFactory, metaclass=ABCMeta):
         :return:
         """
 
-    def regex(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> Self:
+    def regex(
+        self, *pattern: Any, key: Key[Any] | None = None, keys: Sequence[Key[Any]] | None = None, **kwargs: Any
+    ) -> Self:
         """
         Add re pattern
 
         :param key: optional typed key wiring up the match name and value type.
+        :param keys: optional typed keys wiring up a per-name formatter dict, for
+            ``children=True`` patterns exposing several named groups.
         :return: self
         """
-        return self.pattern(self.build_re(*pattern, **_apply_key(key, kwargs)))
+        return self.pattern(self.build_re(*pattern, **_apply_keys(keys, _apply_key(key, kwargs))))
 
-    def string(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> Self:
+    def string(
+        self, *pattern: Any, key: Key[Any] | None = None, keys: Sequence[Key[Any]] | None = None, **kwargs: Any
+    ) -> Self:
         """
         Add string pattern
 
         :param key: optional typed key wiring up the match name and value type.
+        :param keys: optional typed keys wiring up a per-name formatter dict, for
+            ``children=True`` patterns exposing several named groups.
         :return: self
         """
-        return self.pattern(self.build_string(*pattern, **_apply_key(key, kwargs)))
+        return self.pattern(self.build_string(*pattern, **_apply_keys(keys, _apply_key(key, kwargs))))
 
-    def functional(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> Self:
+    def functional(
+        self, *pattern: Any, key: Key[Any] | None = None, keys: Sequence[Key[Any]] | None = None, **kwargs: Any
+    ) -> Self:
         """
         Add functional pattern
 
         :param key: optional typed key wiring up the match name and value type.
+        :param keys: optional typed keys wiring up a per-name formatter dict, for
+            ``children=True`` patterns exposing several named groups.
         :return: self
         """
-        return self.pattern(self.build_functional(*pattern, **_apply_key(key, kwargs)))
+        return self.pattern(self.build_functional(*pattern, **_apply_keys(keys, _apply_key(key, kwargs))))
 
     def chain(self, **kwargs: Any) -> ChainBuilder:
         """
@@ -227,29 +303,36 @@ class ChainBuilder(PatternFactory):
         self._functional_defaults = deepcopy(source._functional_defaults)
         self._string_defaults = deepcopy(source._string_defaults)
         self._chain_defaults = deepcopy(source._chain_defaults)
+        self._keys = dict(source._keys)
 
     def _add(self, pattern: Any) -> ChainPart:
         part = ChainPart(self, pattern)
         self._chain.parts.append(part)
         return part
 
-    def regex(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> ChainPart:
+    def regex(
+        self, *pattern: Any, key: Key[Any] | None = None, keys: Sequence[Key[Any]] | None = None, **kwargs: Any
+    ) -> ChainPart:
         """
         Add a re pattern to the chain.
         """
-        return self._add(self.build_re(*pattern, **_apply_key(key, kwargs)))
+        return self._add(self.build_re(*pattern, **_apply_keys(keys, _apply_key(key, kwargs))))
 
-    def string(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> ChainPart:
+    def string(
+        self, *pattern: Any, key: Key[Any] | None = None, keys: Sequence[Key[Any]] | None = None, **kwargs: Any
+    ) -> ChainPart:
         """
         Add a string pattern to the chain.
         """
-        return self._add(self.build_string(*pattern, **_apply_key(key, kwargs)))
+        return self._add(self.build_string(*pattern, **_apply_keys(keys, _apply_key(key, kwargs))))
 
-    def functional(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> ChainPart:
+    def functional(
+        self, *pattern: Any, key: Key[Any] | None = None, keys: Sequence[Key[Any]] | None = None, **kwargs: Any
+    ) -> ChainPart:
         """
         Add a functional pattern to the chain.
         """
-        return self._add(self.build_functional(*pattern, **_apply_key(key, kwargs)))
+        return self._add(self.build_functional(*pattern, **_apply_keys(keys, _apply_key(key, kwargs))))
 
     def chain(self, **kwargs: Any) -> ChainBuilder:
         """
