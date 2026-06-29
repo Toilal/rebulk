@@ -26,6 +26,20 @@ DEBUG: bool = False
 LOG_LEVEL: int = logging.DEBUG
 
 
+def _truthy_env(name: str) -> bool:
+    """True when environment variable ``name`` holds an affirmative value."""
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Optional, opt-in contract check (off by default, no cost in production): when
+# enabled, ``Rebulk.matches`` asserts that every named match value produced by a
+# pattern matches the ``value_type`` of the same-named declared ``Key`` (see
+# ``declare_keys``), turning the declared type into an enforced contract. Flip it
+# on from the environment (``REBULK_CHECK_DECLARED_KEYS=1``) — e.g. in CI or for a
+# downstream corpus run — or by setting this flag directly.
+CHECK_DECLARED_KEYS: bool = _truthy_env("REBULK_CHECK_DECLARED_KEYS")
+
+
 class Frame(namedtuple("Frame", ["lineno", "package", "name", "filename"])):
     """
     Stack frame representation.

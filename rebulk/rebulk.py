@@ -8,6 +8,7 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, cast
 
+from . import debug
 from .builder import Builder
 from .match import Matches
 from .processors import ConflictSolver, PrivateRemover
@@ -128,6 +129,12 @@ class Rebulk(Builder):
             matches.declared_keys = self.effective_keys(context)
 
         self._matches_patterns(matches, context)
+
+        # Validate formatter output against declared Key.value_type *before* rules
+        # run: the contract is about the value a pattern's formatter produced, not
+        # about matches that a rule later renames/relocates onto a declared name.
+        if debug.CHECK_DECLARED_KEYS:
+            matches.check_declared_keys()
 
         self._execute_rules(matches, context)
 

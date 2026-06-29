@@ -659,6 +659,27 @@ TypeError: Wrong field 'season' typed <class 'str'> contradicts declared key 'se
 
 ```
 
+The declared `value_type` only describes the *output*; the actual conversion is
+the per-pattern formatter, which `declare_keys` lets a pattern override. An
+opt-in contract check verifies the two agree: when enabled, `matches` asserts
+that every named match value is an instance of the declared key's `value_type`,
+raising `TypeError` on a mismatch (a `None` value, a `value=`-mapped literal that
+never went through the converter, are exempt). It is **off by default** (zero
+cost in production) — turn it on in development or CI to catch a formatter
+override that does not produce the declared type:
+
+```python
+>>> from rebulk import debug
+>>> debug.CHECK_DECLARED_KEYS = True   # or env REBULK_CHECK_DECLARED_KEYS=1
+>>> bad = Rebulk().declare_keys(season).regex(r'S(?P<season>\d+)', formatter={'season': str}, children=True)
+>>> bad.matches("S03")
+Traceback (most recent call last):
+    ...
+TypeError: match 'season' value '03' of type 'str' does not match declared key 'season' value_type <class 'int'>
+>>> debug.CHECK_DECLARED_KEYS = False
+
+```
+
 Markers
 =======
 
