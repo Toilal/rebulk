@@ -542,6 +542,17 @@ returns `T | None`, and `matches.all(key)` returns `list[T]`.
 
 ```
 
+For values that aren't built straight from a string, pass an explicit
+`formatter` (a `(str) -> T` converter); the key stays fully typed as `T`.
+
+```python
+>>> from datetime import date
+>>> released = Key("released", date, formatter=date.fromisoformat)
+>>> Rebulk().regex(r'\d{4}-\d{2}-\d{2}', key=released).matches("on 2008-01-02")[released]
+datetime.date(2008, 1, 2)
+
+```
+
 You can also project the matches onto a typed dataclass with `to`. Each field
 is filled from matches sharing its name: a `list[...]` field collects all
 values, any other field takes the first, and unmatched fields fall back to
