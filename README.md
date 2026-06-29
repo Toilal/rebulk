@@ -680,6 +680,27 @@ TypeError: match 'season' value '03' of type 'str' does not match declared key '
 
 ```
 
+A declared key binds by *name*, so a typo or a name kept after its pattern was
+removed silently no-ops. `check_keys` guards against that: it returns the
+declared key names that no built pattern can produce (its `name`, regex group
+names, and declared `properties`, across the rebulk and its children). The full
+pattern set is considered regardless of `disabled`, so the result is
+deterministic — assert it in a test so a typo fails fast instead of doing
+nothing. A name produced only by a rule (e.g. `RenameMatch`) or dynamically by a
+functional pattern is not statically detectable; pass such names — or any other
+intentionally pattern-less key — to `allowed_unused` (a single name or an
+iterable).
+
+```python
+>>> rb = Rebulk().declare_keys(Key('season', int), Key('seson', int)) \
+...        .regex(r'S(?P<season>\d+)', children=True)
+>>> rb.check_keys()
+['seson']
+>>> rb.check_keys(allowed_unused=['seson'])
+[]
+
+```
+
 Markers
 =======
 

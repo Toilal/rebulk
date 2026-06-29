@@ -10,20 +10,44 @@ from typing import TYPE_CHECKING, Any, cast
 
 from . import debug
 from .builder import Builder
+from .chain import Chain
 from .match import Matches
+from .pattern import Pattern, RePattern
 from .processors import ConflictSolver, PrivateRemover
 from .rules import CustomRule, Rules
 from .utils import extend_safe
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     from typing_extensions import Self
 
     from .key import Key
-    from .pattern import Pattern
 
 log = getLogger(__name__).log
+
+
+def _producible_names(pattern: Pattern) -> set[str]:
+    """
+    Names a pattern can emit: any name it declares via ``properties``, its own
+    ``name``, every regex group name, and — for a :class:`~rebulk.chain.Chain` —
+    the names of its parts. Private/marker names are included so a key targeting
+    one is not flagged as unused.
+
+    This mirrors the name extraction in :class:`~rebulk.introspector.PatternDescription`
+    but is intentionally *inclusive* (it keeps private/marker names), whereas
+    introspection filters them out for its public-properties view.
+    """
+    names: set[str] = set(pattern.properties)
+    if pattern.name:
+        names.add(pattern.name)
+    if isinstance(pattern, RePattern):
+        for compiled in pattern.patterns:
+            names.update(compiled.groupindex)
+    elif isinstance(pattern, Chain):
+        for part in pattern.parts:
+            names |= _producible_names(part.pattern)
+    return names
 
 
 class Rebulk(Builder):
@@ -172,6 +196,44 @@ class Rebulk(Builder):
                 for name, key in rebulk._keys.items():
                     keys.setdefault(name, key)
         return keys
+
+    def check_keys(self, *, allowed_unused: str | Iterable[str] = ()) -> list[str]:
+        """
+        Return declared key names that no built pattern can produce (typo guard).
+
+        A declared :class:`~rebulk.key.Key` binds its converter/type to a match
+        name (see :meth:`~rebulk.builder.PatternFactory.declare_keys`); a typo or
+        a name kept after its pattern was removed silently no-ops. This compares
+        every declared key name against the names every pattern *can* emit — its
+        ``name`` plus regex group names, across this rebulk and its children —
+        and returns the declared names matched by none, sorted.
+
+        The full pattern set is considered regardless of ``disabled`` (a key
+        whose patterns are all disabled by config is still legitimately declared),
+        so the result is deterministic and config-independent: ideal to assert in
+        a test (``assert not rb.check_keys()``) so a typo fails fast in CI rather
+        than silently doing nothing.
+
+        Only names a *pattern* can emit are considered (its ``name``, regex group
+        names, and declared ``properties``). A name produced solely by a rule
+        (e.g. ``RenameMatch``/``AppendMatch``) or dynamically by a functional
+        pattern is not detectable statically; pass such names — and any other
+        intentionally pattern-less key — via ``allowed_unused`` (a single name or
+        an iterable of names) to exempt them.
+        """
+        declared: dict[str, Key[Any]] = dict(self._keys)
+        patterns: list[Pattern] = list(self._patterns)
+        for rebulk in self._rebulks:
+            for name, key in rebulk._keys.items():
+                declared.setdefault(name, key)
+            patterns.extend(rebulk._patterns)
+        if not declared:
+            return []
+        produced: set[str] = set()
+        for pattern in patterns:
+            produced |= _producible_names(pattern)
+        allowed = {allowed_unused} if isinstance(allowed_unused, str) else set(allowed_unused)
+        return sorted(name for name in declared if name not in produced and name not in allowed)
 
     def _execute_rules(self, matches: Matches, context: dict[str, Any]) -> None:
         """
