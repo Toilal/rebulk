@@ -393,6 +393,117 @@ def test_check_declared_keys_unnamed_and_undeclared_are_ignored() -> None:
     matches.check_declared_keys()  # no raise
 
 
+def test_check_keys_flags_typo() -> None:
+    season = Key("season", int)
+    typo = Key("seson", int)  # never produced by the pattern below
+    rb = Rebulk().declare_keys(season, typo).regex(r"S(?P<season>\d+)", children=True)
+
+    assert rb.check_keys() == ["seson"]
+
+
+def test_check_keys_clean_when_all_match() -> None:
+    season = Key("season", int)
+    episode = Key("episode", int)
+    rb = Rebulk().declare_keys(season, episode).regex(r"S(?P<season>\d+)E(?P<episode>\d+)", children=True)
+
+    assert rb.check_keys() == []
+
+
+def test_check_keys_matches_pattern_name_not_only_groups() -> None:
+    # A key can target a pattern's name (string/functional/named regex), not only
+    # a regex group name.
+    year = Key("year", int)
+    rb = Rebulk().declare_keys(year).regex(r"\d{4}", name="year")
+
+    assert rb.check_keys() == []
+
+
+def test_check_keys_no_declared_keys_is_empty() -> None:
+    assert Rebulk().regex(r"\d{4}", name="year").check_keys() == []
+
+
+def test_check_keys_allowlist_exempts_intentional_unused() -> None:
+    season = Key("season", int)
+    extra = Key("extra", str)  # intentionally declared without a producing pattern
+    rb = Rebulk().declare_keys(season, extra).regex(r"S(?P<season>\d+)", children=True)
+
+    assert rb.check_keys() == ["extra"]
+    assert rb.check_keys(allowed_unused=["extra"]) == []
+    # A bare string is treated as a single name (not iterated char by char).
+    assert rb.check_keys(allowed_unused="extra") == []
+
+
+def test_check_keys_honors_pattern_declared_properties() -> None:
+    # A pattern (e.g. functional) that emits a name dynamically can declare it via
+    # `properties`; check_keys honors that declaration.
+    season = Key("season", int)
+    rb = Rebulk().declare_keys(season).functional(lambda string: None, properties={"season": [None]})
+
+    assert rb.check_keys() == []
+
+
+def test_check_keys_rule_produced_name_needs_allowlist() -> None:
+    # A name produced only by a rule (not a pattern) is not statically detectable,
+    # so it is reported unless allowlisted — documents the known limitation.
+    from ..rules import RenameMatch, Rule
+
+    year = Key("year", int)
+
+    class RenameRawToYear(Rule):
+        consequence = RenameMatch("year")
+
+        def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+            return matches.named("raw_year")
+
+    rb = Rebulk().declare_keys(year).regex(r"(?P<raw_year>\d{4})", children=True).rules(RenameRawToYear)
+
+    assert rb.check_keys() == ["year"]
+    assert rb.check_keys(allowed_unused="year") == []
+
+
+def test_check_keys_considers_children_rebulks() -> None:
+    season = Key("season", int)
+    episode = Key("episode", int)
+    typo = Key("epsiode", int)
+
+    child = Rebulk().regex(r"E(?P<episode>\d+)", children=True)
+    parent = Rebulk().declare_keys(season, episode, typo).regex(r"S(?P<season>\d+)", children=True).rebulk(child)
+
+    # 'episode' is produced by the child; only the typo 'epsiode' is unused.
+    assert parent.check_keys() == ["epsiode"]
+
+
+def test_check_keys_considers_disabled_patterns_full_set() -> None:
+    # A key whose only producing pattern lives in a disabled child rebulk is NOT
+    # flagged: the typo guard considers the full built pattern set, not the
+    # config-gated effective one.
+    season = Key("season", int)
+    episode = Key("episode", int)
+
+    disabled_child = Rebulk(disabled=lambda context: True).regex(r"E(?P<episode>\d+)", children=True)
+    parent = Rebulk().declare_keys(season, episode).regex(r"S(?P<season>\d+)", children=True).rebulk(disabled_child)
+
+    assert parent.check_keys() == []
+
+
+def test_check_keys_in_chain() -> None:
+    episode = Key("episode", int)
+    version = Key("version", int)
+    typo = Key("verison", int)
+
+    rb = (
+        Rebulk()
+        .declare_keys(episode, version, typo)
+        .defaults(children=True)
+        .chain()
+        .regex(r"e(?P<episode>\d{1,4})")
+        .regex(r"v(?P<version>\d+)")
+        .close()
+    )
+
+    assert rb.check_keys() == ["verison"]
+
+
 if TYPE_CHECKING:
 
     def _reveal_types() -> None:
