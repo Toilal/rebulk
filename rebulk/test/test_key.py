@@ -6,6 +6,7 @@ Tests for typed Key retrieval (POC for type-safe value access).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import TYPE_CHECKING, TypedDict
 
 import pytest
@@ -29,6 +30,20 @@ def test_key_scalar_retrieval() -> None:
     assert matches[year] == 2008
     assert matches.all(year) == [2008]
     assert matches[title] == "Big Buck Bunny"
+
+
+def test_key_converter_defaults_to_value_type() -> None:
+    assert Key("year", int).converter is int
+    fmt = date.fromisoformat
+    assert Key("released", date, formatter=fmt).converter is fmt
+
+
+def test_key_with_explicit_formatter() -> None:
+    released = Key("released", date, formatter=date.fromisoformat)
+    matches = Rebulk().regex(r"\d{4}-\d{2}-\d{2}", key=released).matches("on 2008-01-02 ...")
+
+    assert matches[released] == date(2008, 1, 2)
+    assert matches.all(released) == [date(2008, 1, 2)]
 
 
 def test_key_rejects_structured_value_type() -> None:
@@ -74,5 +89,8 @@ if TYPE_CHECKING:
         assert_type(matches[year], "int | None")
         assert_type(matches.all(year), list[int])
         assert_type(matches[title], "str | None")
+        # A formatter-based key keeps the precise value type.
+        released = Key("released", date, formatter=date.fromisoformat)
+        assert_type(matches[released], "date | None")
         # Existing integer / slice access stays intact.
         assert_type(matches[0], Match)

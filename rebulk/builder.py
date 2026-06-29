@@ -27,12 +27,13 @@ log = getLogger(__name__).log
 
 def _apply_key(key: Key[Any] | None, kwargs: dict[str, Any]) -> dict[str, Any]:
     """
-    Inject a typed :class:`~rebulk.key.Key`'s name and value type (used as
-    formatter) into pattern kwargs, without overriding explicit values.
+    Inject a typed :class:`~rebulk.key.Key`'s name and converter (its explicit
+    ``formatter`` or its ``value_type``) into pattern kwargs, without overriding
+    explicit values.
     """
     if key is not None:
         kwargs.setdefault("name", key.name)
-        kwargs.setdefault("formatter", key.value_type)
+        kwargs.setdefault("formatter", key.converter)
     return kwargs
 
 
