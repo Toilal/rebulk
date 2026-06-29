@@ -358,6 +358,19 @@ def test_check_declared_keys_skips_none_value() -> None:
     matches.check_declared_keys()  # no raise
 
 
+def test_check_declared_keys_skips_private_parent(check_declared_keys: None) -> None:
+    # The private parent of a children pattern carries the raw matched substring
+    # (only the children are formatted), so it is not an instance of the declared
+    # value_type. Being internal/non-emitted, it must be skipped, not flagged.
+    bonus = Key("bonus", int)
+    bulk = Rebulk().declare_keys(bonus).regex(r"x(\d+)", name="bonus", children=True, private_parent=True)
+
+    matches = bulk.matches("x264")  # private parent value "x264" (str) must not raise
+
+    # only the emitted (non-private) child is validated, and it is the int value.
+    assert [match.value for match in matches if not match.private] == [264]
+
+
 def test_check_declared_keys_skips_value_mapped_literal() -> None:
     # A value=-mapped literal never goes through the converter; it is exempt
     # even when its type differs from the declared value_type.

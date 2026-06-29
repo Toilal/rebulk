@@ -925,18 +925,21 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         are declared); :class:`~rebulk.rebulk.Rebulk` calls it from ``matches``
         only when :data:`rebulk.debug.CHECK_DECLARED_KEYS` is enabled.
 
-        Three escape hatches keep it free of false positives:
+        Escape hatches keep it free of false positives:
 
         * a ``None`` value (an unmatched / cleared match) is skipped;
         * a ``value=``-mapped match (a hardcoded literal that never went through
           the converter) is skipped — its value is not a ``str -> value_type``
           conversion;
+        * a ``private`` match is skipped — it is internal scaffolding, not an
+          emitted value, and the parent of a ``children=True`` pattern carries
+          the raw matched substring (the formatter only runs on the children);
         * each match is checked on its own scalar value, so a name bound to
           several matches (``children``) is validated element by element.
         """
         for match in self:
             key = self.declared_keys.get(match.name) if match.name else None
-            if key is None or match.has_literal_value:
+            if key is None or match.private or match.has_literal_value:
                 continue
             value = match.value
             if value is None or isinstance(value, key.value_type):
