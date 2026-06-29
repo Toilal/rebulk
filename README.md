@@ -508,7 +508,10 @@ It has the following additional methods and properties on it.
     `Match.value` as value.
 
     if `enforce_list` is `True`, all values will be wrapped to a list,
-    even if a single value is found.
+    even if a single value is found. This form has a predictable, typed
+    shape (`MatchesDict[list]`), unlike the default which is a scalar *or*
+    a list per name. For fully typed access, prefer the typed retrieval
+    API above (`Key` and `Matches.to(...)`).
 
     If `details` is True, `Match.value` objects are replaced with
     complete `Match` object.
