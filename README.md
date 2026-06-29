@@ -556,6 +556,40 @@ datetime.date(2008, 1, 2)
 
 ```
 
+A single `key=` wires one match name and formatter. For a `children=True`
+pattern that exposes several named groups, pass `keys=` instead: each key's
+converter is registered under its name as a per-name formatter, and an explicit
+per-pattern `formatter` entry still overrides it.
+
+```python
+>>> season = Key("season", int)
+>>> episode = Key("episode", int)
+>>> matches = Rebulk().regex(r'S(?P<season>\d+)E(?P<episode>\d+)',
+...                          keys=[season, episode], children=True) \
+...                   .matches("Show.S03E07.mkv")
+>>> matches[season]
+3
+>>> matches[episode]
+7
+
+```
+
+To avoid repeating the same per-name formatters across many patterns, declare
+the keys once on the builder with `declare_keys`. Every pattern built afterwards
+inherits each key's converter as a per-name formatter for the matching group
+name; a pattern that defines its own formatter for that name still overrides it,
+so formatter variance across patterns is preserved.
+
+```python
+>>> rb = Rebulk().declare_keys(season, episode)
+>>> _ = rb.regex(r'S(?P<season>\d+)E(?P<episode>\d+)', children=True)   # inherits int, int
+>>> _ = rb.regex(r'(?P<season>\d+)x(?P<episode>\d+)', children=True)    # inherits int, int
+>>> matches = rb.matches("Show.S03E07.mkv")
+>>> matches[season], matches[episode]
+(3, 7)
+
+```
+
 You can also project the matches onto a typed dataclass with `to`. Each field
 is filled from matches sharing its name: a `list[...]` field collects all
 values, any other field takes the first, and unmatched fields fall back to
