@@ -10,7 +10,18 @@ import dataclasses
 import itertools
 from collections import OrderedDict, defaultdict
 from collections.abc import Callable, Iterable, KeysView, MutableSequence
-from typing import TYPE_CHECKING, Any, TypeVar, cast, get_args, get_origin, get_type_hints, is_typeddict, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypeVar,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+    is_typeddict,
+    overload,
+)
 
 from .debug import defined_at
 from .key import Key
@@ -22,11 +33,17 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 M = TypeVar("M")
+_V = TypeVar("_V")
 
 
-class MatchesDict(OrderedDict):  # type: ignore[type-arg]
+class MatchesDict(OrderedDict[str | None, _V]):
     """
     A custom dict with matches property.
+
+    Generic over the value type: ``to_dict(enforce_list=True)`` returns a
+    ``MatchesDict[list[Any]]`` (every name maps to a list), the other modes a
+    ``MatchesDict[Any]`` (a name maps to a single value or a list, depending on
+    the matches).
     """
 
     def __init__(self) -> None:
@@ -714,7 +731,13 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         """
         return self._tag_dict.keys()
 
-    def to_dict(self, details: bool = False, first_value: bool = False, enforce_list: bool = False) -> MatchesDict:
+    @overload
+    def to_dict(
+        self, details: bool = ..., first_value: bool = ..., *, enforce_list: Literal[True]
+    ) -> MatchesDict[list[Any]]: ...
+    @overload
+    def to_dict(self, details: bool = ..., first_value: bool = ..., enforce_list: bool = ...) -> MatchesDict[Any]: ...
+    def to_dict(self, details: bool = False, first_value: bool = False, enforce_list: bool = False) -> MatchesDict[Any]:
         """
         Converts matches to a dict object.
         :param details if True, values will be complete Match object, else it will be only string Match.value property
@@ -728,7 +751,7 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
         :return:
         :rtype: dict
         """
-        ret = MatchesDict()
+        ret: MatchesDict[Any] = MatchesDict()
         for match in sorted(self):
             value = match if details else match.value
             ret.matches[match.name].append(match)

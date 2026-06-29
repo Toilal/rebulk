@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -632,3 +632,7 @@ if TYPE_CHECKING:
         assert_type(matches.named("title", index=0), "Match | None")
         assert_type(matches.named("title", 0), "Match | None")
         assert_type(matches.named("title", lambda m: True), "list[Match]")
+
+    def _to_dict_reveal_types(matches: Matches) -> None:
+        # enforce_list=True -> every value is a list (predictable, typable)
+        assert_type(matches.to_dict(enforce_list=True)["x"], list[Any])
