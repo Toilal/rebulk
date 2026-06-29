@@ -60,7 +60,7 @@ The library is built around a pipeline: **Patterns -> Matches -> Rules**.
   - `FunctionalPattern` - user-provided callable
   Each pattern produces `Match` objects and applies validators, formatters, and pre/post match processors.
 
-- **`chain.py` / `Chain`** - Ordered composition of patterns with repeaters (like regex quantifiers `?`, `*`, `+`, `{n,m}`). Also inherits from both `Pattern` and `Builder`.
+- **`chain.py` / `Chain`** - Ordered composition of patterns with repeaters (like regex quantifiers `?`, `*`, `+`, `{n,m}`). `Chain` is a `Pattern` (matchable); it is assembled through a `ChainBuilder` (in `builder.py`, returned by `Builder.chain()`), which appends `ChainPart` objects to it. (`Builder` and `ChainBuilder` share a `PatternFactory` base for the build/defaults machinery.)
 
 - **`match.py`** - `Match` (a single match with start/end/value/name/children) and `Matches` (a list with indexed lookups by name, tag, start, end position). `MatchesDict` converts matches to an OrderedDict.
 

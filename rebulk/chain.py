@@ -8,7 +8,6 @@ from __future__ import annotations
 import itertools
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
-from .builder import Builder
 from .loose import call
 from .match import Match, Matches
 from .pattern import BasePattern, Pattern, filter_match_kwargs
@@ -17,6 +16,8 @@ from .remodule import re
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
 
+    from .builder import ChainBuilder
+
 
 class _InvalidChainException(Exception):
     """
@@ -24,18 +25,20 @@ class _InvalidChainException(Exception):
     """
 
 
-class Chain(Pattern, Builder):
+class Chain(Pattern):
     """
     Definition of a pattern chain to search for.
+
+    A ``Chain`` is a matchable :class:`~rebulk.pattern.Pattern`. It is assembled
+    through a :class:`~rebulk.builder.ChainBuilder` (returned by ``Builder.chain``),
+    which appends :class:`ChainPart` instances to :attr:`parts`.
     """
 
     def __init__(
         self,
-        parent: Any,
         chain_breaker: Callable[[Matches], bool] | None = None,
         **kwargs: Any,
     ) -> None:
-        Builder.__init__(self)
         call(Pattern.__init__, self, **kwargs)
         self._kwargs = kwargs
         self._match_kwargs = filter_match_kwargs(kwargs)
@@ -44,32 +47,7 @@ class Chain(Pattern, Builder):
             self.chain_breaker = chain_breaker
         else:
             self.chain_breaker = None
-        self.parent = parent
         self.parts: list[ChainPart] = []
-
-    def pattern(self, *pattern: Any) -> ChainPart:  # type: ignore[override]
-        """
-
-        :param pattern:
-        :return:
-        """
-        if not pattern:
-            raise ValueError("One pattern should be given to the chain")
-        if len(pattern) > 1:
-            raise ValueError("Only one pattern can be given to the chain")
-        part = ChainPart(self, pattern[0])
-        self.parts.append(part)
-        return part
-
-    def close(self) -> Any:
-        """
-        Deeply close the chain
-        :return: Rebulk instance
-        """
-        parent = self.parent
-        while isinstance(parent, Chain):
-            parent = parent.parent
-        return parent
 
     def _match(
         self,
@@ -243,12 +221,16 @@ class ChainPart(BasePattern):
     Part of a pattern chain.
     """
 
-    def __init__(self, chain: Chain, pattern: Any) -> None:
-        self._chain = chain
+    def __init__(self, builder: ChainBuilder, pattern: Any) -> None:
+        self._builder = builder
         self.pattern = pattern
         self.repeater_start: int = 1
         self.repeater_end: int | None = 1
         self._hidden = False
+
+    @property
+    def _chain(self) -> Chain:
+        return self._builder._chain
 
     @property
     def _is_chain_start(self) -> bool:
@@ -324,14 +306,11 @@ class ChainPart(BasePattern):
         if max_match_index + 1 < self.repeater_start:
             raise _InvalidChainException
 
-    def chain(self) -> Chain:
+    def chain(self) -> ChainBuilder:
         """
-        Add patterns chain, using configuration from this chain
-
-        :return:
-        :rtype:
+        Nest another patterns chain, using configuration from this chain.
         """
-        return self._chain.chain()
+        return self._builder.chain()
 
     def hidden(self, hidden: bool = True) -> ChainPart:
         """
@@ -356,44 +335,21 @@ class ChainPart(BasePattern):
 
     def regex(self, *pattern: Any, **kwargs: Any) -> ChainPart:
         """
-        Add re pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Add re pattern to the chain.
         """
-        # The builder's regex/string/functional are typed `-> Self` (Chain), but
-        # Chain.pattern() yields a ChainPart, which is what is actually returned.
-        return cast("ChainPart", self._chain.regex(*pattern, **kwargs))
+        return self._builder.regex(*pattern, **kwargs)
 
     def functional(self, *pattern: Any, **kwargs: Any) -> ChainPart:
         """
-        Add functional pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Add functional pattern to the chain.
         """
-        return cast("ChainPart", self._chain.functional(*pattern, **kwargs))
+        return self._builder.functional(*pattern, **kwargs)
 
     def string(self, *pattern: Any, **kwargs: Any) -> ChainPart:
         """
-        Add string pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Add string pattern to the chain.
         """
-        return cast("ChainPart", self._chain.string(*pattern, **kwargs))
+        return self._builder.string(*pattern, **kwargs)
 
     def close(self) -> Any:
         """
@@ -402,7 +358,7 @@ class ChainPart(BasePattern):
         :return:
         :rtype:
         """
-        return self._chain.close()
+        return self._builder.close()
 
     def repeater(self, value: Any) -> ChainPart:
         """

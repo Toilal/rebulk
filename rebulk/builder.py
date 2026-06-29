@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Base builder class for Rebulk
+Base builder classes for Rebulk
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from copy import deepcopy
 from logging import getLogger
 from typing import TYPE_CHECKING, Any
 
+from .chain import Chain, ChainPart
 from .loose import set_defaults
 from .pattern import FunctionalPattern, RePattern, StringPattern
 
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
-    from .chain import Chain
     from .key import Key
 
 log = getLogger(__name__).log
@@ -55,9 +55,12 @@ def overrides(kwargs: dict[str, Any]) -> Iterator[dict[str, Any]]:
     kwargs.update(backup)
 
 
-class Builder(metaclass=ABCMeta):
+class PatternFactory:
     """
-    Base builder class for patterns
+    Holds default keyword arguments and builds Pattern objects from them.
+
+    Shared by :class:`Builder` (the fluent pattern-registration API) and
+    :class:`ChainBuilder` (the fluent chain-assembly API).
     """
 
     def __init__(self) -> None:
@@ -67,32 +70,16 @@ class Builder(metaclass=ABCMeta):
         self._functional_defaults: dict[str, Any] = {}
         self._chain_defaults: dict[str, Any] = {}
 
-    def reset(self) -> None:
-        """
-        Reset all defaults.
-
-        :return:
-        """
-        self.__init__()  # type: ignore[misc]
-
     def defaults(self, **kwargs: Any) -> Self:
         """
         Define default keyword arguments for all patterns
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         set_defaults(kwargs, self._defaults, override=True)
         return self
 
     def regex_defaults(self, **kwargs: Any) -> Self:
         """
-        Define default keyword arguments for functional patterns.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Define default keyword arguments for regular expression patterns.
         """
         set_defaults(kwargs, self._regex_defaults, override=True)
         return self
@@ -100,10 +87,6 @@ class Builder(metaclass=ABCMeta):
     def string_defaults(self, **kwargs: Any) -> Self:
         """
         Define default keyword arguments for string patterns.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         set_defaults(kwargs, self._string_defaults, override=True)
         return self
@@ -111,10 +94,6 @@ class Builder(metaclass=ABCMeta):
     def functional_defaults(self, **kwargs: Any) -> Self:
         """
         Define default keyword arguments for functional patterns.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         set_defaults(kwargs, self._functional_defaults, override=True)
         return self
@@ -122,10 +101,6 @@ class Builder(metaclass=ABCMeta):
     def chain_defaults(self, **kwargs: Any) -> Self:
         """
         Define default keyword arguments for patterns chain.
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         set_defaults(kwargs, self._chain_defaults, override=True)
         return self
@@ -133,13 +108,6 @@ class Builder(metaclass=ABCMeta):
     def build_re(self, *pattern: Any, **kwargs: Any) -> RePattern:
         """
         Builds a new regular expression pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         with overrides(kwargs):
             set_defaults(self._regex_defaults, kwargs)
@@ -150,13 +118,6 @@ class Builder(metaclass=ABCMeta):
     def build_string(self, *pattern: Any, **kwargs: Any) -> StringPattern:
         """
         Builds a new string pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         with overrides(kwargs):
             set_defaults(self._string_defaults, kwargs)
@@ -167,13 +128,6 @@ class Builder(metaclass=ABCMeta):
     def build_functional(self, *pattern: Any, **kwargs: Any) -> FunctionalPattern:
         """
         Builds a new functional pattern
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
         """
         with overrides(kwargs):
             set_defaults(self._functional_defaults, kwargs)
@@ -183,29 +137,26 @@ class Builder(metaclass=ABCMeta):
 
     def build_chain(self, **kwargs: Any) -> Chain:
         """
-        Builds a new patterns chain
-
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Builds a new (unregistered) patterns chain.
         """
-        from .chain import Chain
-
         with overrides(kwargs):
             set_defaults(self._chain_defaults, kwargs)
             set_defaults(self._defaults, kwargs)
 
-        chain = Chain(self, **kwargs)
-        chain._defaults = deepcopy(self._defaults)
-        chain._regex_defaults = deepcopy(self._regex_defaults)
-        chain._functional_defaults = deepcopy(self._functional_defaults)
-        chain._string_defaults = deepcopy(self._string_defaults)
-        chain._chain_defaults = deepcopy(self._chain_defaults)
+        return Chain(**kwargs)
 
-        return chain
+
+class Builder(PatternFactory, metaclass=ABCMeta):
+    """
+    Base fluent builder: registers patterns via :meth:`pattern` and exposes the
+    ``string`` / ``regex`` / ``functional`` / ``chain`` methods.
+    """
+
+    def reset(self) -> None:
+        """
+        Reset all defaults.
+        """
+        self.__init__()  # type: ignore[misc]
 
     @abstractmethod
     def pattern(self, *pattern: Any) -> Self:
@@ -219,11 +170,8 @@ class Builder(metaclass=ABCMeta):
         """
         Add re pattern
 
-        :param pattern:
-        :type pattern:
         :param key: optional typed key wiring up the match name and value type.
         :return: self
-        :rtype: Rebulk
         """
         return self.pattern(self.build_re(*pattern, **_apply_key(key, kwargs)))
 
@@ -231,11 +179,8 @@ class Builder(metaclass=ABCMeta):
         """
         Add string pattern
 
-        :param pattern:
-        :type pattern:
         :param key: optional typed key wiring up the match name and value type.
         :return: self
-        :rtype: Rebulk
         """
         return self.pattern(self.build_string(*pattern, **_apply_key(key, kwargs)))
 
@@ -243,26 +188,84 @@ class Builder(metaclass=ABCMeta):
         """
         Add functional pattern
 
-        :param pattern:
-        :type pattern:
         :param key: optional typed key wiring up the match name and value type.
         :return: self
-        :rtype: Rebulk
         """
-        functional = self.build_functional(*pattern, **_apply_key(key, kwargs))
-        return self.pattern(functional)
+        return self.pattern(self.build_functional(*pattern, **_apply_key(key, kwargs)))
 
-    def chain(self, **kwargs: Any) -> Chain:
+    def chain(self, **kwargs: Any) -> ChainBuilder:
         """
-        Add patterns chain, using configuration of this rebulk
+        Add a patterns chain, using configuration of this builder.
 
-        :param pattern:
-        :type pattern:
-        :param kwargs:
-        :type kwargs:
-        :return:
-        :rtype:
+        Returns a :class:`ChainBuilder` to assemble the chain parts; call
+        ``.close()`` to get back to this builder.
         """
         chain = self.build_chain(**kwargs)
         self.pattern(chain)
-        return chain
+        builder = ChainBuilder(self, chain)
+        builder._inherit_defaults(self)
+        return builder
+
+
+class ChainBuilder(PatternFactory):
+    """
+    Fluent builder for the parts of a :class:`~rebulk.chain.Chain`.
+
+    Each ``string`` / ``regex`` / ``functional`` call appends a
+    :class:`~rebulk.chain.ChainPart` (on which ``repeater`` can be called);
+    ``chain`` nests another chain and ``close`` returns the owning builder.
+    """
+
+    def __init__(self, parent: Builder | ChainBuilder, chain: Chain) -> None:
+        super().__init__()
+        self._parent = parent
+        self._chain = chain
+
+    def _inherit_defaults(self, source: PatternFactory) -> None:
+        self._defaults = deepcopy(source._defaults)
+        self._regex_defaults = deepcopy(source._regex_defaults)
+        self._functional_defaults = deepcopy(source._functional_defaults)
+        self._string_defaults = deepcopy(source._string_defaults)
+        self._chain_defaults = deepcopy(source._chain_defaults)
+
+    def _add(self, pattern: Any) -> ChainPart:
+        part = ChainPart(self, pattern)
+        self._chain.parts.append(part)
+        return part
+
+    def regex(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> ChainPart:
+        """
+        Add a re pattern to the chain.
+        """
+        return self._add(self.build_re(*pattern, **_apply_key(key, kwargs)))
+
+    def string(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> ChainPart:
+        """
+        Add a string pattern to the chain.
+        """
+        return self._add(self.build_string(*pattern, **_apply_key(key, kwargs)))
+
+    def functional(self, *pattern: Any, key: Key[Any] | None = None, **kwargs: Any) -> ChainPart:
+        """
+        Add a functional pattern to the chain.
+        """
+        return self._add(self.build_functional(*pattern, **_apply_key(key, kwargs)))
+
+    def chain(self, **kwargs: Any) -> ChainBuilder:
+        """
+        Nest another chain as a part of this chain.
+        """
+        chain = self.build_chain(**kwargs)
+        self._add(chain)
+        nested = ChainBuilder(self, chain)
+        nested._inherit_defaults(self)
+        return nested
+
+    def close(self) -> Any:
+        """
+        Close the chain and return the owning (non-chain) builder.
+        """
+        parent = self._parent
+        while isinstance(parent, ChainBuilder):
+            parent = parent._parent
+        return parent
