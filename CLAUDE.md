@@ -42,6 +42,9 @@ uv run pre-commit run --all-files
 
 # Run the suite against the `regex` backend (see remodule.py)
 REBULK_REGEX_ENABLED=1 uv run pytest
+
+# Run the suite with the declared-key value_type contract check on (see debug.py)
+REBULK_CHECK_DECLARED_KEYS=1 uv run pytest
 ```
 
 CI runs the full matrix twice — with `REBULK_REGEX_ENABLED` set to `0` and `1` — so changes touching pattern matching must pass under both the stdlib `re` and the `regex` backend.

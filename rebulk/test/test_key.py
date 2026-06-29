@@ -8,17 +8,17 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import date
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 import pytest
 
+from .. import debug
 from ..key import Key
+from ..match import Match, Matches
 from ..rebulk import Rebulk
 
 if TYPE_CHECKING:
     from typing_extensions import assert_type
-
-    from ..match import Match
 
 
 def test_key_scalar_retrieval() -> None:
@@ -176,9 +176,12 @@ def test_declare_keys_explicit_formatter_overrides_registry() -> None:
     assert matches.all(episode) == [4]
 
 
-def test_declare_keys_bare_callable_formatter_wins() -> None:
+def test_declare_keys_bare_callable_formatter_wins(monkeypatch: pytest.MonkeyPatch) -> None:
     # A single bare-callable formatter is the pattern's explicit choice and must
     # win over the registry converter (variance preserved, even without a dict).
+    # This deliberately produces a str for an int key, so force the contract
+    # check off (it stays runnable under REBULK_CHECK_DECLARED_KEYS=1).
+    monkeypatch.setattr(debug, "CHECK_DECLARED_KEYS", False)
     year = Key("year", int)
     bulk = Rebulk().declare_keys(year).regex(r"\d{4}", name="year", formatter=lambda s: f"Y{s}")
     matches = bulk.matches("born in 1984")
@@ -277,6 +280,117 @@ def test_effective_keys_parent_wins_over_child() -> None:
     parent = Rebulk().declare_keys(parent_key).rebulk(Rebulk().declare_keys(child_key))
 
     assert parent.effective_keys() == {"dup": parent_key}
+
+
+@pytest.fixture
+def check_declared_keys(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Enable the opt-in declared-key value_type contract check for a test."""
+    monkeypatch.setattr(debug, "CHECK_DECLARED_KEYS", True)
+
+
+def test_truthy_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for raw, expected in [("1", True), ("true", True), ("YES", True), (" on ", True), ("0", False), ("", False)]:
+        monkeypatch.setenv("REBULK_TEST_FLAG", raw)
+        assert debug._truthy_env("REBULK_TEST_FLAG") is expected
+    monkeypatch.delenv("REBULK_TEST_FLAG", raising=False)
+    assert debug._truthy_env("REBULK_TEST_FLAG") is False
+
+
+def test_check_declared_keys_disabled_is_silent(monkeypatch: pytest.MonkeyPatch) -> None:
+    # When the check is off, a contract violation is silent (no behaviour change).
+    monkeypatch.setattr(debug, "CHECK_DECLARED_KEYS", False)
+    season = Key("season", int)
+    bulk = Rebulk().declare_keys(season).regex(r"S(?P<season>\d+)", formatter={"season": str}, children=True)
+    matches = bulk.matches("S03")
+
+    # str value despite the int declaration: the check is off, so it is not flagged.
+    assert matches[0].value == "03"
+
+
+def test_check_declared_keys_passes_on_matching_type(check_declared_keys: None) -> None:
+    season = Key("season", int)
+    episode = Key("episode", int)
+    bulk = Rebulk().declare_keys(season, episode).regex(r"S(?P<season>\d+)E(?P<episode>\d+)", children=True)
+
+    # Inherited int converters produce ints: the contract holds, no raise.
+    matches = bulk.matches("S03E07")
+    assert matches[season] == 3
+    assert matches[episode] == 7
+
+
+def test_check_declared_keys_raises_on_formatter_override_mismatch(check_declared_keys: None) -> None:
+    season = Key("season", int)
+    # A per-pattern override returns str while the key declares int.
+    bulk = Rebulk().declare_keys(season).regex(r"S(?P<season>\d+)", formatter={"season": str}, children=True)
+
+    with pytest.raises(TypeError, match=r"declared key 'season' value_type"):
+        bulk.matches("S03")
+
+
+def test_check_declared_keys_validates_each_match() -> None:
+    # A name bound to several matches is validated value by value: the first
+    # converts to int (ok), the second to str (mismatch) -> raise.
+    episode = Key("episode", int)
+    matches = Matches()
+    matches.declared_keys = {"episode": episode}
+    matches.append(Match(0, 1, name="episode", input_string="7 8", formatter=int))
+    matches.append(Match(2, 3, name="episode", input_string="7 8", formatter=str))
+
+    with pytest.raises(TypeError, match=r"declared key 'episode' value_type"):
+        matches.check_declared_keys()
+
+
+def test_check_declared_keys_skips_none_value() -> None:
+    # A formatted value of None (e.g. a converter that returns None) is exempt
+    # rather than flagged against the declared scalar type.
+    year = Key("year", int)
+    matches = Matches()
+    matches.declared_keys = {"year": year}
+    matches.append(Match(0, 4, name="year", input_string="1984", formatter=lambda _raw: None))
+
+    matches.check_declared_keys()  # no raise
+
+
+def test_check_declared_keys_skips_value_mapped_literal() -> None:
+    # A value=-mapped literal never goes through the converter; it is exempt
+    # even when its type differs from the declared value_type.
+    season = Key("season", int)
+    matches = Matches()
+    matches.declared_keys = {"season": season}
+    matches.append(Match(0, 7, value="literal", name="season", input_string="literal"))
+
+    matches.check_declared_keys()  # no raise
+
+
+def test_check_declared_keys_runs_before_rules(check_declared_keys: None) -> None:
+    from ..rules import RenameMatch, Rule
+
+    season = Key("season", int)
+
+    class RenameLabelToSeason(Rule):
+        consequence = RenameMatch("season")
+
+        def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+            return matches.named("label")
+
+    bulk = Rebulk().declare_keys(season).regex(r"(?P<label>[a-z]+)", children=True).rules(RenameLabelToSeason)
+    matches = bulk.matches("hello")
+
+    # A rule renames a str match onto 'season' (declared int). The check runs
+    # before rules, so this legitimate rule-driven rename is not flagged.
+    assert matches[0].name == "season"
+    assert matches[0].value == "hello"
+
+
+def test_check_declared_keys_unnamed_and_undeclared_are_ignored() -> None:
+    season = Key("season", int)
+    matches = Matches()
+    matches.declared_keys = {"season": season}
+    # An unnamed match and a match with an undeclared name are both skipped.
+    matches.append(Match(0, 3, value="x", input_string="x y z"))
+    matches.append(Match(4, 5, name="other", input_string="x y z", formatter=str))
+
+    matches.check_declared_keys()  # no raise
 
 
 if TYPE_CHECKING:

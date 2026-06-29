@@ -910,6 +910,42 @@ class _BaseMatches(MutableSequence):  # type: ignore[type-arg]
                 kwargs[name] = values[0]
         return model(**kwargs)
 
+    def check_declared_keys(self) -> None:
+        """
+        Assert each named match value matches its declared ``Key.value_type``.
+
+        For every match whose name has a declared :class:`~rebulk.key.Key` (see
+        :meth:`~rebulk.builder.PatternFactory.declare_keys`), check that the
+        formatted value is an instance of the key's ``value_type``, raising
+        ``TypeError`` on a mismatch. This turns the declared output type into an
+        enforced contract, catching a per-pattern ``formatter`` override that does
+        not actually produce the declared type.
+
+        It is meant to run in development / CI (it does nothing useful unless keys
+        are declared); :class:`~rebulk.rebulk.Rebulk` calls it from ``matches``
+        only when :data:`rebulk.debug.CHECK_DECLARED_KEYS` is enabled.
+
+        Three escape hatches keep it free of false positives:
+
+        * a ``None`` value (an unmatched / cleared match) is skipped;
+        * a ``value=``-mapped match (a hardcoded literal that never went through
+          the converter) is skipped — its value is not a ``str -> value_type``
+          conversion;
+        * each match is checked on its own scalar value, so a name bound to
+          several matches (``children``) is validated element by element.
+        """
+        for match in self:
+            key = self.declared_keys.get(match.name) if match.name else None
+            if key is None or match.has_literal_value:
+                continue
+            value = match.value
+            if value is None or isinstance(value, key.value_type):
+                continue
+            raise TypeError(
+                f"match {match.name!r} value {value!r} of type {type(value).__name__!r} "
+                f"does not match declared key {key.name!r} value_type {key.value_type!r}"
+            )
+
     @overload
     def __setitem__(self, index: int, match: Match) -> None: ...
 
@@ -1052,6 +1088,17 @@ class Match:
         :rtype:
         """
         self._value = value
+
+    @property
+    def has_literal_value(self) -> bool:
+        """
+        True when :attr:`value` returns a hardcoded literal (set via ``value=``)
+        rather than a formatter / raw-text result.
+
+        Mirrors the truthiness test the :attr:`value` getter uses, so it reflects
+        exactly when ``value`` short-circuits to the stored literal.
+        """
+        return bool(self._value)
 
     @property
     def names(self) -> set[str | None]:

@@ -54,6 +54,41 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
+  declared-keys-check:
+    # Dedicated signal: run the suite with the opt-in declared-key value_type
+    # contract check enabled, turning each declared Key.value_type into an
+    # actively-enforced contract (see debug.CHECK_DECLARED_KEYS / issue #68).
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        regex: [ "1", "0" ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --no-dev --group test
+
+      - name: Sync regex backend
+        run: uv sync --no-dev --group test --extra native
+        if: ${{ matrix.regex == '1' }}
+
+      - name: Tests (declared-key contract check on)
+        run: uv run --no-sync pytest
+        env:
+          REBULK_REGEX_ENABLED: ${{ matrix.regex }}
+          REBULK_CHECK_DECLARED_KEYS: "1"
+
   pre-commit:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
