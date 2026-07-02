@@ -154,6 +154,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    environment: pypi
+
     permissions:
       contents: write   # semantic-release pushes the version commit + tag and creates the GitHub release
       id-token: write   # PyPI trusted publishing (OIDC), no long-lived token needed
