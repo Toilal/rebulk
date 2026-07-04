@@ -26,6 +26,13 @@ Install
 $ pip install rebulk
 ```
 
+Documentation
+=============
+
+Full documentation is published on GitHub Pages:
+<https://toilal.github.io/rebulk>. A preview of the in-development `develop`
+branch is available at <https://toilal.github.io/rebulk/dev/>.
+
 Usage
 =====
 
