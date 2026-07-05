@@ -1,5 +1,11 @@
 # Rebulk
 
+[![Latest Version](https://img.shields.io/pypi/v/rebulk.svg)](https://pypi.python.org/pypi/rebulk)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Toilal/rebulk/blob/develop/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Toilal/rebulk/ci.yml?branch=develop)](https://github.com/Toilal/rebulk/actions/workflows/ci.yml)
+[![Coveralls](https://img.shields.io/coveralls/github/Toilal/rebulk)](https://coveralls.io/github/Toilal/rebulk)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/relekang/python-semantic-release)
+
 Rebulk is a Python library that performs advanced searches in strings that would be
 hard to implement using the [`re` module](https://docs.python.org/3/library/re.html)
 or [string methods](https://docs.python.org/3/library/stdtypes.html#str) alone.
