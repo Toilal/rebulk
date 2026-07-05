@@ -6,6 +6,9 @@ jobs:
   test:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -55,7 +58,7 @@ jobs:
       - name: Codecov
         uses: codecov/codecov-action@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
 
   declared-keys-check:
     # Dedicated signal: run the suite with the opt-in declared-key value_type
