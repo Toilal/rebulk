@@ -5,6 +5,7 @@ Entry point functions and classes for Rebulk
 
 from __future__ import annotations
 
+import itertools
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, cast
 
@@ -18,7 +19,7 @@ from .rules import CustomRule, Rules
 from .utils import extend_safe
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Iterator
 
     from typing_extensions import Self
 
@@ -164,9 +165,30 @@ class Rebulk(Builder):
 
         return matches
 
+    def _descendants(self, context: dict[str, Any] | None, *, include_disabled: bool = False) -> list[Rebulk]:
+        """
+        Get descendant rebulk objects at any depth, depth-first in registration order.
+
+        A disabled rebulk excludes its whole subtree unless ``include_disabled`` is set. Each rebulk is
+        returned once, even when reachable through several parents or through a cycle.
+        """
+        descendants: list[Rebulk] = []
+        visited: set[Rebulk] = {self}
+        stack: list[Iterator[Rebulk]] = [iter(self._rebulks)]
+        while stack:
+            child = next(stack[-1], None)
+            if child is None:
+                stack.pop()
+            elif child not in visited:
+                visited.add(child)
+                if include_disabled or not child.disabled(context):
+                    descendants.append(child)
+                    stack.append(iter(child._rebulks))
+        return descendants
+
     def effective_rules(self, context: dict[str, Any] | None = None) -> Rules:
         """
-        Get effective rules for this rebulk object and its children.
+        Get effective rules for this rebulk object and its enabled descendants.
         :param context:
         :type context:
         :return:
@@ -174,27 +196,25 @@ class Rebulk(Builder):
         """
         rules = Rules()
         rules.extend(self._rules)
-        for rebulk in self._rebulks:
-            if not rebulk.disabled(context):
-                extend_safe(rules, rebulk._rules)
+        extend_safe(rules, itertools.chain.from_iterable(rebulk._rules for rebulk in self._descendants(context)))
         return rules
 
     def effective_keys(self, context: dict[str, Any] | None = None) -> dict[str, Key[Any]]:
         """
-        Get effective declared keys for this rebulk object and its children.
+        Get effective declared keys for this rebulk object and its enabled descendants.
 
-        Keys declared on a child rebulk are merged in (without overriding the
-        parent's), so the returned registry mirrors the patterns actually run.
+        Keys declared on a descendant rebulk are merged in (without overriding the
+        ones already collected, depth-first), so the returned registry mirrors the
+        patterns actually run.
         :param context:
         :type context:
         :return:
         :rtype:
         """
         keys: dict[str, Key[Any]] = dict(self._keys)
-        for rebulk in self._rebulks:
-            if not rebulk.disabled(context):
-                for name, key in rebulk._keys.items():
-                    keys.setdefault(name, key)
+        for rebulk in self._descendants(context):
+            for name, key in rebulk._keys.items():
+                keys.setdefault(name, key)
         return keys
 
     def check_keys(self, *, allowed_unused: str | Iterable[str] = ()) -> list[str]:
@@ -205,7 +225,7 @@ class Rebulk(Builder):
         name (see :meth:`~rebulk.builder.PatternFactory.declare_keys`); a typo or
         a name kept after its pattern was removed silently no-ops. This compares
         every declared key name against the names every pattern *can* emit — its
-        ``name`` plus regex group names, across this rebulk and its children —
+        ``name`` plus regex group names, across this rebulk and its descendants —
         and returns the declared names matched by none, sorted.
 
         The full pattern set is considered regardless of ``disabled`` (a key
@@ -223,7 +243,7 @@ class Rebulk(Builder):
         """
         declared: dict[str, Key[Any]] = dict(self._keys)
         patterns: list[Pattern] = list(self._patterns)
-        for rebulk in self._rebulks:
+        for rebulk in self._descendants(None, include_disabled=True):
             for name, key in rebulk._keys.items():
                 declared.setdefault(name, key)
             patterns.extend(rebulk._patterns)
@@ -251,16 +271,14 @@ class Rebulk(Builder):
 
     def effective_patterns(self, context: dict[str, Any] | None = None) -> list[Pattern]:
         """
-        Get effective patterns for this rebulk object and its children.
+        Get effective patterns for this rebulk object and its enabled descendants.
         :param context:
         :type context:
         :return:
         :rtype:
         """
         patterns = list(self._patterns)
-        for rebulk in self._rebulks:
-            if not rebulk.disabled(context):
-                extend_safe(patterns, rebulk._patterns)
+        extend_safe(patterns, itertools.chain.from_iterable(rebulk._patterns for rebulk in self._descendants(context)))
         return patterns
 
     def _matches_patterns(self, matches: Matches, context: dict[str, Any]) -> None:

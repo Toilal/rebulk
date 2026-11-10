@@ -24,7 +24,8 @@ runs the matching pipeline. Key methods:
 - `chain(**options) -> ChainBuilder` — start a chain of patterns (closed with `close()`).
 - `pattern(*patterns)` — add already-built `Pattern` objects.
 - `rules(*rules)` — register rules from a class, instance or module.
-- `rebulk(*rebulks)` — nest other `Rebulk` objects to compose their patterns and rules.
+- `rebulk(*rebulks)` — nest other `Rebulk` objects, at any depth, to compose their
+  patterns, rules and declared keys.
 - `defaults(**kwargs)` / `string_defaults` / `regex_defaults` / `functional_defaults` /
   `chain_defaults` — set default options for subsequently built patterns.
 - `declare_keys(*keys)` — declare typed `Key` objects whose converters are inherited by
