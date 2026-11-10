@@ -660,7 +660,8 @@ returns the effective <code>(str) -&gt; T</code> converter.</p>
 to trigger) and either <code>then(matches, when_response, context)</code> or a <code>consequence</code> class
 attribute. Class attributes <code>priority</code> (int, higher first) and <code>dependency</code> (another rule
 class) control ordering. <code>CustomRule</code> is the generic, typed rule base re-exported for
-building custom rules.</p>
+building custom rules. Rules registered as classes are equal per class, while rules
+registered as instances are compared by identity (see <a href="../rules/#rule-identity">Rule identity</a>).</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <p>Consequence classes applied when a rule triggers (used as a rule's <code>consequence</code>):</p>
 <ul>
