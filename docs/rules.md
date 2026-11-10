@@ -67,7 +67,42 @@ When several rules are registered, set the `priority` class attribute (an intege
 runs first) to order their execution, and declare a `dependency` on another `Rule` class
 to force it to run before the current one. For all rules sharing the same `priority`,
 every `when` is evaluated before any `then` is called. Rules are topologically sorted from
-these constraints.
+these constraints. A `dependency` on a class applies to every registered instance of that
+class.
+
+## Rule identity
+
+Rules from a rebulk and its children are merged into a single list of effective rules,
+in which duplicates are kept once. What counts as a duplicate depends on how the rule was
+registered:
+
+- A rule registered as a **class** (or through a module) is instantiated by rebulk, and
+  equals any other rule registered as the same class. A rule class registered by several
+  child rebulks runs once — this is how the default processors brought by each `Rebulk()`
+  run only once.
+- A rule registered as an **instance** is compared by identity. Several instances of the
+  same class, typically with different parameters, are all kept and all run; only the very
+  same object registered twice is deduplicated.
+
+```python
+>>> from rebulk import Rebulk, Rule, RemoveMatch
+
+>>> class RemoveNamed(Rule):
+...     consequence = RemoveMatch
+...
+...     def __init__(self, match_name):
+...         super().__init__()
+...         self.match_name = match_name
+...
+...     def when(self, matches, context):
+...         return matches.named(self.match_name)
+
+>>> child = Rebulk().string("quick", name="quick").string("fox", name="fox")
+>>> _ = child.rules(RemoveNamed("quick"), RemoveNamed("fox"))
+>>> Rebulk().rebulk(child).matches("The quick brown fox")
+[]
+
+```
 
 ## Default processors
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import pytest
+from __future__ import annotations
+
+from typing import Any
 
 from rebulk.test.default_rules_module import (
     RuleAppend0,
@@ -19,7 +21,7 @@ from rebulk.test.default_rules_module import (
 )
 
 from ..match import Match, Matches
-from ..rules import Rules
+from ..rules import Rule, Rules
 from . import rules_module as rm
 from .rules_module import Rule0, Rule1, Rule1Disabled, Rule2, Rule3
 
@@ -41,12 +43,65 @@ def test_rule_priority() -> None:
 
 
 def test_rules_duplicates() -> None:
-    matches = Matches([Match(1, 2)])
-
     rules = Rules(Rule1, Rule1)
 
-    with pytest.raises(ValueError):  # noqa: PT011
-        rules.execute_all_rules(matches, {})
+    assert len(rules) == 1
+
+
+class ParameterizedRule(Rule):
+    def __init__(self, value: int) -> None:
+        super().__init__()
+        self.value = value
+
+    def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+        return True
+
+    def then(self, matches: Matches, when_response: Any, context: dict[str, Any] | None) -> Any:
+        matches.append(Match(self.value, self.value + 1))
+
+
+class DependsOnParameterizedRule(Rule):
+    dependency = ParameterizedRule
+
+    def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+        return len(matches) == 2
+
+    def then(self, matches: Matches, when_response: Any, context: dict[str, Any] | None) -> Any:
+        matches.clear()
+
+
+def test_rules_distinct_instances_of_same_class() -> None:
+    first, second = ParameterizedRule(1), ParameterizedRule(3)
+    rules = Rules(first, second)
+
+    assert rules == [first, second]
+    assert first != second
+
+    matches = Matches()
+    rules.execute_all_rules(matches, {})
+
+    assert [match.span for match in matches] == [(1, 2), (3, 4)]
+
+
+def test_rules_same_instance_deduplicated() -> None:
+    rule = ParameterizedRule(1)
+
+    assert len(Rules(rule, rule)) == 1
+
+
+def test_rules_instance_not_equal_to_class_registered_rule() -> None:
+    rules = Rules(Rule1, Rule1())
+
+    assert len(rules) == 2
+
+
+def test_rules_dependency_on_class_with_several_instances() -> None:
+    rules = Rules(DependsOnParameterizedRule, ParameterizedRule(1), ParameterizedRule(3))
+
+    matches = Matches()
+    rules.execute_all_rules(matches, {})
+
+    assert len(matches) == 0
 
 
 def test_rule_disabled() -> None:
@@ -206,3 +261,16 @@ def test_rule_repr() -> None:
     assert str(Rule1()) == "<Rule1>"
     assert str(Rule2()) == "<Rule2>"
     assert str(Rule1Disabled()) == "<Disabled Rule1>"
+
+
+class DependsOnUnregisteredRule1Instance(Rule):
+    dependency = Rule1()
+
+    def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+        return False
+
+
+def test_rules_dependency_on_unregistered_instance_resolves_to_class() -> None:
+    rules = Rules(Rule1, DependsOnUnregisteredRule1Instance)
+
+    rules.execute_all_rules(Matches(), {})
