@@ -635,7 +635,8 @@ runs the matching pipeline. Key methods:</p>
 <li><code>chain(**options) -&gt; ChainBuilder</code> — start a chain of patterns (closed with <code>close()</code>).</li>
 <li><code>pattern(*patterns)</code> — add already-built <code>Pattern</code> objects.</li>
 <li><code>rules(*rules)</code> — register rules from a class, instance or module.</li>
-<li><code>rebulk(*rebulks)</code> — nest other <code>Rebulk</code> objects to compose their patterns and rules.</li>
+<li><code>rebulk(*rebulks)</code> — nest other <code>Rebulk</code> objects, at any depth, to compose their
+  patterns, rules and declared keys.</li>
 <li><code>defaults(**kwargs)</code> / <code>string_defaults</code> / <code>regex_defaults</code> / <code>functional_defaults</code> /
   <code>chain_defaults</code> — set default options for subsequently built patterns.</li>
 <li><code>declare_keys(*keys)</code> — declare typed <code>Key</code> objects whose converters are inherited by
