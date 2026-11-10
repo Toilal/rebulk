@@ -37,8 +37,10 @@ test = [
     "pytest",
     "coverage",
 ]
+docs = ["zensical"]
 dev = [
     {include-group = "test"},
+    {include-group = "docs"},
     "pre-commit",
     "ruff",
     "mypy",

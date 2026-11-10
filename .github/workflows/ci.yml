@@ -6,6 +6,9 @@ jobs:
   test:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -46,13 +49,16 @@ jobs:
         # Fails the job below the fail_under threshold set in .coveragerc.
         run: uv run --no-sync coverage report
 
+      - name: Coverage XML
+        run: uv run --no-sync coverage xml
+
       - name: Build
         run: uv build
 
-      - name: Coveralls
-        run: uvx coveralls
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      - name: Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          use_oidc: true
 
   declared-keys-check:
     # Dedicated signal: run the suite with the opt-in declared-key value_type

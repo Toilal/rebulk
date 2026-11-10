@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING, Any
 
+from ..processors import ConflictSolver, PrivateRemover
 from ..rebulk import Rebulk
-from ..rules import Rule
+from ..rules import RemoveMatch, Rule
 from . import rebulk_rules_module as rm
 
 if TYPE_CHECKING:
@@ -490,3 +492,107 @@ class TestImmutable:
 
         assert len(named) == 0
         assert len(matches) == 3
+
+
+class RemoveNamedRule(Rule):
+    consequence = RemoveMatch
+
+    def __init__(self, match_name: str) -> None:
+        super().__init__()
+        self.match_name = match_name
+
+    def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+        return matches.named(self.match_name)
+
+
+def _quick_fox_rebulk() -> Rebulk:
+    return Rebulk().string("quick", name="quick").string("fox", name="fox")
+
+
+def test_rebulk_rules_distinct_instances_registered_directly() -> None:
+    rebulk = _quick_fox_rebulk().rules(RemoveNamedRule("quick"), RemoveNamedRule("fox"))
+
+    assert len(rebulk.matches("The quick brown fox")) == 0
+
+
+def test_rebulk_rules_distinct_instances_registered_in_child() -> None:
+    child = _quick_fox_rebulk().rules(RemoveNamedRule("quick"), RemoveNamedRule("fox"))
+    rebulk = Rebulk().rebulk(child)
+
+    assert [rule.match_name for rule in rebulk.effective_rules() if isinstance(rule, RemoveNamedRule)] == [
+        "quick",
+        "fox",
+    ]
+    assert len(rebulk.matches("The quick brown fox")) == 0
+
+
+def test_rebulk_rules_class_registered_in_several_children_kept_once() -> None:
+    rebulk = Rebulk().rebulk(Rebulk().rules(rm.RemoveAllButLastYear), Rebulk().rules(rm.RemoveAllButLastYear))
+
+    effective_classes = [type(rule) for rule in rebulk.effective_rules()]
+
+    assert effective_classes.count(rm.RemoveAllButLastYear) == 1
+    assert effective_classes.count(ConflictSolver) == 1
+    assert effective_classes.count(PrivateRemover) == 1
+
+
+def test_rebulk_rules_same_instance_in_several_children_kept_once() -> None:
+    rule = RemoveNamedRule("quick")
+    rebulk = Rebulk().rebulk(Rebulk().rules(rule), Rebulk().rules(rule))
+
+    assert [r for r in rebulk.effective_rules() if isinstance(r, RemoveNamedRule)] == [rule]
+
+
+def _nested(*rebulks: Rebulk) -> Rebulk:
+    """Nest the given rebulks, each one being the child of the previous one."""
+    for parent, child in itertools.pairwise(rebulks):
+        parent.rebulk(child)
+    return rebulks[0]
+
+
+def test_rebulk_nested_patterns_at_any_depth() -> None:
+    rebulk = _nested(Rebulk(), Rebulk(), Rebulk().string("quick", name="quick"))
+
+    assert [match.value for match in rebulk.matches("The quick brown fox")] == ["quick"]
+
+
+def test_rebulk_nested_rules_at_any_depth() -> None:
+    grandchild = Rebulk().rules(RemoveNamedRule("quick"))
+    rebulk = _nested(Rebulk().string("quick", name="quick"), Rebulk(), grandchild)
+
+    assert len(rebulk.matches("The quick brown fox")) == 0
+
+
+def test_rebulk_nested_default_rules_kept_once() -> None:
+    rebulk = _nested(Rebulk(), Rebulk(), Rebulk())
+
+    effective_classes = [type(rule) for rule in rebulk.effective_rules()]
+
+    assert effective_classes == [ConflictSolver, PrivateRemover]
+
+
+def test_rebulk_nested_depth_first_registration_order() -> None:
+    first = Rebulk().string("a").rebulk(Rebulk().string("b"))
+    rebulk = Rebulk().string("root").rebulk(first, Rebulk().string("c"))
+
+    assert [pattern.patterns[0] for pattern in rebulk.effective_patterns()] == ["root", "a", "b", "c"]
+
+
+def test_rebulk_nested_disabled_rebulk_excludes_subtree() -> None:
+    disabled = Rebulk(disabled=lambda context: bool(context and context.get("off"))).rebulk(
+        Rebulk().string("quick", name="quick")
+    )
+    rebulk = Rebulk().rebulk(disabled)
+
+    assert len(rebulk.matches("The quick brown fox", {"off": True})) == 0
+    assert len(rebulk.matches("The quick brown fox", {"off": False})) == 1
+
+
+def test_rebulk_nested_shared_and_cyclic_rebulks_visited_once() -> None:
+    shared = Rebulk().string("quick", name="quick")
+    first, second = Rebulk().rebulk(shared), Rebulk().rebulk(shared)
+    rebulk = Rebulk().rebulk(first, second)
+    shared.rebulk(rebulk)
+
+    assert len(rebulk.effective_patterns()) == 1
+    assert len(rebulk.matches("The quick brown fox")) == 1
