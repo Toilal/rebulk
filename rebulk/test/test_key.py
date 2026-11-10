@@ -289,6 +289,25 @@ def test_effective_keys_parent_wins_over_child() -> None:
     assert parent.effective_keys() == {"dup": parent_key}
 
 
+def test_effective_keys_merges_descendants_at_any_depth() -> None:
+    season = Key("season", int)
+    episode = Key("episode", int)
+
+    grandchild = Rebulk().declare_keys(episode)
+    parent = Rebulk().declare_keys(season).rebulk(Rebulk().rebulk(grandchild))
+
+    assert parent.effective_keys() == {"season": season, "episode": episode}
+
+
+def test_effective_keys_excludes_disabled_subtree() -> None:
+    episode = Key("episode", int)
+
+    disabled = Rebulk(disabled=True).rebulk(Rebulk().declare_keys(episode))
+    parent = Rebulk().rebulk(disabled)
+
+    assert parent.effective_keys() == {}
+
+
 @pytest.fixture
 def check_declared_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     """Enable the opt-in declared-key value_type contract check for a test."""
@@ -491,6 +510,15 @@ def test_check_keys_considers_children_rebulks() -> None:
 
     # 'episode' is produced by the child; only the typo 'epsiode' is unused.
     assert parent.check_keys() == ["epsiode"]
+
+
+def test_check_keys_considers_descendants_at_any_depth_even_disabled() -> None:
+    season = Key("season", int)
+    typo = Key("seson", int)
+    grandchild = Rebulk(disabled=True).declare_keys(season, typo).regex(r"S(?P<season>\d+)", children=True)
+    rb = Rebulk().rebulk(Rebulk().rebulk(grandchild))
+
+    assert rb.check_keys() == ["seson"]
 
 
 def test_check_keys_considers_disabled_patterns_full_set() -> None:

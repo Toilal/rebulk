@@ -18,7 +18,17 @@ the full pipeline (pattern matching, then rules) and get back a `Matches` sequen
 ```
 
 Rebulk objects can be nested with `Rebulk.rebulk(...)` to compose several pattern sets
-into one matcher.
+into one matcher. Nesting works at any depth: patterns, rules and declared keys of every
+descendant are collected depth-first, in registration order. A disabled rebulk excludes
+its whole subtree, and a rebulk reachable through several parents is only collected once.
+
+```python
+>>> years = Rebulk().regex(r'\d{4}', name='year')
+>>> dates = Rebulk().rebulk(years)
+>>> Rebulk().string('movie').rebulk(dates).matches("movie 2024")
+[<movie:(0, 5)>, <2024:(6, 10)+name=year>]
+
+```
 
 ## String patterns
 
