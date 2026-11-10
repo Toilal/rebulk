@@ -74,6 +74,8 @@ class CustomRule(Condition, Consequence, metaclass=ABCMeta):
     dependency: ClassVar[Any] = None
     properties: ClassVar[dict[str, Any]] = {}
 
+    _class_registered: bool = False
+
     def __init__(self, log_level: int | None = None) -> None:
         self.defined_at = debug.defined_at()
         self.log_level: int
@@ -101,7 +103,16 @@ class CustomRule(Condition, Consequence, metaclass=ABCMeta):
         return f"<{self.name if self.name else self.__class__.__name__}{defined}>"
 
     def __eq__(self, other: object) -> bool:
-        return self.__class__ == other.__class__
+        """
+        Rules instantiated by rebulk from a class are equal to any other such instance of the same class,
+        so that a rule class shared by several rebulks runs once. Rules given as instances are compared by
+        identity, so that differently parameterized instances of a class are all kept.
+        """
+        if self is other:
+            return True
+        if not isinstance(other, CustomRule):
+            return NotImplemented
+        return self._class_registered and other._class_registered and self.__class__ is other.__class__
 
     def __hash__(self) -> int:
         return hash(self.__class__)
@@ -272,7 +283,7 @@ class Rules(list[CustomRule]):
             elif inspect.isclass(rule):
                 self.load_class(rule)
             else:
-                self.append(cast("CustomRule", rule))
+                self._append_unique(cast("CustomRule", rule))
 
     def load_module(self, module: ModuleType) -> None:
         """
@@ -299,7 +310,13 @@ class Rules(list[CustomRule]):
         :return:
         :rtype:
         """
-        self.append(class_())
+        rule = class_()
+        rule._class_registered = True
+        self._append_unique(rule)
+
+    def _append_unique(self, rule: CustomRule) -> None:
+        if rule not in self:
+            self.append(rule)
 
     def execute_all_rules(self, matches: Matches, context: dict[str, Any] | None) -> list[tuple[CustomRule, Any]]:
         """
@@ -314,10 +331,11 @@ class Rules(list[CustomRule]):
         :rtype:
         """
         ret: list[tuple[CustomRule, Any]] = []
+        registration_order = {id(rule): index for index, rule in enumerate(self)}
         for priority, priority_rules in groupby(sorted(self), lambda rule: rule.priority):
             sorted_rules = toposort_rules(list(priority_rules))  # Group by dependency graph toposort
             for rules_group in sorted_rules:
-                sorted_group = sorted(rules_group, key=self.index)  # Sort rules group based on initial ordering.
+                sorted_group = sorted(rules_group, key=lambda rule: registration_order[id(rule)])
                 group_log_level: int | None = None
                 for rule in sorted_group:
                     if group_log_level is None or group_log_level < rule.log_level:
@@ -365,11 +383,9 @@ def toposort_rules(rules: list[CustomRule]) -> Iterator[set[CustomRule]]:
     :rtype:
     """
     graph: dict[CustomRule, set[CustomRule]] = {}
-    class_dict: dict[type[CustomRule], CustomRule] = {}
+    rules_by_class: dict[type[CustomRule], list[CustomRule]] = {}
     for rule in rules:
-        if rule.__class__ in class_dict:
-            raise ValueError(f"Duplicate class rules are not allowed: {rule.__class__}")
-        class_dict[rule.__class__] = rule
+        rules_by_class.setdefault(rule.__class__, []).append(rule)
     for rule in rules:
         if not is_iterable(rule.dependency) and rule.dependency:
             rule_dependencies = [rule.dependency]
@@ -378,9 +394,14 @@ def toposort_rules(rules: list[CustomRule]) -> Iterator[set[CustomRule]]:
         dependencies: set[CustomRule] = set()
         if rule_dependencies:
             for dependency in rule_dependencies:
-                if inspect.isclass(dependency):
-                    dependency = class_dict.get(dependency)
-                if dependency:
-                    dependencies.add(dependency)
+                if not dependency:
+                    continue
+                if not inspect.isclass(dependency):
+                    if any(candidate is dependency for candidate in rules):
+                        dependencies.add(dependency)
+                        continue
+                    dependency = dependency.__class__
+                if dependency is not rule.__class__:
+                    dependencies.update(rules_by_class.get(dependency, ()))
         graph[rule] = dependencies
     return toposort(graph)

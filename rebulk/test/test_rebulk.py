@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from ..processors import ConflictSolver, PrivateRemover
 from ..rebulk import Rebulk
-from ..rules import Rule
+from ..rules import RemoveMatch, Rule
 from . import rebulk_rules_module as rm
 
 if TYPE_CHECKING:
@@ -490,3 +491,52 @@ class TestImmutable:
 
         assert len(named) == 0
         assert len(matches) == 3
+
+
+class RemoveNamedRule(Rule):
+    consequence = RemoveMatch
+
+    def __init__(self, match_name: str) -> None:
+        super().__init__()
+        self.match_name = match_name
+
+    def when(self, matches: Matches, context: dict[str, Any] | None) -> Any:
+        return matches.named(self.match_name)
+
+
+def _quick_fox_rebulk() -> Rebulk:
+    return Rebulk().string("quick", name="quick").string("fox", name="fox")
+
+
+def test_rebulk_rules_distinct_instances_registered_directly() -> None:
+    rebulk = _quick_fox_rebulk().rules(RemoveNamedRule("quick"), RemoveNamedRule("fox"))
+
+    assert len(rebulk.matches("The quick brown fox")) == 0
+
+
+def test_rebulk_rules_distinct_instances_registered_in_child() -> None:
+    child = _quick_fox_rebulk().rules(RemoveNamedRule("quick"), RemoveNamedRule("fox"))
+    rebulk = Rebulk().rebulk(child)
+
+    assert [rule.match_name for rule in rebulk.effective_rules() if isinstance(rule, RemoveNamedRule)] == [
+        "quick",
+        "fox",
+    ]
+    assert len(rebulk.matches("The quick brown fox")) == 0
+
+
+def test_rebulk_rules_class_registered_in_several_children_kept_once() -> None:
+    rebulk = Rebulk().rebulk(Rebulk().rules(rm.RemoveAllButLastYear), Rebulk().rules(rm.RemoveAllButLastYear))
+
+    effective_classes = [type(rule) for rule in rebulk.effective_rules()]
+
+    assert effective_classes.count(rm.RemoveAllButLastYear) == 1
+    assert effective_classes.count(ConflictSolver) == 1
+    assert effective_classes.count(PrivateRemover) == 1
+
+
+def test_rebulk_rules_same_instance_in_several_children_kept_once() -> None:
+    rule = RemoveNamedRule("quick")
+    rebulk = Rebulk().rebulk(Rebulk().rules(rule), Rebulk().rules(rule))
+
+    assert [r for r in rebulk.effective_rules() if isinstance(r, RemoveNamedRule)] == [rule]

@@ -53,7 +53,8 @@ returns the effective `(str) -> T` converter.
 to trigger) and either `then(matches, when_response, context)` or a `consequence` class
 attribute. Class attributes `priority` (int, higher first) and `dependency` (another rule
 class) control ordering. `CustomRule` is the generic, typed rule base re-exported for
-building custom rules.
+building custom rules. Rules registered as classes are equal per class, while rules
+registered as instances are compared by identity (see [Rule identity](rules.md#rule-identity)).
 
 ## Consequences
 
