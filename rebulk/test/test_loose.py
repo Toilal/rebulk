@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import gc
+from typing import Any
+
+from .. import loose
 from ..loose import call
 
 
@@ -80,3 +84,65 @@ def test_loose_kwargs_class() -> None:
 
     assert call(Dummy, v1=1, v2=2).call() == Dummy(v1=1, v2=2).call()
     assert call(Dummy, v1=1, v2=2, v3=3, v4=5).call() == Dummy(v1=1, v2=2, v3=3, v4=5).call()
+
+
+def test_argspec_cache_drops_dead_callables() -> None:
+    def build(offset: int) -> Any:
+        def func(value: int) -> int:
+            return value + offset
+
+        return func
+
+    gc.collect()
+    size = len(loose._argspecs)
+    for offset in range(100):
+        assert call(build(offset), 1) == 1 + offset
+    gc.collect()
+    assert len(loose._argspecs) == size
+
+
+def test_argspec_cache_bound_method() -> None:
+    class Dummy:
+        def method(self, value: int) -> int:
+            return value
+
+    dummy = Dummy()
+    assert call(dummy.method, 1) == dummy.method(1)
+    assert loose.getfullargspec(dummy.method) is loose.getfullargspec(dummy.method)
+    assert Dummy.method in loose._argspecs
+
+
+def test_argspec_unhashable_callable() -> None:
+    class Unhashable:
+        __hash__ = None  # type: ignore[assignment]
+
+        def __call__(self, value: int) -> int:
+            return value
+
+    assert call(Unhashable(), 1) == 1
+
+
+def test_argspec_not_weakrefable_callable() -> None:
+    class Slotted:
+        __slots__ = ()
+
+        def __call__(self, value: int) -> int:
+            return value
+
+    slotted = Slotted()
+    assert call(slotted, 1) == 1
+    assert loose.getfullargspec(slotted) is loose.getfullargspec(slotted)
+
+
+def test_argspec_cache_ignores_foreign_func_attribute() -> None:
+    def target(first: int, second: int, third: int) -> int:
+        return first + second + third
+
+    class Holder:
+        __func__ = staticmethod(target)
+
+        def __call__(self, value: int) -> int:
+            return value
+
+    assert call(Holder(), 1) == 1
+    assert call(target, 1, 2, 3) == 6
