@@ -8,18 +8,47 @@ from __future__ import annotations
 from functools import lru_cache
 from inspect import getfullargspec as _getfullargspec
 from inspect import isclass
+from types import MethodType
 from typing import TYPE_CHECKING, Any, cast
+from weakref import WeakKeyDictionary
 
 from .utils import is_iterable
 
 if TYPE_CHECKING:
     from inspect import FullArgSpec
 
-# Validators/formatters/conflict-solvers are stable singletons for a Rebulk instance's lifetime,
-# so their signature introspection is redundant across the many matching-path calls. The set of
-# distinct callables is small and bounded, and getfullargspec is a pure function of its callable,
-# so an unbounded identity cache is safe.
-getfullargspec = lru_cache(maxsize=None)(_getfullargspec)
+_argspecs: WeakKeyDictionary[Any, FullArgSpec] = WeakKeyDictionary()
+_unweakrefable_argspecs = lru_cache(maxsize=128)(_getfullargspec)
+
+
+def getfullargspec(func: Any) -> FullArgSpec:
+    """
+    ``inspect.getfullargspec``, cached for as long as ``func`` is alive.
+
+    Functional patterns and match constructors are called through :func:`call` on every match, so
+    their introspection is cached. The cache holds them weakly: rule sets built from closures and then
+    dropped must not stay alive through it. Callables that cannot be weakly referenced fall back to a
+    bounded cache.
+
+    :param func: callable to inspect
+    :type func: callable
+    :return: the full argspec of func
+    :rtype: FullArgSpec
+    """
+    # A bound method is a new object on each attribute access, and has the argspec of its function.
+    key = func.__func__ if isinstance(func, MethodType) else func
+    try:
+        return _argspecs[key]
+    except KeyError:
+        pass
+    except TypeError:
+        try:
+            return _unweakrefable_argspecs(key)
+        except TypeError:
+            return _getfullargspec(func)
+    argspec = _getfullargspec(func)
+    _argspecs[key] = argspec
+    return argspec
 
 
 def _constructor(class_: Any) -> Any:
